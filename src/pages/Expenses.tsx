@@ -53,6 +53,18 @@ export function Expenses() {
     if (error) return alert(errMsg(error));
     refresh();
   };
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const attachReceipt = async (e: Row, f: File) => {
+    setUploadingId(e.id);
+    try {
+      const path = await uploadFile(`expenses/${me}`, f);
+      const { error } = await supabase.from("expenses").update({ receipt_path: path }).eq("id", e.id);
+      if (error) throw error;
+      refresh();
+    } catch (x) { alert(errMsg(x)); }
+    setUploadingId(null);
+  };
+
   const removeExpense = async (e: Row) => {
     const linked = settlements.filter((x) => x.expense_id === e.id);
     const extra = linked.length ? `\n\nVerranno cancellati anche ${linked.length} pagament${linked.length === 1 ? "o" : "i"} delle quote collegat${linked.length === 1 ? "o" : "i"}.` : "";
@@ -137,7 +149,15 @@ export function Expenses() {
                 })}
               </ul>
               <footer>
-                {e.receipt_path ? <button className="link small" onClick={() => openFile(e.receipt_path).catch((x) => alert(errMsg(x)))}>📎 scontrino</button> : <span />}
+                {e.receipt_path ? (
+                  <button className="btn small" onClick={() => openFile(e.receipt_path).catch((x) => alert(errMsg(x)))}>📎 Vedi scontrino</button>
+                ) : (e.paid_by === me || isAdmin) ? (
+                  <label className="btn small">
+                    {uploadingId === e.id ? "Carico…" : "📷 Aggiungi scontrino"}
+                    <input type="file" accept="image/*,application/pdf" hidden disabled={uploadingId === e.id}
+                      onChange={(ev) => { const f = ev.target.files?.[0]; ev.target.value = ""; if (f) attachReceipt(e, f); }} />
+                  </label>
+                ) : <span className="muted small">nessuno scontrino</span>}
                 {(e.paid_by === me || isAdmin) && <button className="btn small danger" onClick={() => removeExpense(e)}>🗑️ Elimina spesa</button>}
               </footer>
             </article>

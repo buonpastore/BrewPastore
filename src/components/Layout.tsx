@@ -60,7 +60,7 @@ export function Layout() {
           <img className="brand-logo" src={FACE_IMG} alt="" />
           <span className="brand-text">
             <span className="brand-name">BrewPastore</span>
-            <span className="brand-tag">birra da pascolo</span>
+            <span className="brand-tag">birre da pascolo</span>
           </span>
         </NavLink>
         <div className="user">

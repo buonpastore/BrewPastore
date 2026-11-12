@@ -30,7 +30,7 @@ export function Login() {
       <form className="modal login-card" onSubmit={login}>
         <img className="login-mascot" src={FACE_IMG} alt="La pecora del Buon Pastore" />
         <h1 className="login-title">BREW<br />PASTORE</h1>
-        <div className="ribbon">birra da pascolo</div>
+        <div className="ribbon">birre da pascolo</div>
         {!configured && <p className="error">Configura VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (vedi README).</p>}
         <label><span>Email</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></label>
         <label><span>Password</span><input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></label>
