@@ -106,9 +106,15 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
             <div className="form-grid">
               {!recipeId && <label><span>Nome</span><input value={data.name ?? ""} onChange={(e) => setData({ ...data, name: e.target.value })} /></label>}
               <label><span>Stile</span><FieldInput f={{ key: "style", label: "Stile", type: "select", options: STYLE_OPTIONS, allowCustom: true }} value={data.style ?? ""} onChange={(v) => setData({ ...data, style: (v as string) || null })} /></label>
-              <div className="muted small wide">
-                Batch {data.batch_size_l ?? "?"} L · OG {data.target_og ?? "?"} · FG {data.target_fg ?? "?"} · IBU {data.target_ibu ?? "?"} · Mash {data.mash_temp_c ?? "?"}°C × {data.mash_time_min ?? "?"} min
-              </div>
+              {([
+                ["batch_size_l", "Litri"], ["target_og", "OG"], ["target_fg", "FG"], ["target_ibu", "IBU"], ["target_ebc", "EBC"],
+                ["mash_temp_c", "Mash °C"], ["mash_time_min", "Mash min"], ["boil_time_min", "Bollitura min"],
+              ] as [keyof ParsedRecipe, string][]).map(([k, label]) => (
+                <label key={k} className="param"><span>{label}</span>
+                  <input type="number" step="any" value={(data[k] as number | null) ?? ""}
+                    onChange={(e) => setData({ ...data, [k]: e.target.value === "" ? null : Number(e.target.value) })} />
+                </label>
+              ))}
               {recipeId && (
                 <label className="check wide"><input type="checkbox" checked={fillFields} onChange={(e) => setFillFields(e.target.checked)} /> aggiorna anche i parametri della ricetta (OG, FG, IBU, mash…)</label>
               )}

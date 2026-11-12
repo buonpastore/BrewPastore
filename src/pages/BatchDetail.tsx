@@ -13,6 +13,7 @@ import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
 import { BatchEvaluation } from "./Evaluation";
+import { BrewDay } from "./BrewDay";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { deleteBatches, deletionSummary } from "../deleteHelpers";
 
@@ -27,19 +28,20 @@ const SECTIONS: { title?: string; fields: FieldDef[] }[] = [
     { key: "bottling_date", label: "Imbottigliamento", type: "date" },
     { key: "first_tasting_date", label: "Prima bevuta", type: "date" },
   ]},
-  { title: "Acqua e mash", fields: [
+  { title: "pH", fields: [
     { key: "water_ph_initial", label: "pH acqua iniziale", type: "number", step: "0.01" },
     { key: "water_ph_adjusted", label: "pH acqua dopo correzioni", type: "number", step: "0.01" },
     { key: "mash_ph", label: "pH del mash", type: "number", step: "0.01" },
+  ]},
+  { title: "Gravity", fields: [
+    sgField("pre_sparge_gravity", "1 · Pre-sparge"),
+    sgField("post_sparge_gravity", "2 · Post-sparge"),
+    sgField("original_gravity", "3 · Post-bollitura (OG)"),
+    sgField("final_gravity", "4 · Post-fermentazione (FG)"),
+  ]},
+  { title: "Acqua", fields: [
     { key: "mash_water_l", label: "Acqua mash (L)", type: "number" },
     { key: "sparge_water_l", label: "Acqua sparge (L)", type: "number" },
-  ]},
-  { title: "Densità", fields: [
-    sgField("pre_sparge_gravity", "Gravity pre-sparge"),
-    sgField("post_sparge_gravity", "Gravity post-sparge (pre-boil)"),
-    sgField("original_gravity", "OG (pre-fermentazione)"),
-    sgField("final_gravity", "FG"),
-    { key: "abv", label: "ABV calcolato", render: (v) => (v != null ? `${v}%` : "—") },
   ]},
   { title: "Volumi e imbottigliamento", fields: [
     { key: "volume_fermenter_l", label: "Volume in fermentatore (L)", type: "number" },
@@ -171,6 +173,62 @@ function CostsTab({ batch, canEdit, materials }: { batch: Row; canEdit: boolean;
   );
 }
 
+function BatchBrewDay({ batch, recipe }: { batch: Row; recipe: Row | null }) {
+  const [ings, setIngs] = useState<Row[]>([]);
+  const [water, setWater] = useState<Row[]>([]);
+  useEffect(() => {
+    supabase.from("batch_ingredients").select("*").eq("batch_id", batch.id).then(({ data }) => setIngs(data ?? []));
+    supabase.from("water_adjustments").select("*").eq("batch_id", batch.id).then(({ data }) => setWater(data ?? []));
+  }, [batch.id]);
+  return (
+    <BrewDay ingredients={ings} waterAdjustments={water} mashTemp={recipe?.mash_temp_c} mashTime={recipe?.mash_time_min}
+      boilTime={recipe?.boil_time_min} mashWater={batch.mash_water_l} spargeWater={batch.sparge_water_l}
+      volume={batch.volume_fermenter_l ?? recipe?.batch_size_l} procedure={recipe?.procedure} />
+  );
+}
+
+/** Le 4 gravity in fila, con le variazioni tra un passaggio e l'altro. */
+function GravityStrip({ batch, recipe }: { batch: Row; recipe: Row | null }) {
+  const steps: [string, number | null, string][] = [
+    ["Pre-sparge", batch.pre_sparge_gravity, ""],
+    ["Post-sparge", batch.post_sparge_gravity, ""],
+    ["Post-bollitura (OG)", batch.original_gravity, recipe?.target_og ? `obiettivo ${sg(recipe.target_og)}` : ""],
+    ["Post-fermentazione (FG)", batch.final_gravity, recipe?.target_fg ? `obiettivo ${sg(recipe.target_fg)}` : ""],
+  ];
+  const ph: [string, number | null][] = [["Acqua iniziale", batch.water_ph_initial], ["Acqua corretta", batch.water_ph_adjusted], ["Mash", batch.mash_ph]];
+  return (
+    <div className="chem">
+      <h3 style={{ marginTop: 0 }}>pH</h3>
+      <div className="chem-row">
+        {ph.map(([l, v], i) => (
+          <div key={l} className="chem-cell">
+            {i > 0 && <span className="chem-arrow">→</span>}
+            <span className="muted small">{l}</span>
+            <strong className={l === "Mash" && v != null ? (Number(v) >= 5.2 && Number(v) <= 5.6 ? "ok" : "warn") : ""}>{v != null ? num(v, 2) : "—"}</strong>
+            {l === "Mash" && <span className="muted small">ideale 5,2–5,6</span>}
+          </div>
+        ))}
+      </div>
+      <h3>Gravity</h3>
+      <div className="chem-row">
+        {steps.map(([l, v, sub], i) => {
+          const prev = i > 0 ? steps[i - 1][1] : null;
+          const d = v != null && prev != null ? Math.round((Number(v) - Number(prev)) * 1000) : null;
+          return (
+            <div key={l} className="chem-cell">
+              {i > 0 && <span className="chem-arrow">→</span>}
+              <span className="muted small">{i + 1} · {l}</span>
+              <strong>{sg(v)}</strong>
+              <span className="muted small">{d != null ? `${d > 0 ? "+" : ""}${d} punti` : sub}</span>
+            </div>
+          );
+        })}
+      </div>
+      {batch.abv != null && <p className="small">Grado alcolico: <strong>{num(batch.abv, 1)}% vol</strong></p>}
+    </div>
+  );
+}
+
 export function BatchDetail() {
   const { id } = useParams();
   const { isAdmin } = useAuth();
@@ -184,7 +242,7 @@ export function BatchDetail() {
   useEffect(() => {
     supabase.from("batches").select("*").eq("id", id!).single().then(({ data }) => {
       setBatch(data);
-      if (data) supabase.from("recipes").select("id, name, target_og, target_fg, efficiency_pct, batch_size_l").eq("id", data.recipe_id).single().then(({ data: r }) => setRecipe(r));
+      if (data) supabase.from("recipes").select("id, name, target_og, target_fg, efficiency_pct, batch_size_l, mash_temp_c, mash_time_min, boil_time_min, procedure").eq("id", data.recipe_id).single().then(({ data: r }) => setRecipe(r));
     });
     loadMaterials().then(setMaterials);
   }, [id]);
@@ -231,14 +289,19 @@ export function BatchDetail() {
       </div>
 
       <Tabs active={tab} onChange={setTab} tabs={[
-        ["log", "Log cotta"], ["acqua", "Correzioni acqua"], ["ingredienti", "Ingredienti usati"],
+        ["log", "Log cotta"], ["cottura", "Cottura"], ["chimici", "Valori chimici"], ["ingredienti", "Ingredienti usati"],
         ["diario", "Diario fermentazione"], ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"], ["costi", "Costi"],
         ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico versioni"],
       ]} />
 
       <div className="panel">
-        {tab === "log" && <RecordForm table="batches" row={batch} sections={SECTIONS.filter((s) => s.title !== "Carbonazione")} canEdit={isAdmin} onSaved={setBatch} />}
-        {tab === "acqua" && (
+        {tab === "log" && <RecordForm table="batches" row={batch} sections={SECTIONS.filter((s) => !["Carbonazione", "pH", "Gravity"].includes(s.title ?? ""))} canEdit={isAdmin} onSaved={setBatch} />}
+        {tab === "cottura" && <BatchBrewDay batch={batch} recipe={recipe} />}
+        {tab === "chimici" && (
+          <>
+            <GravityStrip batch={batch} recipe={recipe} />
+            <RecordForm table="batches" row={batch} sections={SECTIONS.filter((s) => s.title === "pH" || s.title === "Gravity")} canEdit={isAdmin} onSaved={setBatch} hideView editLabel="Modifica pH e gravity" />
+            <h3 style={{ marginTop: 22 }}>Correzioni dell'acqua</h3>
           <RowsEditor table="water_adjustments" parentKey="batch_id" parentId={batch.id} canEdit={isAdmin}
             defaults={{ unit: "g", target: "mash" }} emptyText="Nessuna correzione registrata"
             fields={[
@@ -248,6 +311,7 @@ export function BatchDetail() {
               { key: "target", label: "Dove", type: "select", options: ["mash", "sparge", "bollitura", "totale"], required: true },
               { key: "notes", label: "Note" },
             ]} />
+          </>
         )}
         {tab === "ingredienti" && (
           <>

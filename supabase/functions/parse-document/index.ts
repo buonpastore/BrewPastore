@@ -91,6 +91,8 @@ ricetta di birra (spesso è lo screenshot di una conversazione con un assistente
 Estrai la ricetta completa. Regole:
 - Elenca TUTTI gli ingredienti: malti, luppoli (con il momento di aggiunta), lievito, sali e acidi per l'acqua, additivi.
 - Se lo stesso luppolo è usato in momenti diversi, crea una riga per ogni aggiunta.
+- Nel nome metti SOLO il nome dell'ingrediente (es. "Saaz", "Malto Pilsner", "Safale US-05"), senza descrizioni,
+  note di gusto o scopo (niente "per l'aroma", "note speziate"…). Puoi aggiungere gli alfa acidi tra parentesi se indicati, es. "Saaz (3,5% AA)".
 - Mantieni le quantità e le unità della ricetta (kg/g/l/ml/pz). Lieviti a unità: una bustina = 1 pz.
 - Se la ricetta propone alternative, scegli la prima e segnala le alternative in notes.
 - Per lo stile usa, se corrisponde, uno di questi nomi esatti: IPA, Weiss, Blanche, Dubbel, APA, English Ale, Winter Ale, Bock,

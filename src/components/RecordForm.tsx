@@ -9,10 +9,13 @@ interface Props {
   canEdit: boolean;
   onSaved: (row: Row) => void;
   startEditing?: boolean;
+  /** in sola lettura mostra solo il pulsante Modifica (i valori sono già visibili altrove) */
+  hideView?: boolean;
+  editLabel?: string;
 }
 
 /** Scheda di un record con modalità visualizza/modifica. */
-export function RecordForm({ table, row, sections, canEdit, onSaved, startEditing }: Props) {
+export function RecordForm({ table, row, sections, canEdit, onSaved, startEditing, hideView, editLabel }: Props) {
   const [editing, setEditing] = useState(Boolean(startEditing));
   const [draft, setDraft] = useState<Row>(row);
   const [saving, setSaving] = useState(false);
@@ -30,6 +33,9 @@ export function RecordForm({ table, row, sections, canEdit, onSaved, startEditin
     onSaved(data);
   };
 
+  if (!editing && hideView) {
+    return canEdit ? <button className="btn" onClick={() => { setDraft(row); setEditing(true); }}>✏️ {editLabel ?? "Modifica"}</button> : null;
+  }
   if (!editing) {
     return (
       <div>

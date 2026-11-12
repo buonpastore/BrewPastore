@@ -547,3 +547,37 @@ label.block { display: block; margin-bottom: 12px; }
   .bottom-nav a.active svg { opacity: 1; transform: translateY(-1px); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c, var(--gold)) 45%, transparent)); }
   .bottom-nav a.active::before { content: ""; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--c, var(--gold)); }
 }
+
+/* ---------------- piano di cotta ---------------- */
+.bd-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.bd-summary span { background: var(--surface-2); border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; font-weight: 600; font-size: .88rem; }
+.brewday { list-style: none; padding: 0; margin: 0; position: relative; }
+.brewday::before { content: ""; position: absolute; left: 19px; top: 10px; bottom: 10px; width: 2px; background: var(--line-strong); }
+.bd-step { display: flex; gap: 14px; padding-bottom: 18px; position: relative; }
+.bd-dot { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--c); color: var(--c); z-index: 1; }
+.bd-body { flex: 1; min-width: 0; padding-top: 8px; }
+.bd-title strong { font-size: 1.02rem; }
+.bd-items { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 5px; }
+.bd-items li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--surface-2); border-radius: 10px; padding: 7px 11px; }
+.bd-cat { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
+.bd-cat.c-malto { background: var(--gold); } .bd-cat.c-luppolo { background: var(--hop); } .bd-cat.c-lievito { background: #7fd9c8; }
+.bd-cat.c-sali_acqua { background: var(--teal); } .bd-cat.c-additivo { background: var(--magenta); }
+.hop-timeline { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.hop-slot { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: start; }
+.hop-slot .bd-items { margin: 0; }
+.hop-time { display: flex; flex-direction: column; padding-top: 4px; }
+.hop-time strong { font-size: 1.2rem; color: var(--orange); line-height: 1.1; }
+.panel-sub { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+@media (max-width: 600px) { .hop-slot { grid-template-columns: 70px 1fr; } }
+
+/* ---------------- valori chimici ---------------- */
+.chem { margin-bottom: 18px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.chem-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 8px; }
+.chem-cell { position: relative; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 11px 14px; display: flex; flex-direction: column; gap: 2px; }
+.chem-cell strong { font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.chem-cell strong.ok { color: var(--hop); } .chem-cell strong.warn { color: var(--gold); }
+.chem-arrow { position: absolute; left: -11px; top: 50%; transform: translateY(-50%); color: var(--faint); font-size: .9rem; }
+@media (max-width: 600px) { .chem-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .chem-arrow { display: none; } }
+.form-grid label.param input { width: 100%; }
+.modal .form-grid:has(label.param) { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+.modal .form-grid:has(label.param) > label:not(.param):not(.check) { grid-column: span 2; }

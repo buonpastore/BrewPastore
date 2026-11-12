@@ -13,6 +13,7 @@ import { ImportRecipe } from "./ImportRecipe";
 import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
 import { DeleteDialog } from "../components/DeleteDialog";
+import { BrewDay } from "./BrewDay";
 import { deleteRecipe, deletionSummary } from "../deleteHelpers";
 
 export const RECIPE_SECTIONS: { title?: string; fields: FieldDef[] }[] = [
@@ -124,7 +125,7 @@ export function RecipeDetail() {
       )}
 
       <Tabs active={tab} onChange={setTab} tabs={[
-        ["scheda", "Scheda"], ["ingredienti", "Ingredienti"], ["batch", `Batch (${batches.length})`],
+        ["scheda", "Scheda"], ["ingredienti", "Ingredienti"], ["cottura", "Cottura"], ["batch", `Batch (${batches.length})`],
         ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico versioni"],
       ]} />
 
@@ -162,10 +163,22 @@ export function RecipeDetail() {
             </tbody>
           </table>
         )}
+        {tab === "cottura" && <RecipeBrewDay recipe={recipe} />}
         {tab === "documenti" && <DocumentsPanel recipeId={recipe.id} />}
         {tab === "chat" && <ChatPanel recipeId={recipe.id} />}
         {tab === "storico" && <HistoryList relatedTo={{ id: recipe.id, key: "recipe_id" }} />}
       </div>
     </div>
+  );
+}
+
+function RecipeBrewDay({ recipe }: { recipe: Row }) {
+  const [ings, setIngs] = useState<Row[]>([]);
+  useEffect(() => {
+    supabase.from("recipe_ingredients").select("*").eq("recipe_id", recipe.id).order("sort_order").then(({ data }) => setIngs(data ?? []));
+  }, [recipe.id]);
+  return (
+    <BrewDay ingredients={ings} mashTemp={recipe.mash_temp_c} mashTime={recipe.mash_time_min} boilTime={recipe.boil_time_min}
+      volume={recipe.batch_size_l} procedure={recipe.procedure} />
   );
 }

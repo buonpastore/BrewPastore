@@ -213,12 +213,32 @@ function cleanIngredientName(line: string): string {
     .replace(/\b(?:in\s+|a\s+)?\d{2}\s*°\s*c\b/gi, " ")
     .replace(/\b(?:in\s+|nel\s+|al\s+|a\s+)?(?:dry[\s-]?hop(?:ping)?|whirlpool|hop\s?stand|flame\s?out|first wort|fine bollitura|a fuoco spento|mash|ammostamento|inoculo|bollitura|fermentatore|fermentazione|giorno\s*\d+|day\s*\d+)\b/gi, " ")
     .replace(/^\s*(?:di|del|della|dei)\s+/i, "")
-    .replace(/[|•*–—:;=→]+/g, " ")
+    .replace(/[|•*=→]+/g, " ")
     .replace(/\(\s*\)/g, "")
     .replace(/\s{2,}/g, " ")
     .replace(/\s+(?:in|a|al|nel|per|e)\s*$/i, "")
     .replace(/^[\s,.-]+|[\s,.-]+$/g, "")
     .trim();
+}
+
+/** Toglie le descrizioni aggiunte dalle chat: "Saaz (note speziate, per l'aroma)" → "Saaz". */
+function tidyName(name: string, category: string): string {
+  let n = name
+    // parentesi: tieni solo gli alfa acidi, es. "(3,5% AA)"
+    .replace(/\(([^)]*)\)/g, (_m, inner: string) => (/\d\s*%|\baa\b|alfa/i.test(inner) ? ` (${inner.trim()})` : " "))
+    .replace(/\[[^\]]*\]/g, " ");
+  // descrizione dopo trattino, due punti o virgola: "Saaz – luppolo nobile ceco" → "Saaz"
+  const parts = n.split(/\s*[–—]\s*|\s-\s|:\s*|,\s|;\s*|\s\/\s/).map((x) => x.trim()).filter(Boolean);
+  const GENERIC = /^(lievit[oi]|luppol[oi]|malt[oi]|sali|acqua|ingredient[ei]|aggiunt[ae])$/i;
+  const pick = parts.length > 1 && GENERIC.test(parts[0]) ? parts[1] : parts[0];
+  if (pick && pick.length >= 2) n = pick;
+  if (category === "luppolo") {
+    n = n
+      .replace(/\b(?:per|da|come|in)\s+(?:l['’]\s*)?(?:amaro|amaricante|amaricare|aroma|aromatizzazione|aromatico|aromatica|profumo|gusto|sapore|amaricatura)\b.*$/i, "")
+      .replace(/\b(?:amaro|amaricante|aroma|aromatico|aromatica|aromatizzazione|bittering)\s*$/i, "")
+      .replace(/\b(?:luppolo|luppoli)\b\s*(?=\S)/i, "");
+  }
+  return n.replace(/\s{2,}/g, " ").replace(/^[\s,.-]+|[\s,.-]+$/g, "").trim();
 }
 
 export function parseRecipeText(text: string, knownStyles: string[] = []): TextRecipe {
@@ -260,6 +280,8 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
       // "11,5 g" di lievito secco = 1 bustina
       name = `${name} (${q[1]} ${q[2]})`; quantity = 1; unit = "pz";
     }
+    name = tidyName(name, category);
+    if (!name) continue;
     ingredients.push({ name: name.charAt(0).toUpperCase() + name.slice(1), category, quantity, unit, step: stepOf(line, category) });
   }
 
