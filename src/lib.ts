@@ -120,6 +120,8 @@ export interface ParsedRecipe {
   target_ibu: number | null;
   target_ebc: number | null;
   efficiency_pct: number | null;
+  mash_water_l?: number | null;
+  sparge_water_l?: number | null;
   procedure: string | null;
   notes: string | null;
   ingredients: { name: string; category: string; quantity: number; unit: string; step: string | null }[];

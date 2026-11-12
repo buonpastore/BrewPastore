@@ -53,7 +53,7 @@ const RECIPE_SCHEMA = {
   type: "object",
   additionalProperties: false,
   required: ["name", "style", "batch_size_l", "boil_time_min", "mash_temp_c", "mash_time_min",
-             "target_og", "target_fg", "target_ibu", "target_ebc", "efficiency_pct", "procedure", "notes", "ingredients"],
+             "target_og", "target_fg", "target_ibu", "target_ebc", "efficiency_pct", "mash_water_l", "sparge_water_l", "procedure", "notes", "ingredients"],
   properties: {
     name: { type: ["string", "null"] },
     style: { type: ["string", "null"] },
@@ -66,6 +66,8 @@ const RECIPE_SCHEMA = {
     target_ibu: { type: ["number", "null"] },
     target_ebc: { type: ["number", "null"], description: "Colore in EBC (SRM x 1.97)" },
     efficiency_pct: { type: ["number", "null"] },
+    mash_water_l: { type: ["number", "null"], description: "Litri di acqua di mash (ammostamento)" },
+    sparge_water_l: { type: ["number", "null"], description: "Litri di acqua di sparge (risciacquo)" },
     procedure: { type: ["string", "null"], description: "Passaggi di processo (step mash, fermentazione, dry hop...) come testo a punti" },
     notes: { type: ["string", "null"] },
     ingredients: {

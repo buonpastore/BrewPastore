@@ -183,7 +183,7 @@ function BatchBrewDay({ batch, recipe }: { batch: Row; recipe: Row | null }) {
   }, [batch.id]);
   return (
     <BrewDay ingredients={ings} waterAdjustments={water} mashTemp={recipe?.mash_temp_c} mashTime={recipe?.mash_time_min}
-      boilTime={recipe?.boil_time_min} mashWater={batch.mash_water_l} spargeWater={batch.sparge_water_l}
+      boilTime={recipe?.boil_time_min} mashWater={batch.mash_water_l ?? recipe?.mash_water_l} spargeWater={batch.sparge_water_l ?? recipe?.sparge_water_l}
       volume={batch.volume_fermenter_l ?? recipe?.batch_size_l} procedure={recipe?.procedure} />
   );
 }
@@ -244,7 +244,7 @@ export function BatchDetail() {
   useEffect(() => {
     supabase.from("batches").select("*").eq("id", id!).single().then(({ data }) => {
       setBatch(data);
-      if (data) supabase.from("recipes").select("id, name, target_og, target_fg, efficiency_pct, batch_size_l, mash_temp_c, mash_time_min, boil_time_min, procedure").eq("id", data.recipe_id).single().then(({ data: r }) => setRecipe(r));
+      if (data) supabase.from("recipes").select("*").eq("id", data.recipe_id).single().then(({ data: r }) => setRecipe(r));
     });
     loadMaterials().then(setMaterials);
   }, [id]);

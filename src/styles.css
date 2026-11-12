@@ -632,3 +632,14 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .bd-cat.c-luppolo { background: var(--teal); } .bd-cat.c-lievito { background: var(--magenta); } .bd-cat.c-additivo { background: var(--faint); }
 .hop-time strong { color: var(--gold); }
 .chem-cell strong.ok { color: var(--teal); }
+
+/* ---------------- acqua ---------------- */
+.water-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.water-card { background: var(--surface-2); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; }
+.water-card svg, .water-total { color: var(--c); }
+.water-total { font-size: 1.3rem; font-weight: 700; line-height: 1; }
+.water-card strong { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.water-calc { margin: 6px 0 12px; max-width: 560px; }
+.water-calc td { padding: 6px 8px; }
+.water-calc td:last-child { text-align: right; white-space: nowrap; }
+.water-calc tr.tot td { font-weight: 700; border-top: 2px solid var(--line-strong); }

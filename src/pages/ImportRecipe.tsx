@@ -120,6 +120,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
               {([
                 ["batch_size_l", "Litri"], ["target_og", "OG"], ["target_fg", "FG"], ["target_ibu", "IBU"], ["target_ebc", "EBC"],
                 ["mash_temp_c", "Mash °C"], ["mash_time_min", "Mash min"], ["boil_time_min", "Bollitura min"],
+                ["mash_water_l", "Acqua mash L"], ["sparge_water_l", "Acqua sparge L"],
               ] as [keyof ParsedRecipe, string][]).map(([k, label]) => (
                 <label key={k} className="param"><span>{label}</span>
                   <input type="number" step="any" value={(data[k] as number | null) ?? ""}

@@ -166,6 +166,8 @@ export interface TextRecipe {
   target_ibu: number | null;
   target_ebc: number | null;
   efficiency_pct: number | null;
+  mash_water_l: number | null;
+  sparge_water_l: number | null;
   procedure: string | null;
   notes: string | null;
   ingredients: { name: string; category: string; quantity: number; unit: string; step: string | null }[];
@@ -255,6 +257,9 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   const eff = find(/efficien[a-z]*\b[^\d\n]{0,15}(\d{2}(?:[.,]\d)?)\s*%/i);
   const mash = find(/(?:mash|ammostamento|infusione|single infusion|saccarificazione)[^\n]{0,60}?(\d{2}(?:[.,]\d)?)\s*°\s*C?[^\n]{0,30}?(\d{2,3})\s*(?:min|minuti|')/i)
     ?? find(/(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:per|x)\s*(\d{2,3})\s*(?:min|minuti|')/i);
+  const mashW = find(/(?:acqua\s*(?:di|del|per(?: il| lo)?)?\s*)(?:mash|ammostamento|infusione|impasto)\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i)
+    ?? find(/(?:mash|ammostamento)\s*(?:water|acqua)?\s*[:=]\s*(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
+  const spargeW = find(/sparge\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
   const boil = find(/bollitura[^\n\d]{0,20}(\d{2,3})\s*(?:min|minuti|')/i) ?? find(/(\d{2,3})\s*(?:min|minuti)\s*(?:di\s*)?bollitura/i);
 
   const ingredients: TextRecipe["ingredients"] = [];
@@ -314,6 +319,7 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     target_og: g(og), target_fg: g(fg), target_ibu: g(ibu),
     target_ebc: ebc ? g(ebc) : srm ? Math.round(g(srm)! * 1.97) : null,
     efficiency_pct: g(eff),
+    mash_water_l: g(mashW), sparge_water_l: g(spargeW),
     procedure: null,
     notes: ingredients.length ? "Letta direttamente dal testo (senza AI): controlla quantità e momenti di aggiunta." : null,
     ingredients,

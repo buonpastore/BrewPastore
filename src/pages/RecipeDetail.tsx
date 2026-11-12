@@ -12,6 +12,7 @@ import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { BrewDay } from "./BrewDay";
+import { RecipeWater } from "./Water";
 import { CleanNamesButton } from "../components/CleanNames";
 import { deleteRecipe, deletionSummary } from "../deleteHelpers";
 
@@ -62,7 +63,9 @@ export function RecipeDetail() {
   const newBatch = async () => {
     const code = prompt("Nome/codice del batch", `${recipe!.name} #${batches.length + 1}`);
     if (!code) return;
-    const { data: b, error } = await supabase.from("batches").insert({ recipe_id: id, code }).select().single();
+    const { data: b, error } = await supabase.from("batches").insert({
+      recipe_id: id, code, mash_water_l: recipe!.mash_water_l ?? null, sparge_water_l: recipe!.sparge_water_l ?? null,
+    }).select().single();
     if (error) return alert(errMsg(error));
     // copia gli ingredienti della ricetta nel batch (poi si possono correggere)
     const { data: ings } = await supabase.from("recipe_ingredients").select("*").eq("recipe_id", id!).order("sort_order");
@@ -124,7 +127,7 @@ export function RecipeDetail() {
       )}
 
       <Tabs active={tab} onChange={setTab} tabs={[
-        ["scheda", "Scheda"], ["ingredienti", "Ingredienti"], ["cottura", "Cottura"], ["batch", `Batch (${batches.length})`],
+        ["scheda", "Scheda"], ["ingredienti", "Ingredienti"], ["acqua", "Acqua"], ["cottura", "Cottura"], ["batch", `Batch (${batches.length})`],
         ["documenti", "Documenti"],
       ]} />
 
@@ -163,6 +166,7 @@ export function RecipeDetail() {
             </tbody>
           </table>
         )}
+        {tab === "acqua" && <RecipeWater recipe={recipe} canEdit={isAdmin} onSaved={setRecipe} />}
         {tab === "cottura" && <RecipeBrewDay recipe={recipe} />}
         {tab === "documenti" && <DocumentsPanel recipeId={recipe.id} />}
       </div>
@@ -177,6 +181,6 @@ function RecipeBrewDay({ recipe }: { recipe: Row }) {
   }, [recipe.id]);
   return (
     <BrewDay ingredients={ings} mashTemp={recipe.mash_temp_c} mashTime={recipe.mash_time_min} boilTime={recipe.boil_time_min}
-      volume={recipe.batch_size_l} procedure={recipe.procedure} />
+      mashWater={recipe.mash_water_l} spargeWater={recipe.sparge_water_l} volume={recipe.batch_size_l} procedure={recipe.procedure} />
   );
 }
