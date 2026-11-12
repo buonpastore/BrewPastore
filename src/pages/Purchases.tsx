@@ -34,20 +34,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div>
-      <div className="page-head">
-        {!embedded && <h1>Acquisti materie prime</h1>}
-        {isAdmin && (
-          <div className="row-actions">
-            <button className="btn primary" onClick={() => setImporting(true)}>📄 Carica fattura / scontrino / email</button>
-            <button className="btn" onClick={manual}>+ Inserimento manuale</button>
-          </div>
-        )}
-      </div>
-      {isAdmin && !importing && (
-        <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
-          title="📋 Importa un acquisto" />
-      )}
-      {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}
+      {!embedded && <div className="page-head"><h1>Acquisti materie prime</h1></div>}
       <div className="table-wrap">
         <table>
           <thead><tr><th>Data</th><th>Fornitore</th><th>N° doc.</th><th>Righe</th><th>Merce</th><th>Spedizione</th><th>Totale</th></tr></thead>
@@ -66,10 +53,21 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
                 </tr>
               );
             })}
-            {!rows.length && <tr><td colSpan={7} className="muted">Nessun acquisto. Carica una fattura (es. il PDF di Mr Malt) per iniziare.</td></tr>}
+            {!rows.length && <tr><td colSpan={7} className="muted">Nessun acquisto. Importane uno qui sotto (es. il PDF o il testo dell'ordine Mr Malt).</td></tr>}
           </tbody>
         </table>
       </div>
+      {isAdmin && (
+        <div className="ing-import">
+          <h3>Importa un acquisto</h3>
+          {!importing && (
+            <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
+              title="📋 Incolla qui" hint="fattura, screenshot, scontrino o testo" />
+          )}
+          <button className="mini-btn" onClick={manual}>✏️ <span>Inserimento manuale</span></button>
+        </div>
+      )}
+      {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}
     </div>
   );
 }
