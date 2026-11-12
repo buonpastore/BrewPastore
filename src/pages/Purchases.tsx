@@ -11,7 +11,7 @@ import { DocumentsPanel } from "../components/DocumentsPanel";
 import { FilePicker } from "../components/FilePicker";
 import { PickedList } from "./ImportRecipe";
 
-export function Purchases() {
+export function Purchases({ embedded = false }: { embedded?: boolean }) {
   const { isAdmin } = useAuth();
   const nav = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
@@ -33,7 +33,7 @@ export function Purchases() {
   return (
     <div>
       <div className="page-head">
-        <h1>Acquisti materie prime</h1>
+        {!embedded && <h1>Acquisti materie prime</h1>}
         {isAdmin && (
           <div className="row-actions">
             <button className="btn primary" onClick={() => setImporting(true)}>📄 Carica fattura / scontrino / email</button>
@@ -226,7 +226,7 @@ export function PurchaseDetail() {
     if (!confirm("Eliminare l'acquisto e tutte le sue righe?")) return;
     const { error } = await supabase.from("purchases").delete().eq("id", id!);
     if (error) return alert(errMsg(error));
-    nav("/acquisti");
+    nav("/materie-prime?vista=acquisti");
   };
 
   if (!p) return <p>Caricamento…</p>;
@@ -234,7 +234,7 @@ export function PurchaseDetail() {
     <div>
       <div className="page-head">
         <div>
-          <Link to="/acquisti" className="muted small">← Acquisti</Link>
+          <Link to="/materie-prime?vista=acquisti" className="muted small">← Acquisti</Link>
           <h1>{p.supplier} <span className="muted">{date(p.purchase_date)}</span></h1>
         </div>
         {isAdmin && <button className="btn danger" onClick={remove}>Elimina acquisto</button>}

@@ -1,14 +1,14 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import {
-  House, BookOpen, Beer, Receipt, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
+  House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "../lib";
 import { useAuth } from "../auth";
 import { QuotePopup } from "./QuoteOfTheDay";
 
-interface Tab { to: string; label: string; icon: LucideIcon; color: string }
+interface Tab { to: string; label: string; icon: LucideIcon; color: string; also?: string[] }
 interface Group { key: string; label: string; icon: LucideIcon; to: string; color: string; tabs?: Tab[] }
 
 export const GROUPS: Group[] = [
@@ -25,8 +25,7 @@ export const GROUPS: Group[] = [
     key: "conti", label: "Conti", icon: Coins, to: "/spese", color: "var(--hop)",
     tabs: [
       { to: "/spese", label: "Spese condivise", icon: Wallet, color: "var(--hop)" },
-      { to: "/acquisti", label: "Acquisti", icon: Receipt, color: "var(--teal)" },
-      { to: "/materie-prime", label: "Materie prime", icon: Wheat, color: "var(--gold)" },
+      { to: "/materie-prime", label: "Materie prime", icon: Wheat, color: "var(--gold)", also: ["/acquisti"] },
       { to: "/impianto", label: "Preventivi impianto", icon: Wrench, color: "var(--magenta)" },
     ],
   },
@@ -36,7 +35,11 @@ export const GROUPS: Group[] = [
 
 function groupOf(path: string): Group {
   if (path === "/") return GROUPS[0];
-  return GROUPS.find((g) => g.key !== "home" && (path.startsWith(g.to) || g.tabs?.some((t) => path.startsWith(t.to)))) ?? GROUPS[0];
+  return GROUPS.find((g) => g.key !== "home" && (path.startsWith(g.to) || g.tabs?.some((t) => tabActive(t, path)))) ?? GROUPS[0];
+}
+
+function tabActive(t: Tab, path: string) {
+  return path.startsWith(t.to) || Boolean(t.also?.some((a) => path.startsWith(a)));
 }
 
 function initials(name?: string) {
@@ -78,7 +81,7 @@ export function Layout() {
               </NavLink>
               {g.tabs && active && (
                 <div className="sub">
-                  {g.tabs.map((t) => <NavLink key={t.to} to={t.to}>{t.label}</NavLink>)}
+                  {g.tabs.map((t) => <NavLink key={t.to} to={t.to} className={tabActive(t, loc.pathname) ? "active" : ""}>{t.label}</NavLink>)}
                 </div>
               )}
             </div>
@@ -95,7 +98,7 @@ export function Layout() {
             <div className="section-title">{current.label}</div>
             <nav className="section-tabs">
               {current.tabs.map(({ to, label, icon: Icon, color }) => (
-                <NavLink key={to} to={to} style={{ ["--c" as string]: color }} className={loc.pathname.startsWith(to) ? "active" : ""}>
+                <NavLink key={to} to={to} style={{ ["--c" as string]: color }} className={tabActive({ to, label, icon: Icon, color, also: current.tabs!.find((t) => t.to === to)?.also }, loc.pathname) ? "active" : ""}>
                   <Icon size={16} /> {label}
                 </NavLink>
               ))}

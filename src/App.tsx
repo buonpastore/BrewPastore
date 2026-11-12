@@ -5,8 +5,8 @@ import { Recipes } from "./pages/Recipes";
 import { RecipeDetail } from "./pages/RecipeDetail";
 import { Batches } from "./pages/Batches";
 import { BatchDetail } from "./pages/BatchDetail";
-import { Purchases, PurchaseDetail } from "./pages/Purchases";
-import { Materials } from "./pages/Materials";
+import { PurchaseDetail } from "./pages/Purchases";
+import { MaterialsHub } from "./pages/MaterialsHub";
 import { Expenses } from "./pages/Expenses";
 import { Tastings } from "./pages/Tastings";
 import { EquipmentProjects, EquipmentProject, EquipmentQuote } from "./pages/Equipment";
@@ -26,9 +26,9 @@ export default function App() {
           <Route path="batch" element={<Batches />} />
           <Route path="batch/:id" element={<BatchDetail />} />
           <Route path="degustazioni" element={<Tastings />} />
-          <Route path="acquisti" element={<Purchases />} />
+          <Route path="acquisti" element={<Navigate to="/materie-prime?vista=acquisti" replace />} />
           <Route path="acquisti/:id" element={<PurchaseDetail />} />
-          <Route path="materie-prime" element={<Materials />} />
+          <Route path="materie-prime" element={<MaterialsHub />} />
           <Route path="spese" element={<Expenses />} />
           <Route path="impianto" element={<EquipmentProjects />} />
           <Route path="impianto/:id" element={<EquipmentProject />} />

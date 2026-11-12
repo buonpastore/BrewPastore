@@ -3,7 +3,7 @@ import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, type Row } from 
 import { ImportPurchase } from "./Purchases";
 import { useAuth } from "../auth";
 
-export function Materials() {
+export function Materials({ embedded = false }: { embedded?: boolean }) {
   const { isAdmin } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [cat, setCat] = useState("");
@@ -53,7 +53,7 @@ export function Materials() {
   return (
     <div>
       <div className="page-head">
-        <h1>Materie prime e costi medi</h1>
+        {!embedded && <h1>Materie prime e costi medi</h1>}
         {isAdmin && <button className="btn primary" onClick={() => setImporting(true)}>📸 Carica prezzi da screenshot / fattura</button>}
       </div>
       <p className="muted">Costo medio ponderato su tutti gli acquisti (spedizione inclusa). I prezzi arrivano dagli acquisti registrati.</p>
