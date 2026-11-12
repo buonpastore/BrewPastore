@@ -12,6 +12,8 @@ import type { FieldDef } from "../components/fields";
 import { ImportRecipe } from "./ImportRecipe";
 import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
+import { DeleteDialog } from "../components/DeleteDialog";
+import { deleteRecipe, deletionSummary } from "../deleteHelpers";
 
 export const RECIPE_SECTIONS: { title?: string; fields: FieldDef[] }[] = [
   { title: "Generale", fields: [
@@ -47,6 +49,7 @@ export function RecipeDetail() {
   const [tab, setTab] = useState("scheda");
   const [importing, setImporting] = useState(false);
   const [pasted, setPasted] = useState<File[] | undefined>();
+  const [deleting, setDeleting] = useState(false);
   const [reloadIng, setReloadIng] = useState(0);
 
   useEffect(() => {
@@ -107,10 +110,18 @@ export function RecipeDetail() {
         {isAdmin && (
           <div className="row-actions">
             <button className="btn" onClick={duplicate}>⧉ Duplica</button>
+            <button className="btn danger" onClick={() => setDeleting(true)}>🗑️ Elimina</button>
             <button className="btn primary" onClick={newBatch}>🍺 Nuovo batch da questa ricetta</button>
           </div>
         )}
       </div>
+
+      {deleting && (
+        <DeleteDialog title="Elimina ricetta" name={recipe.name}
+          loadSummary={() => deletionSummary(recipe.id, batches.map((b) => b.id))}
+          onConfirm={async () => { await deleteRecipe(recipe.id); nav("/ricette"); }}
+          onClose={() => setDeleting(false)} />
+      )}
 
       <Tabs active={tab} onChange={setTab} tabs={[
         ["scheda", "Scheda"], ["ingredienti", "Ingredienti"], ["batch", `Batch (${batches.length})`],

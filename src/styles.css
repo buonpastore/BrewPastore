@@ -516,3 +516,7 @@ label.block { display: block; margin-bottom: 12px; }
   .review-table tbody tr:hover td { background: none; }
 }
 @media (max-width: 700px) { .review-table .rv-code { grid-column: 1 / -1; order: -1; } .review-table .rv-desc { order: -2; } }
+.delete-list { margin: 6px 0 12px; padding-left: 20px; columns: 2; }
+.delete-list li { margin-bottom: 3px; }
+.btn.danger-solid { background: var(--err); border-color: transparent; color: #2a0710; }
+.btn.danger-solid:hover { background: #ff8aa3; }

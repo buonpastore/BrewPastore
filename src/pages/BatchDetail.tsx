@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   supabase, errMsg, sg, eur, num, date, STATUS_LABELS, MATERIAL_CATEGORIES, UNITS, loadMaterials,
   primingGrams, residualCo2, PRIMING_FACTORS, type Row,
@@ -13,6 +13,8 @@ import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
 import { BatchEvaluation } from "./Evaluation";
+import { DeleteDialog } from "../components/DeleteDialog";
+import { deleteBatches, deletionSummary } from "../deleteHelpers";
 
 const sgField = (key: string, label: string): FieldDef => ({ key, label, type: "number", step: "0.001", render: (v) => sg(v as number) });
 
@@ -176,6 +178,8 @@ export function BatchDetail() {
   const [recipe, setRecipe] = useState<Row | null>(null);
   const [materials, setMaterials] = useState<Row[]>([]);
   const [tab, setTab] = useState("log");
+  const [deleting, setDeleting] = useState(false);
+  const nav = useNavigate();
 
   useEffect(() => {
     supabase.from("batches").select("*").eq("id", id!).single().then(({ data }) => {
@@ -207,9 +211,17 @@ export function BatchDetail() {
         {isAdmin && (
           <div className="row-actions wrap">
             {QUICK.map((q) => <button key={q.status} className="btn small" onClick={() => quick(q)}>{q.label}</button>)}
+            <button className="btn small danger" onClick={() => setDeleting(true)}>🗑️ Elimina batch</button>
           </div>
         )}
       </div>
+
+      {deleting && (
+        <DeleteDialog title="Elimina batch" name={batch.code}
+          loadSummary={async () => { const s = await deletionSummary(null, [batch.id]); const { batch: _b, ...rest } = s; void _b; return rest; }}
+          onConfirm={async () => { await deleteBatches([batch.id]); nav(recipe ? `/ricette/${recipe.id}` : "/batch"); }}
+          onClose={() => setDeleting(false)} />
+      )}
 
       <div className="timeline">
         <div className={batch.brew_date ? "done" : ""}><span>Cotta</span>{date(batch.brew_date)}</div>
