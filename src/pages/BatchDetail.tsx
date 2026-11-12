@@ -14,6 +14,7 @@ import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
 import { BatchEvaluation } from "./Evaluation";
 import { BrewDay } from "./BrewDay";
+import { QuickEntry } from "./QuickEntry";
 import { CleanNamesButton } from "../components/CleanNames";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { deleteBatches, deletionSummary } from "../deleteHelpers";
@@ -236,7 +237,7 @@ export function BatchDetail() {
   const [batch, setBatch] = useState<Row | null>(null);
   const [recipe, setRecipe] = useState<Row | null>(null);
   const [materials, setMaterials] = useState<Row[]>([]);
-  const [tab, setTab] = useState("log");
+  const [tab, setTab] = useState("dati");
   const [deleting, setDeleting] = useState(false);
   const [reloadIng, setReloadIng] = useState(0);
   const nav = useNavigate();
@@ -291,12 +292,13 @@ export function BatchDetail() {
       </div>
 
       <Tabs active={tab} onChange={setTab} tabs={[
-        ["log", "Log cotta"], ["cottura", "Cottura"], ["chimici", "Valori chimici"], ["ingredienti", "Ingredienti usati"],
+        ["dati", "✍️ Inserisci dati"], ["log", "Log cotta"], ["cottura", "Cottura"], ["chimici", "Valori chimici"], ["ingredienti", "Ingredienti usati"],
         ["diario", "Diario fermentazione"], ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"], ["costi", "Costi"],
         ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico versioni"],
       ]} />
 
       <div className="panel">
+        {tab === "dati" && <QuickEntry batch={batch} canEdit={isAdmin} onSaved={setBatch} />}
         {tab === "log" && <RecordForm table="batches" row={batch} sections={SECTIONS.filter((s) => !["Carbonazione", "pH", "Gravity"].includes(s.title ?? ""))} canEdit={isAdmin} onSaved={setBatch} />}
         {tab === "cottura" && <BatchBrewDay batch={batch} recipe={recipe} />}
         {tab === "chimici" && (

@@ -662,3 +662,43 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .ing-import { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); }
 .ing-import h3 { margin-top: 0; }
 .grid-dl .wide dd.pre { font-weight: 500; line-height: 1.65; max-width: 80ch; }
+
+/* ---------------- inserimento rapido dati batch (pensato per il telefono) ---------------- */
+.quick-entry { display: flex; flex-direction: column; gap: 16px; }
+.qe-phase { border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: var(--r); padding: 14px; background: var(--surface-2); }
+.qe-title { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; color: var(--c); font-size: .95rem; }
+.qe-ico { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--c); flex: none; }
+.qe-count { margin-left: auto; font-size: .8rem; color: var(--muted); background: var(--surface-3); padding: 2px 10px; border-radius: 99px; letter-spacing: 0; }
+.qe-count.full { background: var(--c); color: #1f1500; }
+.qe-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.big-field { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px; transition: border-color .2s, box-shadow .2s; }
+.big-field.saved { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(18, 160, 129, .15); }
+.big-field.warn { border-color: var(--gold); }
+.bf-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600; font-size: .95rem; }
+.bf-head .ok { display: inline-flex; align-items: center; gap: 3px; }
+.bf-row { display: grid; grid-template-columns: 56px 1fr 56px; gap: 8px; align-items: stretch; }
+.bf-btn { height: 56px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface-3); color: var(--text); display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
+.bf-btn:active { transform: scale(.95); background: var(--c, var(--gold)); color: #1f1500; }
+.bf-input { position: relative; display: flex; align-items: center; }
+.bf-input input { width: 100%; height: 56px; font-size: 1.75rem; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; border-radius: 14px; padding: 0 44px 0 12px; }
+.bf-input.big input { height: 68px; font-size: 2.1rem; margin-bottom: 10px; }
+.bf-unit { position: absolute; right: 14px; color: var(--muted); font-weight: 600; pointer-events: none; }
+.bf-value { font-size: 1.75rem; font-weight: 700; padding: 6px 0; }
+.qe-events { margin-top: 14px; }
+.qe-events h3 { margin: 0 0 10px; }
+.qe-ev-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.qe-ev-btn { min-height: 64px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); font: 700 .95rem var(--sans); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; touch-action: manipulation; }
+.qe-ev-btn span { font-size: 1.3rem; }
+.qe-ev-btn:active { transform: scale(.97); border-color: var(--gold); }
+.qe-last { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.qe-last li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; background: var(--surface); border-radius: 10px; padding: 8px 12px; }
+.qe-sheet textarea { font-size: 1.05rem; }
+.qe-sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.qe-sheet-btns .btn { min-height: 54px; font-size: 1.05rem; }
+.qe-abv { text-align: center; font-size: 1.1rem; }
+@media (max-width: 600px) {
+  .qe-fields { grid-template-columns: 1fr; }
+  .qe-phase { padding: 12px 10px; }
+  /* pulsanti rapidi di stato più grandi */
+  .page-head .row-actions .btn.small { min-height: 44px; padding: 8px 12px; font-size: .92rem; flex: 1 1 45%; }
+}
