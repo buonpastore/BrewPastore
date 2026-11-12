@@ -24,6 +24,18 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
       .then(({ data }) => setRows(data ?? []));
   }, []);
 
+  const removePurchase = async (p: Row, goods: number) => {
+    if (!confirm(`Eliminare l'acquisto ${p.supplier} del ${date(p.purchase_date)} (${p.purchase_items.length} righe, ${eur(goods + Number(p.shipping_cost))})?\nI costi medi verranno ricalcolati.`)) return;
+    const { data: docs } = await supabase.from("documents").select("id, storage_path").eq("purchase_id", p.id);
+    if (docs?.length) {
+      await supabase.storage.from("documents").remove(docs.map((d) => d.storage_path));
+      await supabase.from("documents").delete().in("id", docs.map((d) => d.id));
+    }
+    const { error } = await supabase.from("purchases").delete().eq("id", p.id);
+    if (error) return alert(errMsg(error));
+    setRows((r) => r.filter((x) => x.id !== p.id));
+  };
+
   const manual = async () => {
     const supplier = prompt("Fornitore");
     if (!supplier) return;
@@ -37,7 +49,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
       {!embedded && <div className="page-head"><h1>Acquisti materie prime</h1></div>}
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Data</th><th>Fornitore</th><th>N° doc.</th><th>Righe</th><th>Merce</th><th>Spedizione</th><th>Totale</th></tr></thead>
+          <thead><tr><th>Data</th><th>Fornitore</th><th>N° doc.</th><th>Righe</th><th>Merce</th><th>Spedizione</th><th>Totale</th>{isAdmin && <th />}</tr></thead>
           <tbody>
             {rows.map((p) => {
               const goods = (p.purchase_items as Row[]).reduce((s, i) => s + Number(i.total_price), 0);
@@ -50,6 +62,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
                   <td>{eur(goods)}</td>
                   <td>{eur(p.shipping_cost)}</td>
                   <td><strong>{eur(goods + Number(p.shipping_cost))}</strong></td>
+                  {isAdmin && <td><button className="icon" title="Elimina acquisto" onClick={() => removePurchase(p, goods)}>🗑️</button></td>}
                 </tr>
               );
             })}

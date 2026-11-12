@@ -43,6 +43,27 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
     setHistory((data ?? []).sort((a, b) => String(b.purchases?.purchase_date).localeCompare(String(a.purchases?.purchase_date))));
   };
 
+  const removeLine = async (h: Row, m: Row) => {
+    if (!confirm(`Eliminare la riga «${h.description ?? m.name}» (${num(h.quantity, 3)} ${h.unit}, ${eur(h.total_price)}) di ${h.purchases?.supplier ?? ""}?`)) return;
+    const { error } = await supabase.from("purchase_items").delete().eq("id", h.id);
+    if (error) return alert(errMsg(error));
+    setHistory((x) => x.filter((r) => r.id !== h.id));
+    setReload((x) => x + 1);
+  };
+
+  const removeMaterial = async (m: Row) => {
+    const n = Number(m.purchases_count);
+    if (!confirm(`Eliminare la materia prima «${m.name}»?${n ? `\nVerranno cancellate anche le sue ${n} righe d'acquisto (${eur(m.total_spent)}).` : ""}\nNelle ricette e nei batch l'ingrediente resta, ma senza prezzo collegato.`)) return;
+    if (n) {
+      const { error } = await supabase.from("purchase_items").delete().eq("material_id", m.material_id);
+      if (error) return alert(errMsg(error));
+    }
+    const { error } = await supabase.from("materials").delete().eq("id", m.material_id);
+    if (error) return alert(errMsg(error));
+    if (open === m.material_id) setOpen(null);
+    setReload((x) => x + 1);
+  };
+
   const edit = async (m: Row) => {
     const name = prompt("Nome materia prima", m.name);
     if (!name) return;
@@ -109,16 +130,17 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                     })() : "—"}
                   </td>
                   <td>{m.purchases_count}</td>
-                  {isAdmin && <td className="nowrap"><button className="icon" title="Modifica" onClick={() => edit(m)}>✏️</button><button className="icon" title="Unisci a un'altra (duplicati)" onClick={() => merge(m)}>🔗</button></td>}
+                  {isAdmin && <td className="nowrap"><button className="icon" title="Modifica" onClick={() => edit(m)}>✏️</button><button className="icon" title="Unisci a un'altra (duplicati)" onClick={() => merge(m)}>🔗</button><button className="icon" title="Elimina materia prima" onClick={() => removeMaterial(m)}>🗑️</button></td>}
                 </tr>
                 {open === m.material_id && (
-                  <tr className="sub"><td colSpan={9}>
+                  <tr className="sub"><td colSpan={10}>
                     {history.length ? (
                       <table>
-                        <thead><tr><th>Data</th><th>Fornitore</th><th>Riga</th><th>Q.tà</th><th>Prezzo</th><th>Prezzo unitario</th></tr></thead>
+                        <thead><tr><th>Data</th><th>Fornitore</th><th>Riga</th><th>Q.tà</th><th>Prezzo</th><th>Prezzo unitario</th>{isAdmin && <th />}</tr></thead>
                         <tbody>{history.map((h) => (
                           <tr key={h.id}><td>{date(h.purchases?.purchase_date)}</td><td>{h.purchases?.supplier}</td><td className="small">{h.description}</td><td>{num(h.quantity, 3)} {h.unit}</td><td>{eur(h.total_price)}</td>
-                            <td>{toBase(Number(h.quantity), h.unit) ? fmtUnitPrice(Number(h.total_price) / toBase(Number(h.quantity), h.unit), m.category, m.base_unit) : "—"}</td></tr>
+                            <td>{toBase(Number(h.quantity), h.unit) ? fmtUnitPrice(Number(h.total_price) / toBase(Number(h.quantity), h.unit), m.category, m.base_unit) : "—"}</td>
+                            {isAdmin && <td><button className="icon" title="Elimina questa riga d'acquisto" onClick={() => removeLine(h, m)}>🗑️</button></td>}</tr>
                         ))}</tbody>
                       </table>
                     ) : <span className="muted">Nessun acquisto registrato</span>}
