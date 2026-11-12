@@ -877,3 +877,27 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .ov-steps p { margin: 2px 0 0; line-height: 1.55; }
 .ov-steps strong { color: var(--text); }
 @media (max-width: 600px) { .ov-grid { grid-template-columns: 1fr 1fr; } .ov-tile { padding: 10px; gap: 9px; } .ov-ico { width: 36px; height: 36px; } .ov-value { font-size: 1.12rem; } }
+
+/* ---------------- ingredienti a riquadri (come la scheda ricetta) ---------------- */
+.ing-groups { grid-template-columns: 1fr; gap: 18px; }
+.ing-group { background: transparent; border: 0; border-radius: 0; padding: 0; }
+.ing-title { margin: 0 0 10px; }
+.ing-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.ing-tile { display: flex; gap: 12px; align-items: center; background: var(--surface-2); border: 1px solid var(--line); border-left: 3px solid var(--c); border-radius: var(--r); padding: 12px 14px; }
+.ing-tile-ico { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); font-size: 1.15rem; }
+.ing-tile-body { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 1px; }
+.ing-name { color: var(--c); font-weight: 700; font-size: .98rem; overflow-wrap: anywhere; }
+.ing-amount { font-size: 1.25rem; font-weight: 700; display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; }
+.ing-pct { font-size: .8rem; font-weight: 600; color: var(--muted); }
+.ing-step { font-size: .8rem; color: var(--muted); }
+.ing-tile .ing-bar { margin-top: 5px; }
+@media (max-width: 600px) { .ing-tiles { grid-template-columns: 1fr 1fr; } .ing-tile { padding: 10px; gap: 9px; } .ing-tile-ico { width: 34px; height: 34px; } .ing-amount { font-size: 1.08rem; } }
+.ing-name { overflow-wrap: break-word; word-break: normal; }
+@media (max-width: 600px) {
+  .ing-tiles { grid-template-columns: 1fr; gap: 8px; }
+  .ing-tile-body { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name amount" "step amount" "bar bar"; column-gap: 10px; align-items: center; }
+  .ing-name { grid-area: name; }
+  .ing-amount { grid-area: amount; flex-direction: column; align-items: flex-end; gap: 0; font-size: 1.15rem; }
+  .ing-step { grid-area: step; }
+  .ing-tile .ing-bar { grid-area: bar; }
+}

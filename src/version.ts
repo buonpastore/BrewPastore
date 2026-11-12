@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.053", date: "13/11/2026 02:05", text: "Ingredienti a riquadri con icona, nome colorato per categoria e quantità in evidenza" },
   { version: "0.052", date: "13/11/2026 01:55", text: "Scheda ricetta più bella: profilo della birra e processo con icone, descrizione a voci, procedimento a passi" },
   { version: "0.051", date: "13/11/2026 01:40", text: "Ingredienti colorati per categoria: malti giallino, luppoli verdino, lieviti rosso, bottiglie verde scuro e altri" },
   { version: "0.050", date: "13/11/2026 01:30", text: "Batch: pulsanti Salva ed Elimina in fondo all'inserimento dati, cestino nell'elenco batch; su telefono pulsanti e caselle grandi in tutta l'app" },

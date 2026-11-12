@@ -47,24 +47,22 @@ export function IngredientsView({ table, parentKey, parentId, volume, reloadKey 
           return (
             <section key={g.title} className="ing-group" style={{ ["--c" as string]: g.color }}>
               <h3 className="ing-title"><span className="ing-ico">{g.icon}</span>{g.title}</h3>
-              <ul>
+              <div className="ing-tiles">
                 {list.map((i) => {
                   const pct = i.category === "malto" && maltKg ? (kg(i) / maltKg) * 100 : null;
                   return (
-                    <li key={i.id}>
-                      <div className="ing-main">
-                        <strong>{i.name}</strong>
-                        {i.step && <span className="badge">{i.step}</span>}
+                    <div key={i.id} className="ing-tile">
+                      <span className="ing-tile-ico">{g.icon}</span>
+                      <div className="ing-tile-body">
+                        <span className="ing-name">{i.name}</span>
+                        <strong className="ing-amount">{qty(i)}{pct != null && <span className="ing-pct">{num(pct, 0)}%</span>}</strong>
+                        {i.step && <span className="ing-step">{i.step}</span>}
+                        {pct != null && <div className="ing-bar"><span style={{ width: `${pct}%` }} /></div>}
                       </div>
-                      <div className="ing-qty">
-                        <strong>{qty(i)}</strong>
-                        {pct != null && <span className="muted small">{num(pct, 0)}%</span>}
-                      </div>
-                      {pct != null && <div className="ing-bar"><span style={{ width: `${pct}%` }} /></div>}
-                    </li>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             </section>
           );
         })}
