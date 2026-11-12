@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { ClipboardEvent as ReactClipboardEvent } from "react";
 
 // URL e chiave "publishable" sono pubblici per design: la sicurezza è nelle policy del database (RLS).
 // In sviluppo locale si possono sovrascrivere con VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in .env.local.
@@ -123,7 +124,7 @@ export interface ParsedRecipe {
 }
 
 /** Chiede alla Edge Function di leggere il documento con l'AI. */
-export async function parseDocument(storagePath: string): Promise<ParsedDocument> {
+export async function parseDocument(storagePath: string | string[]): Promise<ParsedDocument> {
   return invokeParser(storagePath, "purchase") as Promise<ParsedDocument>;
 }
 export async function parseRecipe(storagePath: string): Promise<ParsedRecipe> {
@@ -143,8 +144,9 @@ export async function parseQuote(storagePath: string): Promise<ParsedQuote> {
   return invokeParser(storagePath, "quote") as Promise<ParsedQuote>;
 }
 
-async function invokeParser(storagePath: string, mode: string): Promise<unknown> {
-  const { data, error } = await supabase.functions.invoke("parse-document", { body: { storage_path: storagePath, mode } });
+async function invokeParser(storagePath: string | string[], mode: string): Promise<unknown> {
+  const paths = Array.isArray(storagePath) ? storagePath : [storagePath];
+  const { data, error } = await supabase.functions.invoke("parse-document", { body: { storage_paths: paths, mode } });
   if (error) {
     // prova a leggere il messaggio d'errore restituito dalla funzione
     const ctx = (error as { context?: Response }).context;
@@ -197,4 +199,18 @@ export async function findOrCreateMaterial(name: string, category: string, unit:
 export async function loadMaterials(): Promise<Row[]> {
   const { data } = await supabase.from("materials").select("id, name, category, base_unit").order("name");
   return data ?? [];
+}
+
+/** Estrae le immagini incollate (Ctrl+V) come File. */
+export function filesFromPaste(e: ClipboardEvent | ReactClipboardEvent): File[] {
+  const items = Array.from(e.clipboardData?.items ?? []);
+  return items
+    .filter((i) => i.kind === "file")
+    .map((i, n) => {
+      const f = i.getAsFile();
+      if (!f) return null;
+      const ext = (f.type.split("/")[1] || "png").replace("jpeg", "jpg");
+      return new File([f], f.name && f.name !== "image.png" ? f.name : `screenshot_${Date.now()}_${n}.${ext}`, { type: f.type });
+    })
+    .filter((f): f is File => f !== null);
 }

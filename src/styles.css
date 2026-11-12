@@ -178,3 +178,12 @@ ul.plain li { padding: 4px 0; display: flex; gap: 8px; align-items: center; flex
 .quote-cat { font-size: .85rem; color: var(--accent-strong); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
 .quote blockquote { font-size: 1.2rem; margin: 10px 0; font-style: italic; line-height: 1.45; }
 .quote-author { color: var(--muted); margin-bottom: 8px; }
+
+.dropzone { border: 2px dashed var(--accent); border-radius: var(--radius); padding: 18px; text-align: center; background: var(--accent-soft); margin: 10px 0; }
+.dropzone p { margin: 4px 0 10px; }
+.thumbs { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.thumbs li { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 110px; position: relative; }
+.thumbs img { width: 110px; height: 110px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+.thumbs .file-ico { font-size: 3rem; }
+.thumbs .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 110px; }
+.thumbs button { position: absolute; top: 2px; right: 2px; background: var(--surface); border-radius: 99px; }

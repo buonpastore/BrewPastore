@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  supabase, uploadFile, parseDocument, findOrCreateMaterial, loadMaterials, errMsg, eur, date,
+  supabase, uploadFile, parseDocument, findOrCreateMaterial, loadMaterials, errMsg, eur, date, filesFromPaste,
   MATERIAL_CATEGORIES, UNITS, type ParsedDocument, type Row,
 } from "../lib";
 import { useAuth } from "../auth";
@@ -72,7 +72,8 @@ interface ReviewItem { description: string; material_name: string; material_id: 
 export function ImportPurchase({ onClose }: { onClose: () => void }) {
   const nav = useNavigate();
   const [step, setStep] = useState<"upload" | "reading" | "review" | "saving">("upload");
-  const [file, setFile] = useState<{ path: string; name: string; type: string; size: number } | null>(null);
+  const [picked, setPicked] = useState<File[]>([]);
+  const [uploaded, setUploaded] = useState<{ path: string; name: string; type: string; size: number }[]>([]);
   const [head, setHead] = useState<Omit<ParsedDocument, "items">>({ supplier: "", date: null, invoice_number: null, currency: "EUR", shipping_cost: 0, total_amount: null, notes: null });
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [materials, setMaterials] = useState<Row[]>([]);
@@ -80,14 +81,28 @@ export function ImportPurchase({ onClose }: { onClose: () => void }) {
 
   useEffect(() => { loadMaterials().then(setMaterials); }, []);
 
-  const read = async (files: FileList | null) => {
-    const f = files?.[0];
-    if (!f) return;
+  const addFiles = (files: File[]) => {
+    if (!files.length) return;
+    setError("");
+    setPicked((prev) => [...prev, ...files].slice(0, 10));
+  };
+
+  // incolla screenshot con Ctrl+V / Cmd+V
+  useEffect(() => {
+    if (step !== "upload") return;
+    const onPaste = (e: ClipboardEvent) => addFiles(filesFromPaste(e));
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [step]);
+
+  const read = async () => {
+    if (!picked.length) return;
     setError(""); setStep("reading");
     try {
-      const path = await uploadFile("purchases/import", f);
-      setFile({ path, name: f.name, type: f.type, size: f.size });
-      const parsed = await parseDocument(path);
+      const ups = [];
+      for (const f of picked) ups.push({ path: await uploadFile("purchases/import", f), name: f.name, type: f.type, size: f.size });
+      setUploaded(ups);
+      const parsed = await parseDocument(ups.map((u) => u.path));
       const { items: its, ...h } = parsed;
       setHead({ ...h, supplier: h.supplier ?? "" });
       setItems(its.map((i) => {
@@ -105,18 +120,19 @@ export function ImportPurchase({ onClose }: { onClose: () => void }) {
   const save = async () => {
     setStep("saving"); setError("");
     try {
-      const { data: doc, error: de } = await supabase.from("documents").insert({
-        title: file!.name, kind: file!.type === "application/pdf" ? "fattura" : file!.name.endsWith(".eml") ? "email" : "scontrino",
-        storage_path: file!.path, mime_type: file!.type, size_bytes: file!.size,
-      }).select().single();
+      const kindOf = (u: { name: string; type: string }) =>
+        u.type === "application/pdf" ? "fattura" : u.name.endsWith(".eml") ? "email" : u.type.startsWith("image/") ? "scontrino" : "altro";
+      const { data: docs, error: de } = await supabase.from("documents").insert(uploaded.map((u) => ({
+        title: u.name, kind: kindOf(u), storage_path: u.path, mime_type: u.type, size_bytes: u.size,
+      }))).select();
       if (de) throw de;
       const { data: p, error: pe } = await supabase.from("purchases").insert({
         supplier: head.supplier || "Sconosciuto", purchase_date: head.date ?? new Date().toISOString().slice(0, 10),
         invoice_number: head.invoice_number, shipping_cost: Number(head.shipping_cost || 0), total_amount: head.total_amount,
-        notes: head.notes, document_id: doc.id,
+        notes: head.notes, document_id: docs?.[0]?.id ?? null,
       }).select().single();
       if (pe) throw pe;
-      await supabase.from("documents").update({ purchase_id: p.id }).eq("id", doc.id);
+      await supabase.from("documents").update({ purchase_id: p.id }).in("id", (docs ?? []).map((d) => d.id));
       const rows = [];
       for (const it of items) {
         const material_id = it.material_id || await findOrCreateMaterial(it.material_name, it.category, it.unit);
@@ -137,10 +153,29 @@ export function ImportPurchase({ onClose }: { onClose: () => void }) {
         <h2>📄 Importa acquisto</h2>
         {step === "upload" && (
           <>
-            <p>Carica il PDF della fattura (Mr Malt, Birramia, ecc.), uno screenshot dell'ordine, la foto di uno scontrino o l'email di conferma salvata come <code>.eml</code>. L'AI legge le righe e tu le controlli prima di salvare.</p>
-            <label className="btn primary">Scegli file
-              <input type="file" accept="application/pdf,image/*,.eml,.txt,.html" hidden onChange={(e) => read(e.target.files)} />
-            </label>
+            <p>Carica il PDF della fattura (Mr Malt, Birramia…), uno o più <strong>screenshot</strong> dell'ordine o del carrello, la foto dello scontrino o l'email salvata come <code>.eml</code>. L'AI legge le righe e tu le controlli prima di salvare.</p>
+            <div
+              className="dropzone"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); addFiles(Array.from(e.dataTransfer.files)); }}
+            >
+              <p>📋 <strong>Incolla qui uno screenshot</strong> (Ctrl+V / ⌘V), trascina i file oppure</p>
+              <label className="btn primary">Scegli file
+                <input type="file" multiple accept="application/pdf,image/*,.eml,.txt,.html" hidden onChange={(e) => { addFiles(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
+              </label>
+              <p className="muted small">Più screenshot dello stesso ordine vengono uniti in un unico acquisto (max 10).</p>
+            </div>
+            {picked.length > 0 && (
+              <ul className="thumbs">
+                {picked.map((f, i) => (
+                  <li key={i}>
+                    {f.type.startsWith("image/") ? <img src={URL.createObjectURL(f)} alt={f.name} /> : <span className="file-ico">📄</span>}
+                    <span className="small">{f.name}</span>
+                    <button className="icon tiny" onClick={() => setPicked(picked.filter((_, j) => j !== i))}>✕</button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </>
         )}
         {step === "reading" && <p>⏳ Sto leggendo il documento… (può volerci fino a un minuto)</p>}
@@ -189,6 +224,7 @@ export function ImportPurchase({ onClose }: { onClose: () => void }) {
         )}
         {error && <p className="error">{error}</p>}
         <div className="row-actions">
+          {step === "upload" && picked.length > 0 && <button className="btn primary" onClick={read}>🔎 Leggi {picked.length > 1 ? `${picked.length} file` : "il file"}</button>}
           {step === "review" && <button className="btn primary" onClick={save}>Salva acquisto</button>}
           {step === "saving" && <button className="btn primary" disabled>Salvo…</button>}
           <button className="btn" onClick={onClose}>Chiudi</button>

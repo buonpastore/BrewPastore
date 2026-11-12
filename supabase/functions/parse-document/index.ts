@@ -140,6 +140,7 @@ di acquisto (fattura, conferma d'ordine, email, scontrino). Regole:
 - Se c'è uno sconto sull'intero ordine, ripartiscilo proporzionalmente sulle righe e segnalalo in notes.
 - Quantità: converti in quantità totale (numero confezioni x contenuto). Usa kg/g per solidi, l/ml per liquidi, pz per oggetti.
 - Le spese di spedizione vanno in shipping_cost e NON come riga.
+- Se il documento è uno screenshot di un carrello o di un listino, usa i prezzi mostrati (IVA inclusa se è un negozio online per privati).
 - Se un dato manca usa null; non inventare.`;
 
 function b64(bytes: Uint8Array): string {
@@ -165,32 +166,42 @@ Deno.serve(async (req) => {
     const { data: userData, error: userErr } = await supabase.auth.getUser();
     if (userErr || !userData.user) return json({ error: "Non autenticato" }, 401);
 
-    const { storage_path, mode } = await req.json();
+    const body = await req.json();
+    const mode = body.mode;
     const isRecipe = mode === "recipe";
     const isQuote = mode === "quote";
-    if (typeof storage_path !== "string" || !storage_path) return json({ error: "storage_path mancante" }, 400);
-
-    const { data: file, error: dlErr } = await supabase.storage.from("documents").download(storage_path);
-    if (dlErr || !file) return json({ error: "File non trovato: " + (dlErr?.message ?? "") }, 404);
-    if (file.size > MAX_BYTES) return json({ error: "File troppo grande (max 20 MB)" }, 413);
-
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const name = storage_path.toLowerCase();
-    const mime = file.type || "";
+    // uno o più file (es. più screenshot dello stesso ordine)
+    const paths: string[] = Array.isArray(body.storage_paths) ? body.storage_paths : body.storage_path ? [body.storage_path] : [];
+    if (!paths.length || paths.some((p) => typeof p !== "string" || !p)) return json({ error: "storage_path mancante" }, 400);
+    if (paths.length > 10) return json({ error: "Massimo 10 file per volta" }, 400);
 
     // deno-lint-ignore no-explicit-any
-    let docBlock: any;
-    if (mime === "application/pdf" || name.endsWith(".pdf")) {
-      docBlock = { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64(bytes) } };
-    } else if (/^image\/(png|jpeg|gif|webp)$/.test(mime) || /\.(png|jpe?g|gif|webp)$/.test(name)) {
-      const ext = name.split(".").pop()!;
-      const mt = mime.startsWith("image/") ? mime : `image/${ext === "jpg" ? "jpeg" : ext}`;
-      docBlock = { type: "image", source: { type: "base64", media_type: mt, data: b64(bytes) } };
-    } else {
-      // .eml, .txt, .html: passiamo il testo
-      const text = new TextDecoder().decode(bytes).slice(0, 200_000);
-      docBlock = { type: "text", text: `Contenuto del documento (${storage_path}):\n\n${text}` };
+    const docBlocks: any[] = [];
+    let totalBytes = 0;
+    for (const storage_path of paths) {
+      const { data: file, error: dlErr } = await supabase.storage.from("documents").download(storage_path);
+      if (dlErr || !file) return json({ error: "File non trovato: " + (dlErr?.message ?? storage_path) }, 404);
+      totalBytes += file.size;
+      if (file.size > MAX_BYTES || totalBytes > MAX_BYTES) return json({ error: "File troppo grandi (max 20 MB in totale)" }, 413);
+
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const name = storage_path.toLowerCase();
+      const mime = file.type || "";
+      if (mime === "application/pdf" || name.endsWith(".pdf")) {
+        docBlocks.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: b64(bytes) } });
+      } else if (/^image\/(png|jpeg|gif|webp)$/.test(mime) || /\.(png|jpe?g|gif|webp)$/.test(name)) {
+        const ext = name.split(".").pop()!;
+        const mt = mime.startsWith("image/") ? mime : `image/${ext === "jpg" ? "jpeg" : ext}`;
+        docBlocks.push({ type: "image", source: { type: "base64", media_type: mt, data: b64(bytes) } });
+      } else {
+        // .eml, .txt, .html: passiamo il testo
+        const text = new TextDecoder().decode(bytes).slice(0, 200_000);
+        docBlocks.push({ type: "text", text: `Contenuto del documento (${storage_path}):\n\n${text}` });
+      }
     }
+    const multi = paths.length > 1
+      ? `\n\nATTENZIONE: i ${paths.length} file sono parti dello STESSO documento (es. più screenshot di un unico ordine). Uniscili in un solo risultato e non duplicare le righe che compaiono in due screenshot sovrapposti.`
+      : "";
 
     const client = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") });
     const response = await client.beta.messages.create({
@@ -199,7 +210,7 @@ Deno.serve(async (req) => {
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
       output_config: { format: { type: "json_schema", schema: isRecipe ? RECIPE_SCHEMA : isQuote ? QUOTE_SCHEMA : SCHEMA } },
-      messages: [{ role: "user", content: [docBlock, { type: "text", text: isRecipe ? RECIPE_PROMPT : isQuote ? QUOTE_PROMPT : PROMPT }] }],
+      messages: [{ role: "user", content: [...docBlocks, { type: "text", text: (isRecipe ? RECIPE_PROMPT : isQuote ? QUOTE_PROMPT : PROMPT) + multi }] }],
     });
 
     if (response.stop_reason === "refusal") return json({ error: "Il documento non può essere analizzato" }, 422);

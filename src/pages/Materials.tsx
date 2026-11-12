@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, type Row } from "../lib";
+import { ImportPurchase } from "./Purchases";
 import { useAuth } from "../auth";
 
 export function Materials() {
@@ -10,6 +11,7 @@ export function Materials() {
   const [open, setOpen] = useState<string | null>(null);
   const [history, setHistory] = useState<Row[]>([]);
   const [reload, setReload] = useState(0);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     supabase.from("material_costs").select("*").order("category").order("name").then(({ data }) => setRows(data ?? []));
@@ -52,8 +54,10 @@ export function Materials() {
     <div>
       <div className="page-head">
         <h1>Materie prime e costi medi</h1>
-        <span className="muted">Costo medio ponderato su tutti gli acquisti (spedizione inclusa)</span>
+        {isAdmin && <button className="btn primary" onClick={() => setImporting(true)}>📸 Carica prezzi da screenshot / fattura</button>}
       </div>
+      <p className="muted">Costo medio ponderato su tutti gli acquisti (spedizione inclusa). I prezzi arrivano dagli acquisti registrati.</p>
+      {importing && <ImportPurchase onClose={() => setImporting(false)} />}
       <div className="toolbar">
         <input placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={cat} onChange={(e) => setCat(e.target.value)}>
