@@ -716,3 +716,23 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .nb-chip.on { background: var(--gold); color: #1f1500; border-color: transparent; }
 .nb-chip.on.st-fermentazione, .nb-chip.on.st-maturazione { background: var(--teal); }
 .nb-chip.on.st-imbottigliato { background: var(--magenta); }
+
+/* ---------------- spese: schede con stato delle quote ---------------- */
+.exp-list { display: flex; flex-direction: column; gap: 12px; }
+.exp-card { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; }
+.exp-card header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.exp-amount { font-size: 1.35rem; font-weight: 700; white-space: nowrap; }
+.exp-shares { list-style: none; padding: 0; margin: 12px 0 6px; display: flex; flex-direction: column; gap: 6px; }
+.exp-shares li { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "who share" "state act"; gap: 2px 10px; align-items: center; background: var(--surface); border-radius: 10px; padding: 9px 12px; border-left: 3px solid var(--faint); }
+.exp-who { grid-area: who; font-weight: 600; }
+.exp-share { grid-area: share; font-weight: 700; text-align: right; }
+.exp-state { grid-area: state; font-size: .85rem; color: var(--muted); }
+.exp-act { grid-area: act; display: flex; gap: 6px; justify-content: flex-end; }
+.exp-shares li.payer { border-left-color: var(--gold); }
+.exp-shares li.paid { border-left-color: var(--teal); } .exp-shares li.paid .exp-state { color: var(--teal); }
+.exp-shares li.pending { border-left-color: var(--teal); } .exp-shares li.pending .exp-state { color: var(--text); }
+.exp-shares li.due { border-left-color: var(--magenta); } .exp-shares li.due .exp-state { color: var(--magenta); font-weight: 600; }
+.exp-card footer { display: flex; justify-content: space-between; align-items: center; }
+.pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pay-method { min-height: 64px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font: 700 1rem var(--sans); cursor: pointer; }
+.pay-method:active, .pay-method:hover { border-color: var(--gold); background: rgba(237, 165, 18, .1); }

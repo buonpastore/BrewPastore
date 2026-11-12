@@ -14,6 +14,17 @@ export function Expenses() {
   const [showNew, setShowNew] = useState(false);
   const [showPay, setShowPay] = useState<{ to?: string; amount?: number; expense_id?: string } | null>(null);
   const [reload, setReload] = useState(0);
+  const [payShare, setPayShare] = useState<{ expense: Row; share: Row } | null>(null);
+
+  const payWith = async (method: string) => {
+    if (!payShare) return;
+    const { error } = await supabase.from("settlements").insert({
+      to_user: payShare.expense.paid_by, amount: Number(payShare.share.amount), method, expense_id: payShare.expense.id,
+      notes: `Quota di «${payShare.expense.description}»`,
+    });
+    if (error) return alert(errMsg(error));
+    setPayShare(null); setReload((x) => x + 1);
+  };
 
   useEffect(() => {
     supabase.from("expenses").select("*, expense_shares(*)").order("expense_date", { ascending: false }).then(({ data }) => setExpenses(data ?? []));
@@ -86,24 +97,48 @@ export function Expenses() {
 
       <div className="panel">
         <h2>Spese</h2>
-        <div className="table-wrap">
-          <table>
-            <thead><tr><th>Data</th><th>Descrizione</th><th>Pagato da</th><th>Importo</th><th>Divisione</th><th>Scontrino</th><th /></tr></thead>
-            <tbody>
-              {expenses.map((e) => (
-                <tr key={e.id}>
-                  <td>{date(e.expense_date)}</td>
-                  <td>{e.description}{e.notes && <div className="muted small">{e.notes}</div>}</td>
-                  <td>{nameOf(e.paid_by)}</td>
-                  <td><strong>{eur(e.amount)}</strong></td>
-                  <td className="small">{(e.expense_shares as Row[]).map((s) => `${nameOf(s.user_id)} ${eur(s.amount)}`).join(" · ")}</td>
-                  <td>{e.receipt_path ? <button className="link" onClick={() => openFile(e.receipt_path).catch((x) => alert(errMsg(x)))}>📎 apri</button> : "—"}</td>
-                  <td>{(e.paid_by === me || isAdmin) && <button className="icon" onClick={() => removeExpense(e)}>🗑️</button>}</td>
-                </tr>
-              ))}
-              {!expenses.length && <tr><td colSpan={7} className="muted">Nessuna spesa registrata.</td></tr>}
-            </tbody>
-          </table>
+        <div className="exp-list">
+          {expenses.map((e) => (
+            <article key={e.id} className="exp-card">
+              <header>
+                <div>
+                  <strong>{e.description}</strong>
+                  <div className="muted small">{date(e.expense_date)} · pagata da <strong>{nameOf(e.paid_by)}</strong></div>
+                  {e.notes && <div className="muted small">{e.notes}</div>}
+                </div>
+                <div className="exp-amount">{eur(e.amount)}</div>
+              </header>
+              <ul className="exp-shares">
+                {(e.expense_shares as Row[]).map((sh) => {
+                  const isPayer = sh.user_id === e.paid_by;
+                  const st = settlements.find((x) => x.expense_id === e.id && x.from_user === sh.user_id && x.to_user === e.paid_by);
+                  return (
+                    <li key={sh.user_id} className={isPayer ? "payer" : st ? (st.confirmed ? "paid" : "pending") : "due"}>
+                      <span className="exp-who">{nameOf(sh.user_id)}{sh.user_id === me ? " (tu)" : ""}</span>
+                      <span className="exp-share">{eur(sh.amount)}</span>
+                      <span className="exp-state">
+                        {isPayer ? "ha anticipato"
+                          : st ? <>✓ pagato · {METHODS[st.method] ?? st.method}{st.confirmed ? " · ricevuto" : " · da confermare"}</>
+                          : "da pagare"}
+                      </span>
+                      <span className="exp-act">
+                        {!isPayer && !st && sh.user_id === me && Number(sh.amount) > 0 && (
+                          <button className="btn small primary" onClick={() => setPayShare({ expense: e, share: sh })}>💸 Ho pagato</button>
+                        )}
+                        {st && !st.confirmed && e.paid_by === me && <button className="btn small" onClick={() => confirmReceived(st)}>Confermo ricevuto</button>}
+                        {st && !st.confirmed && st.from_user === me && <button className="icon" title="Annulla" onClick={() => removeSettlement(st)}>↩️</button>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <footer>
+                {e.receipt_path ? <button className="link small" onClick={() => openFile(e.receipt_path).catch((x) => alert(errMsg(x)))}>📎 scontrino</button> : <span />}
+                {(e.paid_by === me || isAdmin) && <button className="icon" title="Elimina spesa" onClick={() => removeExpense(e)}>🗑️</button>}
+              </footer>
+            </article>
+          ))}
+          {!expenses.length && <p className="muted">Nessuna spesa registrata.</p>}
         </div>
       </div>
 
@@ -134,6 +169,18 @@ export function Expenses() {
         </div>
       </div>
 
+      {payShare && (
+        <div className="modal-backdrop" onClick={() => setPayShare(null)}>
+          <div className="modal pay-sheet" onClick={(ev) => ev.stopPropagation()}>
+            <h2>💸 Come hai pagato?</h2>
+            <p>La tua quota di <strong>{eur(payShare.share.amount)}</strong> a <strong>{nameOf(payShare.expense.paid_by)}</strong> per «{payShare.expense.description}».</p>
+            <div className="pay-methods">
+              {Object.entries(METHODS).map(([k, v]) => <button key={k} className="pay-method" onClick={() => payWith(k)}>{v}</button>)}
+            </div>
+            <button className="btn" style={{ width: "100%", marginTop: 10 }} onClick={() => setPayShare(null)}>Annulla</button>
+          </div>
+        </div>
+      )}
       {showNew && <NewExpense profiles={profiles} me={me} onClose={() => setShowNew(false)} onSaved={refresh} />}
       {showPay && <NewSettlement profiles={profiles} me={me} initial={showPay} onClose={() => setShowPay(null)} onSaved={refresh} />}
     </div>
