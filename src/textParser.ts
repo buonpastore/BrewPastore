@@ -4,6 +4,7 @@
  * sia righe singole tipo "Malto Pils 5 kg 12,50 €".
  */
 export interface TextItem {
+  code: string | null;
   description: string;
   material_name: string;
   category: string;
@@ -74,7 +75,7 @@ function cleanName(s: string) {
   return s.replace(/[®™]/g, "").replace(/\s+/g, " ").replace(/^[\s\-–•*]+|[\s\-–]+$/g, "").trim();
 }
 
-function finish(name: string, qty: number, total: number): TextItem {
+function finish(name: string, qty: number, total: number, code: string | null = null): TextItem {
   const description = cleanName(name);
   const category = guessCategory(description);
   const size = EQUIPMENT.test(description) || category === "altro" && /\bkit\b/i.test(description) ? null : sizeIn(description);
@@ -85,8 +86,8 @@ function finish(name: string, qty: number, total: number): TextItem {
       .replace(/\(\s*\)/g, ""),
   ) || description;
   return size
-    ? { description, material_name, category, quantity: size.q * qty, unit: size.u, total_price: total }
-    : { description, material_name, category, quantity: qty, unit: "pz", total_price: total };
+    ? { code, description, material_name, category, quantity: size.q * qty, unit: size.u, total_price: total }
+    : { code, description, material_name, category, quantity: qty, unit: "pz", total_price: total };
 }
 
 export function parseOrderText(text: string): TextOrder {
@@ -96,12 +97,12 @@ export function parseOrderText(text: string): TextOrder {
   let totalDoc: number | null = null;
 
   // ---- formato a blocchi (pagina ordini Mr Malt e simili)
-  let cur: { name: string; unit?: number; qty?: number; total?: number } | null = null;
+  let cur: { name: string; code?: string; unit?: number; qty?: number; total?: number } | null = null;
   const flush = () => {
     if (cur && cur.name && (cur.total != null || cur.unit != null)) {
       const qty = cur.qty ?? 1;
       const total = cur.total ?? (cur.unit ?? 0) * qty;
-      items.push(finish(cur.name, qty, total));
+      items.push(finish(cur.name, qty, total, cur.code ?? null));
     }
     cur = null;
   };
@@ -110,7 +111,9 @@ export function parseOrderText(text: string): TextOrder {
     if (/spedizion|trasport|consegna/.test(low) && priceIn(l) != null) { flush(); shipping += priceIn(l)!; continue; }
     if (/^(totale|total|importo totale|totale ordine)\b/.test(low) && priceIn(l) != null) { flush(); totalDoc = priceIn(l); continue; }
     if (/^(subtotale|imponibile|iva|sconto)\b/.test(low)) continue;
-    if (/^\d{5,}$/.test(l)) continue; // codice articolo
+    if (/^\d{5,}$/.test(l)) { if (cur && !cur.code) cur.code = l; continue; } // codice articolo
+    const codeLbl = l.match(/^(?:cod(?:ice)?\.?|art\.?|sku|rif\.?)\s*:?\s*([A-Z0-9-]{3,})$/i);
+    if (codeLbl) { if (cur && !cur.code) cur.code = codeLbl[1]; continue; }
     const ord = l.match(/^(?:ordinat[oi]|q\.?\s?t[aà]|quantit[aà])\s*:?\s*(\d+(?:[.,]\d+)?)/i);
     if (ord) { if (cur) cur.qty = Number(ord[1].replace(",", ".")); continue; }
     if (/^(spedit[oi]|evas[oi]|disponibil)/i.test(l)) continue;

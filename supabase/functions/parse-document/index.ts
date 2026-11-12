@@ -31,8 +31,9 @@ const SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["description", "material_name", "category", "quantity", "unit", "total_price"],
+        required: ["code", "description", "material_name", "category", "quantity", "unit", "total_price"],
         properties: {
+          code: { type: ["string", "null"], description: "Codice articolo del fornitore, se presente" },
           description: { type: "string", description: "Descrizione riga così come appare" },
           material_name: { type: "string", description: "Nome normalizzato breve, es. 'Malto Pilsner Weyermann', 'Luppolo Citra pellet', 'Lievito US-05'" },
           category: {

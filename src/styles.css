@@ -515,3 +515,4 @@ label.block { display: block; margin-bottom: 12px; }
   .review-table input[style], .review-table select { width: 100% !important; }
   .review-table tbody tr:hover td { background: none; }
 }
+@media (max-width: 700px) { .review-table .rv-code { grid-column: 1 / -1; order: -1; } .review-table .rv-desc { order: -2; } }

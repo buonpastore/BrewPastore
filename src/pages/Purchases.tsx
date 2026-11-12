@@ -74,7 +74,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
   );
 }
 
-interface ReviewItem { description: string; material_name: string; material_id: string; category: string; quantity: number; unit: string; total_price: number }
+interface ReviewItem { code?: string | null; description: string; material_name: string; material_id: string; category: string; quantity: number; unit: string; total_price: number }
 
 /** Upload → lettura AI → revisione → salvataggio acquisto */
 export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void; initialFiles?: File[] }) {
@@ -150,7 +150,7 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
       const rows = [];
       for (const it of items) {
         const material_id = it.material_id || await findOrCreateMaterial(it.material_name, it.category, it.unit);
-        rows.push({ purchase_id: p.id, material_id, description: it.description, quantity: Number(it.quantity), unit: it.unit, total_price: Number(it.total_price) });
+        rows.push({ purchase_id: p.id, material_id, description: it.code ? `[${it.code}] ${it.description}` : it.description, quantity: Number(it.quantity), unit: it.unit, total_price: Number(it.total_price) });
       }
       if (rows.length) {
         const { error } = await supabase.from("purchase_items").insert(rows);
@@ -184,10 +184,11 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
             </div>
             <div className="table-wrap">
               <table className="review-table">
-                <thead><tr><th>Riga documento</th><th>Materia prima</th><th>Categoria</th><th>Q.tà</th><th>Unità</th><th>Prezzo riga €</th><th /></tr></thead>
+                <thead><tr><th>Codice</th><th>Riga documento</th><th>Materia prima</th><th>Categoria</th><th>Q.tà</th><th>Unità</th><th>Prezzo riga €</th><th /></tr></thead>
                 <tbody>
                   {items.map((it, i) => (
                     <tr key={i}>
+                      <td data-label="Codice" className="rv-code"><input value={it.code ?? ""} placeholder="—" onChange={(e) => setItem(i, { code: e.target.value })} style={{ width: 95 }} /></td>
                       <td className="small rv-desc">{it.description}</td>
                       <td data-label="Materia prima" className="rv-wide">
                         <select value={it.material_id} onChange={(e) => setItem(i, { material_id: e.target.value })}>

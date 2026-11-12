@@ -89,6 +89,7 @@ export async function openFile(path: string) {
 }
 
 export interface ParsedItem {
+  code?: string | null;
   description: string;
   material_name: string;
   category: string;
