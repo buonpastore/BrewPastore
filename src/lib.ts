@@ -1,11 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 
 // URL e chiave "publishable" sono pubblici per design: la sicurezza è nelle policy del database (RLS).
-// Le variabili d'ambiente VITE_SUPABASE_* hanno la precedenza (utile per sviluppo/test).
-const rawUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || "https://yfinekpfymzpfhrlfpkz.supabase.co";
-// accetta anche ".../rest/v1/" incollato per sbaglio
+// In sviluppo locale si possono sovrascrivere con VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in .env.local.
+const PROD_URL = "https://yfinekpfymzpfhrlfpkz.supabase.co";
+const PROD_KEY = "sb_publishable_7sKoSMI-AYzOWKgDx6nz4w_ko447jxG";
+const env = import.meta.env;
+const rawUrl = (env.DEV && (env.VITE_SUPABASE_URL as string | undefined)?.trim()) || PROD_URL;
 const url = rawUrl.replace(/\/(rest|auth)\/v1\/?$/, "").replace(/\/+$/, "");
-const key = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() || "sb_publishable_7sKoSMI-AYzOWKgDx6nz4w_ko447jxG";
+const key = (env.DEV && (env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()) || PROD_KEY;
 export const configured = Boolean(url && key);
 export const supabase = createClient(url ?? "http://localhost", key ?? "missing");
 
