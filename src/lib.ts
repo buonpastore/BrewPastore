@@ -240,3 +240,31 @@ export async function prepareMascot(file: File, crop?: [number, number, number, 
   canvas.getContext("2d")!.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
   return new Promise((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error("Conversione non riuscita"))), "image/png"));
 }
+
+// ---------- come mostrare prezzi e quantità per categoria ----------
+// malti €/kg · luppoli €/g · lieviti €/unità (bustina) · resto nell'unità base
+export function priceUnit(category: string, baseUnit: string): { factor: number; label: string } {
+  if (category === "luppolo" && baseUnit === "kg") return { factor: 1 / 1000, label: "g" };
+  if (category === "lievito" && baseUnit === "pz") return { factor: 1, label: "unità" };
+  if (category === "lievito" && baseUnit === "kg") return { factor: 1 / 1000, label: "g" };
+  return { factor: 1, label: baseUnit };
+}
+export function fmtUnitPrice(cost: number | null | undefined, category: string, baseUnit: string) {
+  if (cost == null) return "—";
+  const { factor, label } = priceUnit(category, baseUnit);
+  const v = Number(cost) * factor;
+  // prezzi molto piccoli (es. luppolo al grammo) con 3 decimali
+  const s = v < 1 ? new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(v) : eur(v);
+  return `${s}/${label}`;
+}
+export function fmtBaseQty(qtyBase: number | null | undefined, category: string, baseUnit: string) {
+  if (qtyBase == null) return "—";
+  const { factor, label } = priceUnit(category, baseUnit);
+  const q = factor === 1 ? Number(qtyBase) : Number(qtyBase) / factor;
+  return `${num(q, 3)} ${label === "unità" ? (q === 1 ? "unità" : "unità") : label}`;
+}
+/** quantità nell'unità base (kg, l, pz) */
+export function toBase(qty: number, unit: string) {
+  const u = unit.toLowerCase();
+  return u === "g" || u === "ml" ? qty / 1000 : u === "cl" ? qty / 100 : u === "mg" ? qty / 1e6 : qty;
+}

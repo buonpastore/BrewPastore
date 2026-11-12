@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
-import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, type Row } from "../lib";
+import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, fmtUnitPrice, fmtBaseQty, toBase, type Row } from "../lib";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth";
 
@@ -11,9 +11,29 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
   const [history, setHistory] = useState<Row[]>([]);
   const [reload, setReload] = useState(0);
+  const [last, setLast] = useState<Record<string, { cost: number; date: string; supplier: string }>>({});
 
   useEffect(() => {
     supabase.from("material_costs").select("*").order("category").order("name").then(({ data }) => setRows(data ?? []));
+    // prezzo dell'ultimo acquisto (spedizione ripartita come per il costo medio)
+    supabase.from("purchase_items").select("material_id, quantity, unit, total_price, purchase_id, purchases(purchase_date, created_at, shipping_cost, supplier)")
+      .then(({ data }) => {
+        const items = (data ?? []) as Row[];
+        const goods: Record<string, number> = {};
+        for (const i of items) goods[i.purchase_id] = (goods[i.purchase_id] ?? 0) + Number(i.total_price);
+        const out: Record<string, { cost: number; date: string; supplier: string; key: string }> = {};
+        for (const i of items) {
+          const p = i.purchases ?? {};
+          const share = goods[i.purchase_id] > 0 ? Number(p.shipping_cost ?? 0) * Number(i.total_price) / goods[i.purchase_id] : 0;
+          const q = toBase(Number(i.quantity), i.unit);
+          if (!q) continue;
+          const key = `${p.purchase_date ?? ""}|${p.created_at ?? ""}`;
+          if (!out[i.material_id] || key > out[i.material_id].key) {
+            out[i.material_id] = { cost: (Number(i.total_price) + share) / q, date: p.purchase_date, supplier: p.supplier, key };
+          }
+        }
+        setLast(out);
+      });
   }, [reload]);
 
   const toggle = async (id: string) => {
@@ -54,7 +74,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       <div className="page-head">
         {!embedded && <h1>Materie prime e costi medi</h1>}
       </div>
-      <p className="muted">Costo medio ponderato su tutti gli acquisti (spedizione inclusa). Per aggiungere prezzi carica gli acquisti in <Link to="/materie-prime?vista=acquisti">Acquisti e fatture</Link>.</p>
+      <p className="muted">Costo medio ponderato su tutti gli acquisti e prezzo dell'ultimo acquisto (spedizione inclusa). Malti al kg, luppoli al grammo, lieviti a unità. Per aggiungere prezzi carica gli acquisti in <Link to="/materie-prime?vista=acquisti">Acquisti e fatture</Link>.</p>
       <div className="toolbar">
         <input placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={cat} onChange={(e) => setCat(e.target.value)}>
@@ -65,26 +85,40 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       </div>
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Materia prima</th><th>Categoria</th><th>Acquistato</th><th>Speso</th><th>Costo medio</th><th>Acquisti</th>{isAdmin && <th />}</tr></thead>
+          <thead><tr><th>Materia prima</th><th>Categoria</th><th>Acquistato</th><th>Speso</th><th>Costo medio</th><th>Ultimo acquisto</th><th>Acquisti</th>{isAdmin && <th />}</tr></thead>
           <tbody>
             {list.map((m) => (
               <Fragment key={m.material_id}>
                 <tr>
                   <td><button className="link" onClick={() => toggle(m.material_id)}>{open === m.material_id ? "▾" : "▸"} {m.name}</button></td>
                   <td><span className="badge">{m.category}</span></td>
-                  <td>{num(m.qty_purchased, 3)} {m.base_unit}</td>
+                  <td className="nowrap">{fmtBaseQty(m.qty_purchased, m.category, m.base_unit)}</td>
                   <td>{eur(m.total_spent)}</td>
-                  <td><strong>{m.avg_unit_cost != null ? `${eur(m.avg_unit_cost)}/${m.base_unit}` : "—"}</strong></td>
+                  <td className="nowrap"><strong>{fmtUnitPrice(m.avg_unit_cost, m.category, m.base_unit)}</strong></td>
+                  <td className="nowrap">
+                    {last[m.material_id] ? (() => {
+                      const l = last[m.material_id];
+                      const diff = m.avg_unit_cost ? (l.cost / Number(m.avg_unit_cost) - 1) * 100 : 0;
+                      return (
+                        <>
+                          <strong>{fmtUnitPrice(l.cost, m.category, m.base_unit)}</strong>
+                          {Math.abs(diff) >= 1 && <span className={diff > 0 ? "warn small" : "ok small"}> {diff > 0 ? "▲" : "▼"}{num(Math.abs(diff), 0)}%</span>}
+                          <div className="muted small">{date(l.date)} · {l.supplier}</div>
+                        </>
+                      );
+                    })() : "—"}
+                  </td>
                   <td>{m.purchases_count}</td>
                   {isAdmin && <td className="nowrap"><button className="icon" title="Modifica" onClick={() => edit(m)}>✏️</button><button className="icon" title="Unisci a un'altra (duplicati)" onClick={() => merge(m)}>🔗</button></td>}
                 </tr>
                 {open === m.material_id && (
-                  <tr className="sub"><td colSpan={7}>
+                  <tr className="sub"><td colSpan={9}>
                     {history.length ? (
                       <table>
-                        <thead><tr><th>Data</th><th>Fornitore</th><th>Riga</th><th>Q.tà</th><th>Prezzo</th></tr></thead>
+                        <thead><tr><th>Data</th><th>Fornitore</th><th>Riga</th><th>Q.tà</th><th>Prezzo</th><th>Prezzo unitario</th></tr></thead>
                         <tbody>{history.map((h) => (
-                          <tr key={h.id}><td>{date(h.purchases?.purchase_date)}</td><td>{h.purchases?.supplier}</td><td className="small">{h.description}</td><td>{num(h.quantity, 3)} {h.unit}</td><td>{eur(h.total_price)}</td></tr>
+                          <tr key={h.id}><td>{date(h.purchases?.purchase_date)}</td><td>{h.purchases?.supplier}</td><td className="small">{h.description}</td><td>{num(h.quantity, 3)} {h.unit}</td><td>{eur(h.total_price)}</td>
+                            <td>{toBase(Number(h.quantity), h.unit) ? fmtUnitPrice(Number(h.total_price) / toBase(Number(h.quantity), h.unit), m.category, m.base_unit) : "—"}</td></tr>
                         ))}</tbody>
                       </table>
                     ) : <span className="muted">Nessun acquisto registrato</span>}

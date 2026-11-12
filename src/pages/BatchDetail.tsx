@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   supabase, errMsg, sg, eur, num, date, STATUS_LABELS, MATERIAL_CATEGORIES, UNITS, loadMaterials,
-  primingGrams, residualCo2, PRIMING_FACTORS, type Row,
+  primingGrams, residualCo2, PRIMING_FACTORS, fmtUnitPrice, type Row,
 } from "../lib";
 import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
@@ -140,7 +140,7 @@ function CostsTab({ batch, canEdit, materials }: { batch: Row; canEdit: boolean;
                 <tr key={i.id}>
                   <td>{i.name}</td>
                   <td>{num(i.quantity, 3)} {i.unit}</td>
-                  <td>{unit != null ? `${eur(unit)}/${a?.base_unit ?? (["l", "ml"].includes(i.unit) ? "l" : i.unit === "pz" ? "pz" : "kg")}` : <span className="warn">nessun prezzo</span>}</td>
+                  <td>{unit != null ? fmtUnitPrice(unit, a?.category ?? i.category, a?.base_unit ?? (["l", "ml"].includes(i.unit) ? "l" : i.unit === "pz" ? "pz" : "kg")) : <span className="warn">nessun prezzo</span>}</td>
                   <td>{unit != null ? eur(toBase(i.quantity, i.unit) * unit) : "—"}</td>
                 </tr>
               );

@@ -9,11 +9,12 @@ function potentialOf(name: string, category: string): { pkl: number; tipo: strin
   if (/miele|honey/.test(n)) return { pkl: 290, tipo: "miele" };
   if (/\bdme\b|estratto secco|dry malt/.test(n)) return { pkl: 360, tipo: "estratto secco" };
   if (/\blme\b|estratto liquido/.test(n)) return { pkl: 300, tipo: "estratto liquido" };
+  // l'avena sta in "altro" ma porta comunque estratto
+  if (/avena|\boat/.test(n)) return { pkl: /fiocch|flake/.test(n) ? 270 : 260, tipo: "avena" };
   if (category !== "malto") return null;
   if (/black|choc|cioccol|roast|tostat|carafa|nero/.test(n)) return { pkl: 245, tipo: "malto tostato" };
   if (/crystal|cara|caramel/.test(n)) return { pkl: 270, tipo: "malto caramello" };
   if (/frument|wheat|weizen/.test(n)) return { pkl: 315, tipo: "frumento" };
-  if (/avena|oat/.test(n)) return { pkl: 270, tipo: "avena" };
   if (/acidul|acid/.test(n)) return { pkl: 270, tipo: "acidulato" };
   return { pkl: 300, tipo: "malto base" };
 }

@@ -46,6 +46,7 @@ const BRANDS = /mr\.?\s*malt[®]?|birramia|brewferm/gi;
 export function guessCategory(name: string): string {
   const n = name.toLowerCase().replace(BRANDS, "");
   if (/\bkit\b/.test(n) || EQUIPMENT.test(n)) return "altro";
+  if (/avena|\boat/.test(n)) return "altro"; // l'avena non è un malto
   if (/luppol|\bhop|pellet|cascade|citra|mosaic|simcoe|saaz|hallertau|magnum|centennial|amarillo|galaxy|nelson/.test(n)) return "luppolo";
   if (/lievit|yeast|safale|saflager|safbrew|us-?05|s-?04|w-?34\/70|wlp|wyeast|lallemand|fermentis|nottingham|verdant|bry-?97|kveik/.test(n)) return "lievito";
   if (/star\s?san|pbw|percarbonat|detergen|sanific|igieniz|chemipro|soda caustica/.test(n)) return "detergenti";
@@ -54,7 +55,7 @@ export function guessCategory(name: string): string {
   if (/bottigli/.test(n)) return "bottiglie";
   if (/tapp/.test(n)) return "tappi";
   if (/etichett/.test(n)) return "etichette";
-  if (/malt|pils|pilsner|munich|monaco|vienna|crystal|\bcara(?!ff)|frumento|wheat|avena|oat|chocolate|roast|carafa|biscuit|melanoid|acidulat/.test(n)) return "malto";
+  if (/malt|pils|pilsner|munich|monaco|vienna|crystal|\bcara(?!ff)|frumento|wheat|chocolate|roast|carafa|biscuit|melanoid|acidulat/.test(n)) return "malto";
   return "altro";
 }
 
@@ -78,7 +79,8 @@ function cleanName(s: string) {
 function finish(name: string, qty: number, total: number, code: string | null = null): TextItem {
   const description = cleanName(name);
   const category = guessCategory(description);
-  const size = EQUIPMENT.test(description) || category === "altro" && /\bkit\b/i.test(description) ? null : sizeIn(description);
+  // attrezzatura e kit a pezzi; lieviti a unità (bustine), non a grammi
+  const size = EQUIPMENT.test(description) || category === "lievito" || (category === "altro" && /\bkit\b/i.test(description)) ? null : sizeIn(description);
   const material_name = cleanName(
     description.replace(BRANDS, "")
       .replace(/(?:^|[\s\-(x×])\d+(?:[.,]\d+)?\s*(?:kg|gr|g|ml|cl|lt|l)\b/gi, " ")
