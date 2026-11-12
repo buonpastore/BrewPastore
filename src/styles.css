@@ -431,3 +431,10 @@ ul.plain li:last-child { border-bottom: 0; }
   .timeline > div { font-size: .78rem; }
   .timeline > div span { font-size: .58rem; letter-spacing: .02em; }
 }
+.picker { margin: 12px 0; }
+.picker .dropzone { margin: 0 0 4px; cursor: text; outline: none; caret-color: transparent; transition: border-color .15s, background .15s; }
+.picker .dropzone:focus { border-color: var(--gold); background: rgba(242, 181, 58, .09); }
+.dropzone-inner { display: flex; flex-direction: column; gap: 6px; align-items: center; user-select: none; }
+.dropzone-inner strong { font-size: 1.02rem; }
+kbd { font: 600 .78rem var(--sans); background: var(--surface-3); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; }
+.btn.disabled { opacity: .5; pointer-events: none; }

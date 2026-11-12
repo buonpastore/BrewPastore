@@ -127,7 +127,7 @@ export interface ParsedRecipe {
 export async function parseDocument(storagePath: string | string[]): Promise<ParsedDocument> {
   return invokeParser(storagePath, "purchase") as Promise<ParsedDocument>;
 }
-export async function parseRecipe(storagePath: string): Promise<ParsedRecipe> {
+export async function parseRecipe(storagePath: string | string[]): Promise<ParsedRecipe> {
   return invokeParser(storagePath, "recipe") as Promise<ParsedRecipe>;
 }
 
@@ -140,7 +140,7 @@ export interface ParsedQuote {
   notes: string | null;
   items: { code: string | null; description: string; category: string | null; quantity: number; unit_price: number; discount_pct: number; vat_pct: number }[];
 }
-export async function parseQuote(storagePath: string): Promise<ParsedQuote> {
+export async function parseQuote(storagePath: string | string[]): Promise<ParsedQuote> {
   return invokeParser(storagePath, "quote") as Promise<ParsedQuote>;
 }
 

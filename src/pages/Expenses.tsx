@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase, uploadFile, parseDocument, openFile, errMsg, eur, date, type Row } from "../lib";
 import { useAuth } from "../auth";
+import { FilePicker } from "../components/FilePicker";
 
 const METHODS: Record<string, string> = { bonifico: "🏦 Bonifico", paypal: "💙 PayPal", contanti: "💵 Contanti (a mano)", altro: "Altro" };
 
@@ -153,8 +154,8 @@ function NewExpense({ profiles, me, onClose, onSaved }: { profiles: Row[]; me: s
 
   const total = Number(amount.replace(",", ".")) || 0;
 
-  const upload = async (files: FileList | null) => {
-    const f = files?.[0];
+  const upload = async (files: File[]) => {
+    const f = files[0];
     if (!f) return;
     setError(""); setBusy("Carico lo scontrino…");
     try {
@@ -201,10 +202,9 @@ function NewExpense({ profiles, me, onClose, onSaved }: { profiles: Row[]; me: s
     <div className="modal-backdrop">
       <form className="modal" onSubmit={save}>
         <h2>🧾 Nuova spesa</h2>
-        <label className="btn small">📷 Carica scontrino (foto/PDF)
-          <input type="file" accept="image/*,application/pdf" hidden onChange={(e) => upload(e.target.files)} />
-        </label>
-        {receipt && <span className="ok small"> ✓ scontrino caricato</span>}
+        {receipt
+          ? <p className="ok small">✓ Scontrino caricato {busy ? "" : "— controlla i dati qui sotto"}</p>
+          : <FilePicker onFiles={upload} multiple={false} disabled={Boolean(busy)} hint="Lo scontrino è facoltativo: l'AI prova a leggere importo e data." />}
         {busy && <p className="muted">⏳ {busy}</p>}
         <div className="form-grid">
           <label className="wide"><span>Descrizione</span><input required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="es. Malti Mr Malt, bottiglie, gas…" /></label>

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  supabase, uploadFile, parseDocument, findOrCreateMaterial, loadMaterials, errMsg, eur, date, filesFromPaste,
+  supabase, uploadFile, parseDocument, findOrCreateMaterial, loadMaterials, errMsg, eur, date,
   MATERIAL_CATEGORIES, UNITS, type ParsedDocument, type Row,
 } from "../lib";
 import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
 import { RowsEditor } from "../components/RowsEditor";
 import { DocumentsPanel } from "../components/DocumentsPanel";
+import { FilePicker } from "../components/FilePicker";
+import { PickedList } from "./ImportRecipe";
 
 export function Purchases() {
   const { isAdmin } = useAuth();
@@ -87,14 +89,6 @@ export function ImportPurchase({ onClose }: { onClose: () => void }) {
     setPicked((prev) => [...prev, ...files].slice(0, 10));
   };
 
-  // incolla screenshot con Ctrl+V / Cmd+V
-  useEffect(() => {
-    if (step !== "upload") return;
-    const onPaste = (e: ClipboardEvent) => addFiles(filesFromPaste(e));
-    window.addEventListener("paste", onPaste);
-    return () => window.removeEventListener("paste", onPaste);
-  }, [step]);
-
   const read = async () => {
     if (!picked.length) return;
     setError(""); setStep("reading");
@@ -154,28 +148,9 @@ export function ImportPurchase({ onClose }: { onClose: () => void }) {
         {step === "upload" && (
           <>
             <p>Carica il PDF della fattura (Mr Malt, Birramia…), uno o più <strong>screenshot</strong> dell'ordine o del carrello, la foto dello scontrino o l'email salvata come <code>.eml</code>. L'AI legge le righe e tu le controlli prima di salvare.</p>
-            <div
-              className="dropzone"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => { e.preventDefault(); addFiles(Array.from(e.dataTransfer.files)); }}
-            >
-              <p>📋 <strong>Incolla qui uno screenshot</strong> (Ctrl+V / ⌘V), trascina i file oppure</p>
-              <label className="btn primary">Scegli file
-                <input type="file" multiple accept="application/pdf,image/*,.eml,.txt,.html" hidden onChange={(e) => { addFiles(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
-              </label>
-              <p className="muted small">Più screenshot dello stesso ordine vengono uniti in un unico acquisto (max 10).</p>
-            </div>
-            {picked.length > 0 && (
-              <ul className="thumbs">
-                {picked.map((f, i) => (
-                  <li key={i}>
-                    {f.type.startsWith("image/") ? <img src={URL.createObjectURL(f)} alt={f.name} /> : <span className="file-ico">📄</span>}
-                    <span className="small">{f.name}</span>
-                    <button className="icon tiny" onClick={() => setPicked(picked.filter((_, j) => j !== i))}>✕</button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <FilePicker onFiles={addFiles} accept="application/pdf,image/*,.eml,.txt,.html"
+              hint="Puoi aggiungere più screenshot dello stesso ordine (max 10): verranno uniti." />
+            <PickedList files={picked} onRemove={(i) => setPicked(picked.filter((_, j) => j !== i))} />
           </>
         )}
         {step === "reading" && <p>⏳ Sto leggendo il documento… (può volerci fino a un minuto)</p>}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FilePicker } from "../components/FilePicker";
 import { supabase, uploadFile, parseRecipe, findOrCreateMaterial, errMsg, MATERIAL_CATEGORIES, UNITS, type ParsedRecipe } from "../lib";
 
 interface Props {
@@ -14,17 +15,19 @@ export function ImportRecipe({ onClose, recipeId, onDone }: Props) {
   const nav = useNavigate();
   const [step, setStep] = useState<"upload" | "reading" | "review" | "saving">("upload");
   const [data, setData] = useState<ParsedRecipe | null>(null);
-  const [path, setPath] = useState("");
+  const [paths, setPaths] = useState<string[]>([]);
+  const [picked, setPicked] = useState<File[]>([]);
   const [fillFields, setFillFields] = useState(!recipeId);
   const [error, setError] = useState("");
 
-  const read = async (files: FileList | null) => {
-    if (!files?.length) return;
+  const read = async () => {
+    if (!picked.length) return;
     setError(""); setStep("reading");
     try {
-      const p = await uploadFile("recipes/import", files[0]);
-      setPath(p);
-      setData(await parseRecipe(p));
+      const ps: string[] = [];
+      for (const f of picked) ps.push(await uploadFile("recipes/import", f));
+      setPaths(ps);
+      setData(await parseRecipe(ps));
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
   };
@@ -61,7 +64,7 @@ export function ImportRecipe({ onClose, recipeId, onDone }: Props) {
         const { error } = await supabase.from("recipe_ingredients").insert(rows);
         if (error) throw error;
       }
-      await supabase.from("documents").insert({ title: "Fonte ricetta (import)", kind: "foto", storage_path: path, recipe_id: id });
+      await supabase.from("documents").insert(paths.map((p, i) => ({ title: `Fonte ricetta (import)${paths.length > 1 ? ` ${i + 1}` : ""}`, kind: "foto", storage_path: p, recipe_id: id })));
       onDone?.();
       onClose();
       if (!recipeId) nav(`/ricette/${id}`);
@@ -74,11 +77,9 @@ export function ImportRecipe({ onClose, recipeId, onDone }: Props) {
         <h2>📸 Importa ricetta da screenshot</h2>
         {step === "upload" && (
           <>
-            <p>Carica lo screenshot di una chat con un'AI, la foto di un foglio o un PDF con la ricetta. L'AI estrarrà ingredienti e parametri: potrai controllarli prima di salvare.</p>
-            <label className="btn primary">
-              Scegli file
-              <input type="file" accept="image/*,application/pdf,.txt,.md" hidden onChange={(e) => read(e.target.files)} />
-            </label>
+            <p>Incolla lo screenshot di una chat con un'AI (anche più screenshot se la ricetta è lunga), la foto di un foglio o un PDF. L'AI estrarrà ingredienti e parametri: potrai controllarli prima di salvare.</p>
+            <FilePicker onFiles={(f) => setPicked((p) => [...p, ...f].slice(0, 10))} accept="image/*,application/pdf,.txt,.md" />
+            <PickedList files={picked} onRemove={(i) => setPicked(picked.filter((_, j) => j !== i))} />
           </>
         )}
         {step === "reading" && <p>⏳ Sto leggendo la ricetta… (può volerci fino a un minuto)</p>}
@@ -116,11 +117,28 @@ export function ImportRecipe({ onClose, recipeId, onDone }: Props) {
         )}
         {error && <p className="error">{error}</p>}
         <div className="row-actions">
+          {step === "upload" && picked.length > 0 && <button className="btn primary" onClick={read}>🔎 Leggi {picked.length > 1 ? `${picked.length} screenshot` : "la ricetta"}</button>}
           {step === "review" && <button className="btn primary" onClick={save}>Salva {data?.ingredients.length} ingredienti</button>}
           {step === "saving" && <button className="btn primary" disabled>Salvo…</button>}
           <button className="btn" onClick={onClose}>Chiudi</button>
         </div>
       </div>
     </div>
+  );
+}
+
+/** Miniature dei file scelti/incollati, con possibilità di toglierli. */
+export function PickedList({ files, onRemove }: { files: File[]; onRemove: (i: number) => void }) {
+  if (!files.length) return null;
+  return (
+    <ul className="thumbs">
+      {files.map((f, i) => (
+        <li key={i}>
+          {f.type.startsWith("image/") ? <img src={URL.createObjectURL(f)} alt={f.name} /> : <span className="file-ico">📄</span>}
+          <span className="small">{f.name}</span>
+          <button type="button" className="icon tiny" onClick={() => onRemove(i)}>✕</button>
+        </li>
+      ))}
+    </ul>
   );
 }

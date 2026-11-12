@@ -7,6 +7,8 @@ import { RecordForm } from "../components/RecordForm";
 import { RowsEditor } from "../components/RowsEditor";
 import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
+import { FilePicker } from "../components/FilePicker";
+import { PickedList } from "./ImportRecipe";
 
 const PROJECT_STATUS: Record<string, string> = { in_valutazione: "In valutazione", approvato: "Approvato", acquistato: "Acquistato", scartato: "Scartato" };
 const QUOTE_STATUS: Record<string, string> = { ricevuto: "Ricevuto", in_trattativa: "In trattativa", scelto: "Scelto ✓", scartato: "Scartato", superato: "Superato da nuova versione" };
@@ -345,6 +347,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [aiPath, setAiPath] = useState<string | null>(null);
+  const [aiPicked, setAiPicked] = useState<File[]>([]);
 
   const suppliers = useMemo(() => [...new Set(quotes.map((q) => q.supplier))], [quotes]);
 
@@ -386,12 +389,18 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
         setSupplier(f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " "));
         setStep("map");
       } catch (e) { setError(errMsg(e)); }
-    } else {
-      setStep("reading");
+    }
+  };
+
+  const readAi = async () => {
+    if (!aiPicked.length) return;
+    setError(""); setStep("reading");
+    {
       try {
-        const path = await uploadFile(`equipment/${projectId}`, f);
-        setAiPath(path);
-        const r = await parseQuote(path);
+        const ps: string[] = [];
+        for (const f of aiPicked) ps.push(await uploadFile(`equipment/${projectId}`, f));
+        setAiPath(ps[0]);
+        const r = await parseQuote(ps);
         setSupplier(r.supplier ?? ""); setQuoteDate(r.date ?? quoteDate); setValidUntil(r.valid_until ?? "");
         setIncludeVat(r.prices_include_vat); setShipping(r.shipping_cost ?? 0); setNotes(r.notes ?? "");
         setItems(r.items.map((i) => ({ code: i.code ?? "", description: i.description, category: i.category ?? "", quantity: i.quantity, unit_price: i.unit_price, discount_pct: i.discount_pct ?? 0, vat_pct: i.vat_pct ?? 22 })));
@@ -463,9 +472,17 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
             <p>{mode === "excel"
               ? "Carica il file .xlsx del preventivo. Nel passo successivo scegli il foglio e quali colonne contengono descrizione, quantità e prezzi."
               : "Carica lo screenshot, la foto o il PDF del preventivo: l'AI estrae fornitore, righe, sconti e IVA. Potrai correggere tutto prima di salvare."}</p>
-            <label className="btn primary">Scegli file
-              <input type="file" hidden accept={mode === "excel" ? ".xlsx" : "image/*,application/pdf,.eml,.txt"} onChange={(e) => pick(e.target.files)} />
-            </label>
+            {mode === "excel" ? (
+              <label className="btn primary">Scegli file Excel
+                <input type="file" hidden accept=".xlsx" onChange={(e) => pick(e.target.files)} />
+              </label>
+            ) : (
+              <>
+                <FilePicker onFiles={(f) => setAiPicked((p) => [...p, ...f].slice(0, 10))} accept="image/*,application/pdf,.eml,.txt"
+                  hint="Se il preventivo è lungo puoi incollare più screenshot." />
+                <PickedList files={aiPicked} onRemove={(i) => setAiPicked(aiPicked.filter((_, j) => j !== i))} />
+              </>
+            )}
           </>
         )}
         {step === "reading" && <p>⏳ Sto leggendo il preventivo… (può volerci fino a un minuto)</p>}
@@ -539,6 +556,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
         )}
         {error && <p className="error">{error}</p>}
         <div className="row-actions">
+          {step === "upload" && mode === "ai" && aiPicked.length > 0 && <button className="btn primary" onClick={readAi}>🔎 Leggi il preventivo</button>}
           {step === "map" && <button className="btn primary" onClick={applyMapping}>Avanti →</button>}
           {step === "review" && mode === "excel" && <button className="btn" onClick={() => setStep("map")}>← Colonne</button>}
           {step === "review" && <button className="btn primary" onClick={save}>Salva preventivo</button>}
