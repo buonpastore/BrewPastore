@@ -12,6 +12,7 @@ import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { BrewDay } from "./BrewDay";
+import { RecipeOverview } from "./RecipeOverview";
 import { RecipeWater } from "./Water";
 import { buildProcedure } from "../procedure";
 import { CleanNamesButton } from "../components/CleanNames";
@@ -54,6 +55,7 @@ export function RecipeDetail() {
   const [pasted, setPasted] = useState<File[] | undefined>();
   const [deleting, setDeleting] = useState(false);
   const [editIng, setEditIng] = useState(false);
+  const [editScheda, setEditScheda] = useState(sp.get("edit") === "1");
   const [viewKey, setViewKey] = useState(0);
   const [reloadIng, setReloadIng] = useState(0);
 
@@ -151,10 +153,15 @@ export function RecipeDetail() {
             }}>📝 <span>Genera riassunto del procedimento</span></button>
           </div>
         )}
-        {tab === "scheda" && (
-          <RecordForm table="recipes" row={recipe} sections={RECIPE_SECTIONS} canEdit={isAdmin}
-            startEditing={sp.get("edit") === "1" && isAdmin} onSaved={setRecipe} />
-        )}
+        {tab === "scheda" && (editScheda && isAdmin ? (
+          <RecordForm table="recipes" row={recipe} sections={RECIPE_SECTIONS} canEdit={isAdmin} startEditing
+            onSaved={(r) => { setRecipe(r); setEditScheda(false); }} onCancel={() => setEditScheda(false)} />
+        ) : (
+          <>
+            <RecipeOverview recipe={recipe} />
+            {isAdmin && <button className="btn" style={{ marginTop: 16 }} onClick={() => setEditScheda(true)}>✏️ Modifica scheda</button>}
+          </>
+        ))}
         {tab === "ingredienti" && (
           <>
             <IngredientsView table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} volume={recipe.batch_size_l} reloadKey={`${reloadIng}-${viewKey}`} />

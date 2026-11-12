@@ -69,6 +69,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
     setStep("saving"); setError("");
     try {
       const { ingredients, ...fields } = data;
+      if (fields.notes && /^Lett[ao] direttamente dal testo/i.test(fields.notes)) fields.notes = null;
       let id = recipeId;
       if (!id) {
         const rec = { ...fields, name: fields.name || "Ricetta importata" };
@@ -166,7 +167,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
                 </tbody>
               </table>
             </div>
-            {data.notes && <p className="note">📝 {data.notes}</p>}
+            {data.notes && !/^Lett[ao] direttamente dal testo/i.test(data.notes) && <p className="note">📝 {data.notes}</p>}
           </>
         )}
         {error && <p className="error">{error}</p>}
