@@ -56,7 +56,7 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
   return (
     <div className="overview">
       <h3 className="ov-h"><Beer size={16} /> Profilo della birra</h3>
-      <div className="ov-grid">
+      <div className="ov-grid cols-3">
         <Tile icon={<Beer size={20} />} label="Alcol" value={abv != null ? `${num(abv, 1)}%` : "—"} sub={abv != null ? "stimato da OG e FG" : "servono OG e FG"} />
         <Tile icon={<Target size={20} />} label="OG prevista" value={sg(recipe.target_og)} sub="densità iniziale" color="var(--teal)" />
         <Tile icon={<Flag size={20} />} label="FG prevista" value={sg(recipe.target_fg)} sub="densità finale" color="var(--teal)" />
@@ -67,7 +67,7 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
       </div>
 
       <h3 className="ov-h"><Thermometer size={16} /> Processo</h3>
-      <div className="ov-grid">
+      <div className="ov-grid cols-4">
         <Tile icon={<Thermometer size={20} />} label="Mash" value={recipe.mash_temp_c ? `${num(recipe.mash_temp_c, 1)} °C` : "—"}
           sub={recipe.mash_time_min ? `per ${recipe.mash_time_min} minuti` : undefined} color="var(--gold)" />
         <Tile icon={<Flame size={20} />} label="Bollitura" value={recipe.boil_time_min ? `${recipe.boil_time_min} min` : "—"} color="var(--magenta)" />
@@ -99,17 +99,24 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
       {steps.length > 0 && (
         <>
           <h3 className="ov-h"><ListOrdered size={16} /> Procedimento</h3>
+          <p className="ov-summary">{summarize(recipe, steps)}</p>
           <ol className="ov-steps">
             {steps.map((st, i) => {
               const [ico, color] = stepIcon(st);
               const m = st.match(/^([^:]{2,30}):\s*(.*)$/);
+              const title = m ? m[1] : st.split(/\s+(?:a|con|e)\s+/)[0];
+              const body = m ? m[2] : st.slice(title.length).trim();
+              const items = splitDetails(body);
               return (
-                <li key={i} style={{ ["--c" as string]: color }}>
-                  <span className="ov-step-ico">{ico}</span>
-                  <div>
-                    <span className="ov-step-n">Passo {i + 1}</span>
-                    {m ? <p><strong>{m[1]}</strong> {m[2]}</p> : <p>{st}</p>}
+                <li key={i} className="ov-step" style={{ ["--c" as string]: color }}>
+                  <div className="ov-step-head">
+                    <span className="ov-step-num">{i + 1}</span>
+                    <span className="ov-step-ico">{ico}</span>
+                    <strong className="ov-step-title">{title.replace(/\.$/, "")}</strong>
                   </div>
+                  {items.length > 1 ? (
+                    <ul className="ov-step-items">{items.map((x, j) => <li key={j}>{x}</li>)}</ul>
+                  ) : body ? <p className="ov-step-text">{body.replace(/^[,:]\s*/, "")}</p> : null}
                 </li>
               );
             })}
@@ -127,3 +134,50 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
     </div>
   );
 }
+
+/** Divide i dettagli di un passo in voci: fasi del mash (→), aggiunte (", "), ingredienti ("con …"). */
+function splitDetails(body: string): string[] {
+  let t = body.replace(/\.$/, "").trim();
+  if (!t) return [];
+  if (t.includes("→")) {
+    const [phases, rest] = t.split(/\s+con\s+/);
+    const out = phases.split(/\s*→\s*/).map((x) => x.trim()).filter(Boolean);
+    if (rest) out.push(`Con ${rest}`);
+    return out;
+  }
+  t = t.replace(/^con\s+/i, "");
+  const parts = t.split(/,\s+(?=[A-ZÀ-Ú0-9])/).map((x) => x.trim()).filter(Boolean);
+  return parts.length > 1 ? parts : [t];
+}
+
+/** Riassunto discorsivo del procedimento, dai passi e dai dati della ricetta. */
+function summarize(r: Row, steps: string[]): string {
+  const find = (rx: RegExp) => steps.find((s) => rx.test(s)) ?? "";
+  const names = (txt: string) => [...new Set(txt.replace(/^[^:]*:\s*/, "").split(/,\s*/)
+    .map((x) => x.replace(/\s+\d.*$/, "").trim()).filter((x) => x && !/^\d/.test(x)))];
+  const parts: string[] = [];
+  const head = `${r.style ? `${r.style}` : "Birra"}${r.batch_size_l ? ` da ${String(r.batch_size_l).replace(".", ",")} litri` : ""}`;
+  const mash = find(/^mash/i);
+  const temps = [...mash.matchAll(/(\d{2})\s*°C/g)].map((m) => m[1]).filter((t, i, a) => a.indexOf(t) === i);
+  if (temps.length > 1) parts.push(`mash a step ${temps.filter((t) => Number(t) < 76).join(" → ")} °C${temps.some((t) => Number(t) >= 76) ? " con mash out" : ""}`);
+  else if (r.mash_temp_c) parts.push(`mash a ${String(r.mash_temp_c).replace(".", ",")} °C per ${r.mash_time_min ?? "?"} minuti`);
+  const boil = find(/^bollitura/i);
+  if (boil) {
+    const n = names(boil.split(":").slice(1).join(":") || "");
+    parts.push(`bollitura di ${r.boil_time_min ?? boil.match(/(\d+)\s*min/)?.[1] ?? "?"} minuti${n.length ? ` con ${andList(n.map((x, i) => (i === 0 ? x : x.charAt(0).toLowerCase() + x.slice(1))))}` : ""}`);
+  }
+  const wp = find(/^whirlpool/i);
+  if (wp) { const n = names(wp.split(":").slice(1).join(":")); if (n.length) parts.push(`whirlpool con ${n.join(", ")}`); }
+  const cool = find(/inoculare/i);
+  const yeast = cool.match(/inoculare\s+([^(.]+)/i)?.[1]?.trim();
+  const ferm = find(/^fermentaz/i);
+  const ft = [...ferm.matchAll(/(\d{2}(?:–\d{2})?)\s*°C/g)].map((m) => m[1]);
+  if (yeast || ft.length) parts.push(`fermentazione${yeast ? ` con ${yeast}` : ""}${ft.length > 1 ? ` da ${ft[0]} °C fino a ${ft[ft.length - 1]} °C` : ft.length ? ` a ${ft[0]} °C` : ""}`);
+  const dry = find(/^dry hop/i);
+  if (dry) { const n = names(dry.split(":").slice(1).join(":")); if (n.length) parts.push(`dry hop con ${n.join(", ")}`); }
+  const carb = find(/^carbonaz/i).replace(/^[^:]*:\s*/, "").replace(/\.$/, "");
+  if (carb) parts.push(`carbonazione a ${carb}`);
+  return parts.length ? `${head}: ${parts.join("; ")}.` : `${head}.`;
+}
+
+const andList = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}` : xs[0] ?? "");

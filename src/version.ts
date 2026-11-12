@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.054", date: "13/11/2026 02:20", text: "Scheda ricetta: riquadri ordinati (3+3 e 4), riassunto del procedimento e passi a schede con i dettagli in elenco" },
   { version: "0.053", date: "13/11/2026 02:05", text: "Ingredienti a riquadri con icona, nome colorato per categoria e quantità in evidenza" },
   { version: "0.052", date: "13/11/2026 01:55", text: "Scheda ricetta più bella: profilo della birra e processo con icone, descrizione a voci, procedimento a passi" },
   { version: "0.051", date: "13/11/2026 01:40", text: "Ingredienti colorati per categoria: malti giallino, luppoli verdino, lieviti rosso, bottiglie verde scuro e altri" },

@@ -901,3 +901,27 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
   .ing-step { grid-area: step; }
   .ing-tile .ing-bar { grid-area: bar; }
 }
+
+/* scheda ricetta: griglie omogenee */
+.ov-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ov-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .ov-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .ov-grid.cols-3, .ov-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* procedimento: riassunto + passi a schede */
+.ov-summary { margin: 0 0 14px; padding: 14px 16px; border-radius: var(--r); background: linear-gradient(150deg, rgba(237, 165, 18, .12), rgba(237, 165, 18, .03)); border: 1px solid rgba(237, 165, 18, .3); line-height: 1.6; font-weight: 500; }
+.ov-steps { gap: 10px; }
+.ov-steps::before { display: none; }
+.ov-steps > li.ov-step { display: block; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: var(--r); }
+.ov-step-head { display: flex; align-items: center; gap: 10px; }
+.ov-step-num { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #1f1500; font-weight: 800; font-size: .9rem; }
+.ov-step .ov-step-ico { width: 30px; height: 30px; border: 0; background: color-mix(in srgb, var(--c) 15%, transparent); }
+.ov-step-title { font-size: 1.05rem; }
+.ov-step-items { margin: 8px 0 0 38px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.ov-step-items li { position: relative; padding-left: 14px; line-height: 1.45; }
+.ov-step-items li::before { content: ""; position: absolute; left: 0; top: .6em; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+.ov-step-text { margin: 6px 0 0 38px; line-height: 1.5; }
+@media (max-width: 600px) { .ov-step-items, .ov-step-text { margin-left: 4px; } }
+.ov-steps .ov-step-items li { display: block; padding: 0 0 0 14px; gap: 0; }
+.ov-steps .ov-step-text { margin: 6px 0 0 38px; }
+@media (max-width: 600px) { .ov-steps .ov-step-text, .ov-steps .ov-step-items { margin-left: 4px; } }
