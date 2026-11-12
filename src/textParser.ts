@@ -211,7 +211,9 @@ function stepOf(line: string, category: string): string | null {
 function cleanIngredientName(line: string): string {
   return line
     .replace(QTY, " ")
-    .replace(/\(?\s*(?:a|@|per|dopo)?\s*\d{1,3}\s*(?:min\b|minuti|'|’)\s*\)?/gi, " ")
+    .replace(/\(?\s*(?:a|@|per|dopo|circa)?\s*\d{1,3}(?:\s*[–—-]\s*\d{1,3})?\s*(?:min\b|minuti|'|’)\s*\)?/gi, " ")
+    .replace(/\b(?:dalla|alla|prima della|a)\s+fine(?:\s+(?:della\s+)?bollitura)?\b/gi, " ")
+    .replace(/\bda\s+\d+(?:[.,]\d+)?\s*(?:g|gr|ml)\b\.?/gi, " ")
     .replace(/\b(?:in\s+|a\s+)?\d{2}\s*°\s*c\b/gi, " ")
     .replace(/\b(?:in\s+|nel\s+|al\s+|a\s+)?(?:dry[\s-]?hop(?:ping)?|whirlpool|hop\s?stand|flame\s?out|first wort|fine bollitura|a fuoco spento|mash|ammostamento|inoculo|bollitura|fermentatore|fermentazione|giorno\s*\d+|day\s*\d+)\b/gi, " ")
     .replace(/^\s*(?:di|del|della|dei)\s+/i, "")
@@ -240,6 +242,14 @@ function tidyName(name: string, category: string): string {
       .replace(/\b(?:amaro|amaricante|aroma|aromatico|aromatica|aromatizzazione|bittering)\s*$/i, "")
       .replace(/\b(?:luppolo|luppoli)\b\s*(?=\S)/i, "");
   }
+  n = n
+    .replace(/^(?:quando mancano|dopo|aggiunger[ei]|aggiungi|inserire)\b\s*/gi, "")
+    .replace(/^(?:aggiunger[ei]|aggiungi)\s+/i, "")
+    .replace(/^(?:di|del|della)\s+/i, "")
+    .replace(/\s+per\s+\d+(?:\s*[–—-]\s*\d+)?\s*$/i, "")
+    .replace(/\s+(?:dalla|alla)\s+fine\s*$/i, "")
+    .replace(/\s+da\s+\d+(?:[.,]\d+)?\s*(?:g|gr|ml)?\s*$/i, "")
+    .replace(/\s+(?:da|di|a|per|in)\s*$/i, "");
   return n.replace(/\s{2,}/g, " ").replace(/^[\s,.-]+|[\s,.-]+$/g, "").trim();
 }
 
@@ -248,23 +258,45 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   const lines = raw.split(/\r?\n/).map((l) => l.replace(/^\s*(?:[-*•+]|\d+[.)])\s+/, "").replace(/^#+\s*/, "").trim()).filter(Boolean);
   const find = (rx: RegExp) => { const m = raw.match(rx); return m ? m : null; };
 
-  const og = find(/\b(?:OG|O\.G\.|densit[aà] iniziale|gravity iniziale)\b[^\d\n]{0,25}(1[.,]\d{3})/i);
-  const fg = find(/\b(?:FG|F\.G\.|densit[aà] finale|gravity finale)\b[^\d\n]{0,25}(1[.,]\d{3})/i);
-  const ibu = find(/\bIBU\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)|(\d{1,3}(?:[.,]\d)?)\s*IBU\b/i);
-  const ebc = find(/\bEBC\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)|(\d{1,3}(?:[.,]\d)?)\s*EBC\b/i);
+  const RANGE = "(?:\\s*[–—-]\\s*(1[.,]\\d{3}))?";
+  const og = find(new RegExp(`\\b(?:OG|O\\.G\\.|densit[aà] iniziale|gravity iniziale)\\b[^\\d\\n]{0,30}(1[.,]\\d{3})${RANGE}`, "i"));
+  const fg = find(new RegExp(`\\b(?:FG|F\\.G\\.|densit[aà] finale|gravity finale)\\b[^\\d\\n]{0,30}(1[.,]\\d{3})${RANGE}`, "i"));
+  const ibu = find(/\bIBU\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)(?:\s*[–—-]\s*(\d{1,3}(?:[.,]\d)?))?|(\d{1,3}(?:[.,]\d)?)\s*IBU\b/i);
+  const ebc = find(/\bEBC\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)(?:\s*[–—-]\s*(\d{1,3}(?:[.,]\d)?))?|(\d{1,3}(?:[.,]\d)?)\s*EBC\b/i);
   const srm = find(/\bSRM\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)|(\d{1,3}(?:[.,]\d)?)\s*SRM\b/i);
   const vol = find(/(?:volume|batch|lotto|litri finali|in fermentatore|per)\b[^\d\n]{0,25}(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i) ?? find(/\b(\d{1,3}(?:[.,]\d)?)\s*(?:l|litri)\s*(?:di birra|finali|batch)/i);
   const eff = find(/efficien[a-z]*\b[^\d\n]{0,15}(\d{2}(?:[.,]\d)?)\s*%/i);
-  const mash = find(/(?:mash|ammostamento|infusione|single infusion|saccarificazione)[^\n]{0,60}?(\d{2}(?:[.,]\d)?)\s*°\s*C?[^\n]{0,30}?(\d{2,3})\s*(?:min|minuti|')/i)
-    ?? find(/(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:per|x)\s*(\d{2,3})\s*(?:min|minuti|')/i);
+  const mash = find(/(?:mash(?!\s*out)|ammostamento|infusione|single infusion|saccarificazione)[^\n]{0,60}?(\d{2}(?:[.,]\d)?)\s*°\s*C?[^\n]{0,30}?(\d{2,3})\s*(?:min|minuti|')/i)
+    ?? find(/(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:per|x|×)?\s*(\d{1,3})\s*(?:min|minuti|')/i);
+  // tabella delle fasi di mash: "Prima fase  63 °C  60 minuti"
+  const mashSteps = lines
+    .map((l) => l.match(/^([A-Za-zÀ-ú' ]{3,30}?)\s+(\d{2}(?:[.,]\d)?)\s*°\s*C\s+(\d{1,3})\s*(?:min|minuti|')/i))
+    .filter((m): m is RegExpMatchArray => !!m && !/fermentaz|inizio|intermedia|finale|whirlpool|raffredd/i.test(m[1]))
+    .map((m) => `${m[1].trim()} ${m[2]} °C × ${m[3]} min`);
   const mashW = find(/(?:acqua\s*(?:di|del|per(?: il| lo)?)?\s*)(?:mash|ammostamento|infusione|impasto)\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i)
     ?? find(/(?:mash|ammostamento)\s*(?:water|acqua)?\s*[:=]\s*(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
   const spargeW = find(/sparge\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
   const boil = find(/bollitura[^\n\d]{0,20}(\d{2,3})\s*(?:min|minuti|')/i) ?? find(/(\d{2,3})\s*(?:min|minuti)\s*(?:di\s*)?bollitura/i);
 
   const ingredients: TextRecipe["ingredients"] = [];
+  const INSTRUCTION = /^(?:quando|dopo|inizio|fine|durante|al termine|terminata)\b|\b(?:aggiunger[ei]|aggiungi|inserire|preparare|raffreddare|trasferire|mantenere|portare|riscaldare|misurare|prelevare|lasciare|avvio|spegnere|mescolare|controllare|ossigenare|inoculare|registrare|calcolare|utilizzare|attendere|verificare|sollevare|abbassare|procedere)\b/i;
+  const boilMin = (() => { const b = raw.match(/bollitura[^\n\d]{0,25}(\d{2,3})\s*(?:min|minuti|')/i) ?? raw.match(/(\d{2,3})\s*(?:min|minuti)\s*(?:di\s*)?bollitura/i); return b ? Number(b[1]) : null; })();
+  const keyOf = (n: string) => n.toLowerCase().replace(/^(?:luppolo|malto|lievito)\s+/, "").replace(/[^a-z0-9]/g, "");
   for (const l of lines) {
     if (SKIP_LINE.test(l)) continue;
+    if (INSTRUCTION.test(l)) {
+      // es. "Quando mancano 10 minuti  Aggiungere 300 g zucchero": completa il momento dell'ingrediente già trovato
+      const q2 = l.match(QTY);
+      if (!q2) continue;
+      const nm = tidyName(cleanIngredientName(l.replace(INSTRUCTION, " ").replace(/\b(?:mancano|aggiungere|aggiungi|di)\b/gi, " ")), "altro");
+      const hit = ingredients.find((i) => keyOf(i.name).includes(keyOf(nm)) || keyOf(nm).includes(keyOf(i.name)));
+      if (hit && !hit.step && nm.length > 1) {
+        const after = l.match(/dopo\s*(\d{1,3})\s*(?:min|minuti)/i);
+        const st = after && boilMin ? `${boilMin - Number(after[1])} min` : stepOf(l, hit.category);
+        if (st && st !== "mash" && st !== "inoculo") hit.step = st;
+      }
+      continue;
+    }
     // tabelle markdown: | Malto Pils | 5 kg | mash |
     const line = l.includes("|") ? l.split("|").map((c) => c.trim()).filter(Boolean).join(" ") : l;
     if (/^[-:\s|]+$/.test(line)) continue;
@@ -310,17 +342,24 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   const style = styleIn(name ?? "") ?? styleIn(intro?.[0] ?? "") ?? styleIn(prose);
 
   const g = (m: RegExpMatchArray | null, i = 1) => (m ? num(m[i] ?? m[i + 1]) : null);
+  // valore singolo o medio di un intervallo (OG/FG: gruppo 1-2 · IBU/EBC: 1-2 oppure 3)
+  const mid = (m: RegExpMatchArray | null, dec: number) => {
+    if (!m) return null;
+    const a = m[1] ?? m[3]; if (a == null) return null;
+    const v = m[2] != null && m[1] != null ? (num(m[1]) + num(m[2])) / 2 : num(a);
+    const f = 10 ** dec; return Math.round(v * f) / f;
+  };
   return {
     name, style,
     batch_size_l: g(vol),
     boil_time_min: g(boil),
     mash_temp_c: mash ? num(mash[1]) : null,
     mash_time_min: mash ? num(mash[2]) : null,
-    target_og: g(og), target_fg: g(fg), target_ibu: g(ibu),
-    target_ebc: ebc ? g(ebc) : srm ? Math.round(g(srm)! * 1.97) : null,
+    target_og: mid(og, 3), target_fg: mid(fg, 3), target_ibu: mid(ibu, 0),
+    target_ebc: ebc ? mid(ebc, 0) : srm ? Math.round(g(srm)! * 1.97) : null,
     efficiency_pct: g(eff),
     mash_water_l: g(mashW), sparge_water_l: g(spargeW),
-    procedure: null,
+    procedure: mashSteps.length > 1 ? `Mash a step: ${mashSteps.join(" → ")}` : null,
     notes: ingredients.length ? "Letta direttamente dal testo (senza AI): controlla quantità e momenti di aggiunta." : null,
     ingredients,
   };
