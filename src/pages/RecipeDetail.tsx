@@ -13,7 +13,9 @@ import { STYLE_OPTIONS } from "../styles-list";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { BrewDay } from "./BrewDay";
 import { RecipeWater } from "./Water";
+import { buildProcedure } from "../procedure";
 import { CleanNamesButton } from "../components/CleanNames";
+import { IngredientsView } from "../components/IngredientsView";
 import { deleteRecipe, deletionSummary } from "../deleteHelpers";
 
 export const RECIPE_SECTIONS: { title?: string; fields: FieldDef[] }[] = [
@@ -51,6 +53,8 @@ export function RecipeDetail() {
   const [importing, setImporting] = useState(false);
   const [pasted, setPasted] = useState<File[] | undefined>();
   const [deleting, setDeleting] = useState(false);
+  const [editIng, setEditIng] = useState(false);
+  const [viewKey, setViewKey] = useState(0);
   const [reloadIng, setReloadIng] = useState(0);
 
   useEffect(() => {
@@ -132,22 +136,49 @@ export function RecipeDetail() {
       ]} />
 
       <div className="panel">
+        {tab === "scheda" && isAdmin && (
+          <div className="row-actions" style={{ margin: "0 0 14px" }}>
+            <button className="mini-btn" onClick={async () => {
+              const { data: ings } = await supabase.from("recipe_ingredients").select("*").eq("recipe_id", recipe.id).order("sort_order");
+              const text = buildProcedure({
+                mashTemp: recipe.mash_temp_c, mashTime: recipe.mash_time_min, boil: recipe.boil_time_min,
+                mashWater: recipe.mash_water_l, spargeWater: recipe.sparge_water_l,
+                ingredients: (ings ?? []).map((i) => ({ name: i.name, category: i.category, quantity: Number(i.quantity), unit: i.unit, step: i.step })),
+              });
+              if (recipe.procedure && !confirm("Sostituire il procedimento attuale con il riassunto generato dagli ingredienti e dai parametri?")) return;
+              const { data, error } = await supabase.from("recipes").update({ procedure: text }).eq("id", recipe.id).select().single();
+              if (error) return alert(errMsg(error));
+              setRecipe(data);
+            }}>📝 <span>Genera riassunto del procedimento</span></button>
+          </div>
+        )}
         {tab === "scheda" && (
           <RecordForm table="recipes" row={recipe} sections={RECIPE_SECTIONS} canEdit={isAdmin}
             startEditing={sp.get("edit") === "1" && isAdmin} onSaved={setRecipe} />
         )}
         {tab === "ingredienti" && (
           <>
-            {isAdmin && !importing && (
-              <FilePicker compact allowText textPlaceholder="Incolla qui il testo della ricetta (es. copiato da una chat con l'AI)" onFiles={(f) => { setPasted(f); setImporting(true); }} accept="image/*,application/pdf,.txt,.md"
-                title="📋 Importa ingredienti" hint="anche più screenshot" />
+            <IngredientsView table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} volume={recipe.batch_size_l} reloadKey={`${reloadIng}-${viewKey}`} />
+            {isAdmin && (
+              <div className="ing-tools">
+                <button className={"mini-btn" + (editIng ? " on" : "")} onClick={() => setEditIng(!editIng)}>✏️ <span>{editIng ? "Chiudi modifica" : "Modifica ingredienti"}</span></button>
+                <CleanNamesButton table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} onDone={() => setReloadIng((x) => x + 1)} />
+              </div>
             )}
-            {isAdmin && <div className="row-actions" style={{ margin: "-6px 0 10px" }}><CleanNamesButton table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} onDone={() => setReloadIng((x) => x + 1)} /></div>}
-            <RowsEditor table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} fields={ingFields}
-              canEdit={isAdmin} orderBy={{ column: "sort_order" }} defaults={{ category: "malto", unit: "kg" }}
-              reloadKey={reloadIng} />
+            {isAdmin && editIng && (
+              <RowsEditor table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} fields={ingFields}
+                canEdit={isAdmin} orderBy={{ column: "sort_order" }} defaults={{ category: "malto", unit: "kg" }}
+                reloadKey={reloadIng} onChange={() => setViewKey((x) => x + 1)} />
+            )}
+            {isAdmin && !importing && (
+              <div className="ing-import">
+                <h3>Importa ingredienti</h3>
+                <FilePicker compact allowText textPlaceholder="Incolla qui il testo della ricetta (es. copiato da una chat con l'AI)" onFiles={(f) => { setPasted(f); setImporting(true); }} accept="image/*,application/pdf,.txt,.md"
+                  title="📋 Incolla qui" hint="screenshot, file o testo" />
+              </div>
+            )}
             {importing && <ImportRecipe recipeId={recipe.id} initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }}
-              onDone={() => { setReloadIng((x) => x + 1); loadMaterials().then(setMaterials); }} />}
+              onDone={() => { setReloadIng((x) => x + 1); loadMaterials().then(setMaterials); supabase.from("recipes").select("*").eq("id", recipe.id).single().then(({ data }) => data && setRecipe(data)); }} />}
           </>
         )}
         {tab === "batch" && (

@@ -645,3 +645,20 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .water-calc tr.tot td { font-weight: 700; border-top: 2px solid var(--line-strong); }
 .update-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: rgba(237, 165, 18, .12); border: 1px solid rgba(237, 165, 18, .45); border-radius: var(--r); padding: 10px 14px; margin: -6px 0 18px; font-weight: 600; }
 .version { text-align: center; margin-top: 24px; }
+
+/* ---------------- lista ingredienti ---------------- */
+.ing-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.ing-group { background: var(--surface-2); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: var(--r); padding: 12px 14px; }
+.ing-title { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; color: var(--c); }
+.ing-ico { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--c); }
+.ing-group ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.ing-group li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 9px 2px; border-bottom: 1px solid var(--line); align-items: center; }
+.ing-group li:last-child { border-bottom: 0; }
+.ing-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.ing-qty { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.ing-bar { grid-column: 1 / -1; height: 4px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.ing-bar span { display: block; height: 100%; background: var(--c); border-radius: 4px; }
+.ing-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 16px 0 10px; }
+.ing-import { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); }
+.ing-import h3 { margin-top: 0; }
+.grid-dl .wide dd.pre { font-weight: 500; line-height: 1.65; max-width: 80ch; }

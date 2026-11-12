@@ -1,3 +1,4 @@
+import { buildProcedure } from "./procedure";
 /**
  * Lettura "senza AI" del testo di un ordine (es. copiato dalla pagina ordini di Mr Malt o da un'email).
  * Riconosce sia il formato a blocchi (nome / codice / prezzo / Ordinato N / totale)
@@ -157,6 +158,7 @@ export function parseOrderText(text: string): TextOrder {
 export interface TextRecipe {
   name: string | null;
   style: string | null;
+  description: string | null;
   batch_size_l: number | null;
   boil_time_min: number | null;
   mash_temp_c: number | null;
@@ -349,8 +351,27 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     const v = m[2] != null && m[1] != null ? (num(m[1]) + num(m[2])) / 2 : num(a);
     const f = 10 ** dec; return Math.round(v * f) / f;
   };
+  // dati per il riassunto del procedimento
+  const fermProfile = lines
+    .map((l) => l.match(/^((?:inizio|fase|fine|prima|seconda|terza|ultima)[A-Za-zÀ-ú ]{0,25}?)\s+(\d{2}(?:\s*[–—-]\s*\d{2})?)\s*°\s*C\s*$/i))
+    .filter((m): m is RegExpMatchArray => !!m && !/mash|ammost|bollit/i.test(m[1]))
+    .map((m) => `${m[1].trim().toLowerCase()} ${m[2].replace(/\s*[–—-]\s*/, "–")} °C`);
+  const cool = raw.match(/raffredda[a-z]*[^\n\d]{0,40}?(\d{2})\s*°\s*C/i);
+  const spT = raw.match(/sparge[^\n]{0,60}?(\d{2})\s*°\s*C/i) ?? raw.match(/(\d{2})\s*°\s*C[^\n]{0,30}sparge/i);
+  const carb = raw.match(/carbonazione[^\n\d]{0,30}(\d[,.]?\d?\s*(?:[–—-]\s*\d[,.]?\d?)?\s*vol[a-z]*(?:\s*(?:di\s*)?CO[2₂])?)/i);
+  // descrizione della birra dal profilo organolettico (Colore, Corpo, Aroma, Finale…)
+  const PROFILE = /^(colore|schiuma|corpo|aroma|gusto|luppolo|amaro|finale|aspetto|carbonazione percepita)\s*[:\t ]\s*(.+)$/i;
+  const profile = lines.map((l) => l.match(PROFILE)).filter((m): m is RegExpMatchArray => !!m && !/\d/.test(m[2]) && m[2].length < 80 && !/quantit|momento|valore|descrizione|operazione/i.test(m[2]))
+    .map((m) => `${m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase()}: ${m[2].trim().replace(/\.$/, "")}`);
+  const procedure = ingredients.length ? buildProcedure({
+    mashTemp: mash ? num(mash[1]) : null, mashTime: mash ? num(mash[2]) : null, mashSteps,
+    boil: g(boil), mashWater: g(mashW), spargeWater: g(spargeW), spargeTemp: spT ? num(spT[1]) : null,
+    coolTemp: cool ? num(cool[1]) : null, fermProfile, carbonation: carb ? carb[1].replace(/\s+/g, " ").replace(/vol[a-z]*/i, "volumi").replace(/CO2/, "CO₂") : null,
+    ingredients,
+  }) : null;
+
   return {
-    name, style,
+    name, style, description: profile.length ? profile.join(" · ") : null,
     batch_size_l: g(vol),
     boil_time_min: g(boil),
     mash_temp_c: mash ? num(mash[1]) : null,
@@ -359,7 +380,7 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     target_ebc: ebc ? mid(ebc, 0) : srm ? Math.round(g(srm)! * 1.97) : null,
     efficiency_pct: g(eff),
     mash_water_l: g(mashW), sparge_water_l: g(spargeW),
-    procedure: mashSteps.length > 1 ? `Mash a step: ${mashSteps.join(" → ")}` : null,
+    procedure,
     notes: ingredients.length ? "Letta direttamente dal testo (senza AI): controlla quantità e momenti di aggiunta." : null,
     ingredients,
   };

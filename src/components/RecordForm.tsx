@@ -44,7 +44,7 @@ export function RecordForm({ table, row, sections, canEdit, onSaved, startEditin
             {s.title && <h3>{s.title}</h3>}
             <dl className="grid-dl">
               {s.fields.map((f) => (
-                <div key={f.key} className={f.wide ? "wide" : ""}>
+                <div key={f.key} className={f.wide || f.type === "textarea" ? "wide" : ""}>
                   <dt>{f.label}</dt>
                   <dd className={f.type === "textarea" ? "pre" : ""}>{display(f, row)}</dd>
                 </div>

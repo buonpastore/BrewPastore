@@ -111,6 +111,7 @@ export interface ParsedDocument {
 export interface ParsedRecipe {
   name: string | null;
   style: string | null;
+  description?: string | null;
   batch_size_l: number | null;
   boil_time_min: number | null;
   mash_temp_c: number | null;
