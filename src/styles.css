@@ -940,3 +940,4 @@ button.qe-title { width: 100%; background: none; border: 0; padding: 0; cursor: 
 .recipe-pick-btn:hover, .recipe-pick-btn:active { border-color: var(--gold); }
 .qe-phase { scroll-margin-top: calc(var(--topbar-h) + 12px); }
 .mat-name { font-weight: 600; } .mat-name:hover { filter: brightness(1.15); text-decoration: none; }
+@media (max-width: 600px) { .ov-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .ov-grid.cols-3 .ov-tile { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px; } .ov-grid.cols-3 .ov-value { font-size: 1.02rem; } .ov-grid.cols-3 .ov-ico { width: 32px; height: 32px; } }

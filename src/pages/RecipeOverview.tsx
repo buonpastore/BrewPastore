@@ -58,11 +58,15 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
       <h3 className="ov-h"><Beer size={16} /> Profilo della birra</h3>
       <div className="ov-grid cols-3">
         <Tile icon={<Beer size={20} />} label="Alcol" value={abv != null ? `${num(abv, 1)}%` : "—"} sub={abv != null ? "stimato da OG e FG" : "servono OG e FG"} />
-        <Tile icon={<Target size={20} />} label="OG prevista" value={sg(recipe.target_og)} sub="densità iniziale" color="var(--teal)" />
-        <Tile icon={<Flag size={20} />} label="FG prevista" value={sg(recipe.target_fg)} sub="densità finale" color="var(--teal)" />
         <Tile icon={<Leaf size={20} />} label="Amaro" value={ibu != null ? `${num(ibu, 0)} IBU` : "—"} sub={ibu != null ? ibuName(ibu) : undefined} color="var(--cat-luppolo)" />
         <Tile icon={<Palette size={20} />} label="Colore" value={ebc != null ? `${num(ebc, 0)} EBC` : "—"} sub={ebc != null ? ebcName(ebc) : undefined}
           swatch={ebc != null ? ebcColor(ebc) : undefined} color="var(--cat-malto)" />
+      </div>
+
+      <h3 className="ov-h"><Target size={16} /> Densità e volume</h3>
+      <div className="ov-grid cols-3">
+        <Tile icon={<Target size={20} />} label="OG prevista" value={sg(recipe.target_og)} sub="densità iniziale" color="var(--teal)" />
+        <Tile icon={<Flag size={20} />} label="FG prevista" value={sg(recipe.target_fg)} sub="densità finale" color="var(--teal)" />
         <Tile icon={<CupSoda size={20} />} label="Volume" value={recipe.batch_size_l ? `${num(recipe.batch_size_l, 1)} L` : "—"} sub="in fermentatore" color="var(--magenta)" />
       </div>
 
