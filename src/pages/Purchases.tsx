@@ -10,6 +10,7 @@ import { RowsEditor } from "../components/RowsEditor";
 import { DocumentsPanel } from "../components/DocumentsPanel";
 import { FilePicker } from "../components/FilePicker";
 import { PickedList } from "./ImportRecipe";
+import { parseOrderText } from "../textParser";
 
 export function Purchases({ embedded = false }: { embedded?: boolean }) {
   const { isAdmin } = useAuth();
@@ -102,9 +103,16 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
       const ups = [];
       for (const f of picked) ups.push({ path: await uploadFile("purchases/import", f), name: f.name, type: f.type, size: f.size });
       setUploaded(ups);
-      const parsed = await parseDocument(ups.map((u) => u.path));
+      // testo incollato: prima prova la lettura diretta (non serve l'AI)
+      let parsed: ParsedDocument | null = null;
+      if (picked.every((f) => f.type.startsWith("text/") || /\.txt$/i.test(f.name))) {
+        const texts = await Promise.all(picked.map((f) => f.text()));
+        const local = parseOrderText(texts.join("\n"));
+        if (local.items.length) parsed = local;
+      }
+      if (!parsed) parsed = await parseDocument(ups.map((u) => u.path));
       const { items: its, ...h } = parsed;
-      setHead({ ...h, supplier: h.supplier ?? "" });
+      setHead({ ...h, supplier: h.supplier ?? "", date: h.date ?? new Date().toISOString().slice(0, 10) });
       setItems(its.map((i) => {
         const match = materials.find((m) => m.name.toLowerCase() === i.material_name.toLowerCase());
         return { ...i, material_id: match?.id ?? "" };
@@ -175,24 +183,24 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
               <label><span>Spedizione €</span><input type="number" step="any" value={head.shipping_cost} onChange={(e) => setHead({ ...head, shipping_cost: Number(e.target.value) })} /></label>
             </div>
             <div className="table-wrap">
-              <table>
+              <table className="review-table">
                 <thead><tr><th>Riga documento</th><th>Materia prima</th><th>Categoria</th><th>Q.tà</th><th>Unità</th><th>Prezzo riga €</th><th /></tr></thead>
                 <tbody>
                   {items.map((it, i) => (
                     <tr key={i}>
-                      <td className="small">{it.description}</td>
-                      <td>
+                      <td className="small rv-desc">{it.description}</td>
+                      <td data-label="Materia prima" className="rv-wide">
                         <select value={it.material_id} onChange={(e) => setItem(i, { material_id: e.target.value })}>
                           <option value="">➕ nuova: {it.material_name}</option>
                           {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                         </select>
                         {!it.material_id && <input value={it.material_name} onChange={(e) => setItem(i, { material_name: e.target.value })} />}
                       </td>
-                      <td><select value={it.category} onChange={(e) => setItem(i, { category: e.target.value })}>{MATERIAL_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></td>
-                      <td><input type="number" step="any" style={{ width: 80 }} value={it.quantity} onChange={(e) => setItem(i, { quantity: Number(e.target.value) })} /></td>
-                      <td><select value={it.unit} onChange={(e) => setItem(i, { unit: e.target.value })}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
-                      <td><input type="number" step="any" style={{ width: 90 }} value={it.total_price} onChange={(e) => setItem(i, { total_price: Number(e.target.value) })} /></td>
-                      <td><button className="icon" onClick={() => setItems(items.filter((_, j) => j !== i))}>🗑️</button></td>
+                      <td data-label="Categoria"><select value={it.category} onChange={(e) => setItem(i, { category: e.target.value })}>{MATERIAL_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></td>
+                      <td data-label="Quantità"><input type="number" step="any" style={{ width: 80 }} value={it.quantity} onChange={(e) => setItem(i, { quantity: Number(e.target.value) })} /></td>
+                      <td data-label="Unità"><select value={it.unit} onChange={(e) => setItem(i, { unit: e.target.value })}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
+                      <td data-label="Prezzo €"><input type="number" step="any" style={{ width: 90 }} value={it.total_price} onChange={(e) => setItem(i, { total_price: Number(e.target.value) })} /></td>
+                      <td className="rv-del"><button className="icon" title="Togli riga" onClick={() => setItems(items.filter((_, j) => j !== i))}>🗑️</button></td>
                     </tr>
                   ))}
                 </tbody>
