@@ -207,7 +207,7 @@ function NewExpense({ profiles, me, onClose, onSaved }: { profiles: Row[]; me: s
           : <FilePicker onFiles={upload} multiple={false} disabled={Boolean(busy)} hint="Lo scontrino è facoltativo: l'AI prova a leggere importo e data." />}
         {busy && <p className="muted">⏳ {busy}</p>}
         <div className="form-grid">
-          <label className="wide"><span>Descrizione</span><input required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="es. Malti Mr Malt, bottiglie, gas…" /></label>
+          <label className="wide"><span>Descrizione</span><input required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="es. Malti Mr Malt, bottiglie, tappi…" /></label>
           <label><span>Importo €</span><input required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
           <label><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>
           <label className="wide"><span>Note</span><input value={notes} onChange={(e) => setNotes(e.target.value)} /></label>

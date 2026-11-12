@@ -8,7 +8,7 @@ Web app per gestire la produzione di birra di 3 soci: ricette, log delle cotte, 
 |---|---|
 | **Ricette** | Scheda completa, ingredienti, duplica ricetta. Ingredienti importabili da **screenshot** (es. chat con un'AI), foto o PDF. |
 | **Batch** | Log della cotta: pH acqua iniziale e corretto, correzioni acqua (sali/acidi), pH mash, gravity pre/post-sparge, OG, FG, ABV automatico. Date di cotta, fermentazione, imbottigliamento, prima bevuta. Diario di fermentazione. **Carbonazione** (metodo, zucchero, volumi CO₂) con calcolatore del priming. |
-| **Costi** | Costo per batch, per bottiglia e per litro: materie prime al costo medio ponderato degli acquisti + bottiglie/tappi + energia/gas/acqua. |
+| **Costi** | Costo per batch, per bottiglia e per litro: materie prime al costo medio ponderato degli acquisti + bottiglie/tappi + energia/acqua. |
 | **Acquisti** | Carichi la fattura PDF (Mr Malt o altri), uno screenshot, la foto dello scontrino o l'email `.eml`: l'AI estrae le righe e tu confermi. |
 | **Materie prime** | Costo medio di ogni materia prima, storico prezzi per fornitore, unione dei doppioni. |
 | **Spese condivise** | Ognuno dei 3 carica lo scontrino di una spesa e la divide; i rimborsi si registrano con metodo (bonifico / PayPal / contanti) e chi li riceve li conferma. Saldi automatici "chi deve a chi". |

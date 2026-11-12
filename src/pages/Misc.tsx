@@ -183,7 +183,7 @@ export function Settings() {
   const [name, setName] = useState(profile?.display_name ?? "");
   const [msg, setMsg] = useState("");
 
-  useEffect(() => { supabase.from("settings").select("*").order("key").then(({ data }) => setSettings(data ?? [])); }, []);
+  useEffect(() => { supabase.from("settings").select("*").neq("key", "gas_price_m3").order("key").then(({ data }) => setSettings(data ?? [])); }, []);
 
   const saveSetting = async (s: Row, value: string) => {
     const { error } = await supabase.from("settings").update({ value: Number(value.replace(",", ".")) }).eq("key", s.key);

@@ -33,7 +33,7 @@ export function Batches() {
           <tbody>
             {list.map((b) => {
               const c = costs[b.id];
-              const total = c ? c.ingredients_cost + c.extra_cost + c.energy_cost + c.gas_cost + c.water_cost : null;
+              const total = c ? c.ingredients_cost + c.extra_cost + c.energy_cost + c.water_cost : null;
               return (
                 <tr key={b.id}>
                   <td><Link to={`/batch/${b.id}`}>{b.code}</Link></td>

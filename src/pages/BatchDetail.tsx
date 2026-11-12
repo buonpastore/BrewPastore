@@ -57,7 +57,6 @@ const SECTIONS: { title?: string; fields: FieldDef[] }[] = [
   ]},
   { title: "Consumi", fields: [
     { key: "energy_kwh", label: "Energia elettrica (kWh)", type: "number" },
-    { key: "gas_m3", label: "Gas (m³)", type: "number" },
     { key: "water_used_l", label: "Acqua totale usata (L)", type: "number" },
     { key: "notes", label: "Note", type: "textarea" },
   ]},
@@ -109,7 +108,7 @@ function CostsTab({ batch, canEdit, materials }: { batch: Row; canEdit: boolean;
   }, [batch.id, reload]);
 
   const toBase = (q: number, u: string) => (["g", "ml"].includes(u) ? q / 1000 : q);
-  const total = summary ? summary.ingredients_cost + summary.extra_cost + summary.energy_cost + summary.gas_cost + summary.water_cost : 0;
+  const total = summary ? summary.ingredients_cost + summary.extra_cost + summary.energy_cost + summary.water_cost : 0;
   const liters = batch.volume_bottled_l ?? (batch.bottles_count && batch.bottle_size_l ? batch.bottles_count * batch.bottle_size_l : null);
   const matOptions = materials.map((m) => ({ value: m.id, label: m.name }));
 
@@ -119,7 +118,7 @@ function CostsTab({ batch, canEdit, materials }: { batch: Row; canEdit: boolean;
         <div className="kpis">
           <div className="kpi"><span>Materie prime</span><strong>{eur(summary.ingredients_cost)}</strong></div>
           <div className="kpi"><span>Bottiglie, tappi, extra</span><strong>{eur(summary.extra_cost)}</strong></div>
-          <div className="kpi"><span>Energia + gas + acqua</span><strong>{eur(summary.energy_cost + summary.gas_cost + summary.water_cost)}</strong></div>
+          <div className="kpi"><span>Energia + acqua</span><strong>{eur(summary.energy_cost + summary.water_cost)}</strong></div>
           <div className="kpi main"><span>Totale batch</span><strong>{eur(total)}</strong></div>
           <div className="kpi main"><span>Per bottiglia</span><strong>{batch.bottles_count ? eur(total / batch.bottles_count) : "—"}</strong></div>
           <div className="kpi"><span>Per litro</span><strong>{liters ? eur(total / liters) : "—"}</strong></div>
@@ -165,7 +164,7 @@ function CostsTab({ batch, canEdit, materials }: { batch: Row; canEdit: boolean;
           return u != null ? eur(u * r.quantity) : "—";
         } }]}
       />
-      <p className="muted small">Energia, gas e acqua sono calcolati dai consumi del log × prezzi in Impostazioni.</p>
+      <p className="muted small">Energia e acqua sono calcolate dai consumi del log × prezzi in Impostazioni.</p>
     </div>
   );
 }
