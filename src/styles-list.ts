@@ -1,6 +1,6 @@
 /** Stili di birra per il menu a tendina delle ricette. */
 export const OUR_STYLES = [
-  "IPA", "Weiss", "Blanche", "Dubbel", "APA", "English Ale", "Winter Ale", "Bock", "Doppelbock",
+  "IPA", "Weiss", "Blanche", "Dubbel", "APA", "English Ale", "Winter Ale", "Bock", "Doppelbock", "Saison",
 ];
 
 export const FAMOUS_STYLES = [
@@ -11,7 +11,7 @@ export const FAMOUS_STYLES = [
   // americane
   "American Amber Ale", "Session IPA", "Double IPA", "NEIPA", "Black IPA", "Cream Ale",
   // belghe
-  "Tripel", "Quadrupel", "Belgian Strong Ale", "Saison", "Belgian Blonde",
+  "Tripel", "Quadrupel", "Belgian Strong Ale", "Belgian Blonde",
   // tedesche ad alta fermentazione
   "Kölsch", "Altbier", "Dunkelweizen", "Weizenbock",
   // acide e speciali
