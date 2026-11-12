@@ -1,0 +1,169 @@
+La birra è composta per oltre il 90% da acqua: per questo il profilo dell'acqua di una città ha plasmato interi stili.
+L'acqua di Pilsen è molto dolce, povera di sali: è uno dei segreti della morbidezza della Pilsner originale.
+L'acqua di Burton-on-Trent è ricchissima di solfato di calcio: da qui il termine "burtonizzare" l'acqua per le pale ale.
+La prima Pilsner fu prodotta nel 1842 a Plzeň dal birraio bavarese Josef Groll.
+Il luppolo è un parente stretto della cannabis: entrambi appartengono alla famiglia delle Cannabaceae.
+Il luppolo è una pianta rampicante che può crescere fino a circa 30 cm in un solo giorno nel pieno della stagione.
+Si usano solo i coni delle piante femminili di luppolo: è lì che si trovano le ghiandole di luppolina.
+La luppolina, la polverina gialla nei coni, contiene alfa acidi, beta acidi e oli essenziali.
+Gli alfa acidi del luppolo diventano amari solo dopo l'isomerizzazione durante la bollitura.
+Gli IBU (International Bitterness Units) misurano i milligrammi di iso-alfa acidi per litro di birra.
+Oltre i 100 IBU circa il palato umano fatica a percepire differenze di amaro.
+Il luppolo ha proprietà antibatteriche: è uno dei motivi per cui venne adottato per conservare la birra.
+Prima del luppolo, la birra veniva aromatizzata con il gruit, una miscela di erbe come mirto di palude, achillea e rosmarino selvatico.
+Il lievito Saccharomyces cerevisiae è lo stesso organismo usato per fare il pane.
+Il lievito lager Saccharomyces pastorianus è un ibrido naturale tra S. cerevisiae e S. eubayanus.
+S. eubayanus, uno dei "genitori" del lievito lager, è stato identificato in Patagonia solo nel 2011.
+Louis Pasteur pubblicò nel 1876 gli "Études sur la bière", studi sulla fermentazione della birra.
+Emil Christian Hansen, al laboratorio Carlsberg, isolò per primo una coltura pura di lievito lager negli anni 1880.
+La scala del pH fu introdotta nel 1909 da Søren Sørensen, chimico del Laboratorio Carlsberg.
+Il pH ideale del mash per la maggior parte delle birre si colloca tra 5,2 e 5,6 (misurato a temperatura ambiente).
+Gli enzimi beta-amilasi lavorano meglio intorno ai 60–65 °C e producono zuccheri fermentabili.
+Gli enzimi alfa-amilasi preferiscono 68–72 °C e producono zuccheri più complessi: più corpo, meno fermentabilità.
+Una birra con mash a 64 °C sarà in genere più secca di una con mash a 69 °C.
+Il maltosio è lo zucchero più abbondante in un mosto tipico.
+La maltazione consiste nel far germinare l'orzo e poi bloccare la germinazione con il calore.
+I malti scuri come il black malt vengono tostati fino a oltre 200 °C.
+Il colore della birra si misura in EBC in Europa e in SRM negli Stati Uniti: EBC ≈ SRM × 1,97.
+Un'equazione popolare per stimare l'ABV è (OG − FG) × 131,25.
+La densità dell'acqua pura a 20 °C è il riferimento 1,000 per i densimetri da birra.
+Un grado Plato corrisponde circa a 4 "punti" di densità: 12 °P ≈ 1,048.
+L'alcol è meno denso dell'acqua: per questo la densità scende durante la fermentazione.
+Il rifrattometro va corretto quando c'è alcol nel campione: le letture dopo la fermentazione sono falsate.
+Il diacetile dà un aroma di burro o caramella mou: il "riposo del diacetile" aiuta il lievito a riassorbirlo.
+Il DMS (dimetilsolfuro) ricorda il mais cotto: una bollitura vigorosa e scoperta aiuta a eliminarlo.
+L'acetaldeide sa di mela verde ed è spesso segno di una birra "giovane".
+I fenoli tipici delle weizen (chiodo di garofano) vengono dal gene POF+ di certi lieviti.
+Il banana delle weizen è dovuto all'isoamil acetato, un estere prodotto dal lievito.
+Fermentare più caldo in genere aumenta la produzione di esteri fruttati.
+Il "lightstruck" o "skunky" è causato dalla luce che degrada i composti del luppolo: per questo le bottiglie scure proteggono meglio.
+Le bottiglie marroni filtrano molta più luce dannosa rispetto a quelle verdi o trasparenti.
+L'ossigeno è il nemico della birra finita: l'ossidazione dà note di cartone bagnato.
+L'ossigeno è invece amico del lievito all'inizio: va dato al mosto freddo prima dell'inoculo.
+Il "cold break" è la precipitazione di proteine quando il mosto viene raffreddato rapidamente.
+Il "hot break" è la schiuma proteica che si forma all'inizio della bollitura.
+Il whirlpool crea un cono di trub al centro della pentola, facilitando il travaso del mosto limpido.
+L'Irish moss è un'alga (Chondrus crispus) usata come chiarificante negli ultimi minuti di bollitura.
+La colla di pesce (isinglass) è stata usata per secoli per chiarificare le real ale inglesi.
+La gelatina usata a freddo aiuta a rendere più limpida la birra finita.
+Il "chill haze" è una velatura che appare solo quando la birra è fredda, dovuta a proteine e polifenoli.
+Un volume di CO₂ significa che la birra contiene un volume di gas pari al proprio volume liquido.
+Le weizen bavaresi possono arrivare a 3,5–4 volumi di CO₂.
+Le real ale inglesi servite a pompa hanno circa 1–1,5 volumi di CO₂.
+La schiuma si regge grazie a proteine e iso-alfa acidi del luppolo.
+Grassi e detergenti sui bicchieri distruggono la schiuma: un bicchiere "beer clean" è fondamentale.
+Le bollicine che salgono sempre dallo stesso punto del bicchiere nascono da micro-imperfezioni chiamate siti di nucleazione.
+In una Guinness alla spina le bollicine sembrano scendere: è un effetto delle correnti nel bicchiere.
+Le stout alla spina "nitro" usano una miscela di azoto e CO₂ per una schiuma cremosa.
+La widget nelle lattine di stout è una capsula che rilascia gas all'apertura per creare la schiuma.
+La lattina per birra fu introdotta negli Stati Uniti nel 1935.
+Il tappo a corona fu brevettato da William Painter nel 1892.
+Il tappo a corona standard ha 21 "denti".
+Le bottiglie champagnotte resistono a pressioni molto più alte delle normali bottiglie da birra.
+Una bottiglia "beer bomb" è una bottiglia esplosa per eccesso di priming o infezione: attenzione agli zuccheri!
+Una birra bottiglia-condizionata continua a evolvere in bottiglia grazie al lievito residuo.
+Il Reinheitsgebot bavarese del 1516 ammetteva solo acqua, orzo e luppolo: il lievito non era ancora conosciuto.
+Il Reinheitsgebot era anche una misura per riservare il frumento ai fornai.
+In Belgio esistono birre a fermentazione spontanea, i lambic, prodotte nella valle della Senne.
+I lambic vengono inoculati dai microrganismi presenti nell'aria tramite vasche di raffreddamento aperte chiamate coolship.
+Il gueuze è una miscela di lambic giovani e vecchi rifermentata in bottiglia.
+La kriek è un lambic con ciliegie, la framboise con lamponi.
+I lambic usano luppolo invecchiato, per sfruttarne le proprietà conservanti e non l'amaro.
+Il Brettanomyces dà aromi "funky" come cuoio, sudore di cavallo e stalla: amato in alcuni stili, temuto in altri.
+Il Lactobacillus produce acido lattico ed è usato nelle sour come Berliner Weisse e Gose.
+La Gose è una birra tedesca con sale e coriandolo, originaria della città di Goslar.
+La Berliner Weisse veniva spesso servita con sciroppo di lampone o di asperula.
+Napoleone avrebbe definito la Berliner Weisse "lo champagne del Nord" (aneddoto tradizionale).
+Esistono solo una manciata di birrifici trappisti autorizzati a usare il logo "Authentic Trappist Product".
+Una birra trappista deve essere prodotta all'interno o nei pressi di un'abbazia, sotto il controllo dei monaci.
+Secondo una spiegazione popolare (non confermata), i nomi Dubbel e Tripel verrebbero dalle croci segnate sui fusti per indicarne la forza.
+Tre Fontane, vicino a Roma, è l'unica abbazia trappista italiana con birra certificata.
+Lo stile Italian Grape Ale (IGA) prevede l'uso di uva o mosto d'uva: un contributo italiano al mondo della birra.
+L'Italia ha visto nascere i primi birrifici artigianali moderni nel 1996.
+Le IPA nacquero in Inghilterra nel XIX secolo e venivano spedite in India.
+Il mito che le IPA fossero "inventate" apposta per il viaggio in India è una semplificazione: le pale ale molto luppolate esistevano già.
+La porter prende probabilmente il nome dai facchini (porters) di Londra che la bevevano.
+La stout nasce come versione "stout", cioè robusta, della porter.
+La Russian Imperial Stout era esportata verso la corte russa nel Settecento.
+La Märzen prende il nome da marzo, mese in cui veniva prodotta prima della pausa estiva.
+In Baviera era vietato fare birra d'estate per il rischio di incendi e infezioni.
+La Kölsch può chiamarsi così solo se prodotta nella zona di Colonia.
+Le Altbier di Düsseldorf sono ale fermentate e poi maturate al freddo, "alla vecchia maniera".
+Le Rauchbier di Bamberga usano malto affumicato con legno di faggio.
+La Steam Beer californiana fermentava lievito lager a temperature da ale.
+La Hefeweizen è torbida perché non filtrata e ricca di lievito in sospensione.
+La Witbier belga usa frumento non maltato, coriandolo e scorza d'arancia amara.
+La Saison era la birra dei lavoratori stagionali nelle fattorie della Vallonia.
+Il lievito saison è noto per poter attenuare moltissimo, lasciando birre molto secche.
+Le NEIPA sono torbide per la combinazione di proteine, polifenoli dei luppoli e lievito.
+La "biotrasformazione" è la modifica dei composti aromatici del luppolo da parte del lievito in fermentazione.
+Il dry hopping aggiunge aroma senza aggiungere amaro significativo.
+L'"hop creep" è una ripresa di fermentazione causata da enzimi presenti nel luppolo in dry hop.
+Il luppolo Cascade, rilasciato nel 1972, è il simbolo delle American Pale Ale.
+Il Citra, rilasciato nel 2007, ha aromi di agrumi e frutta tropicale.
+Il Saaz è il luppolo nobile ceco per eccellenza, usato nelle Pilsner.
+I quattro luppoli "nobili" tradizionali sono Hallertau Mittelfrüh, Tettnanger, Spalter e Saaz.
+La Nuova Zelanda produce luppoli con note di uva spina e frutto della passione, come il Nelson Sauvin.
+Il nome Nelson Sauvin richiama le note di Sauvignon Blanc che il luppolo ricorda.
+I luppoli vanno conservati sottovuoto e in freezer: gli alfa acidi calano con calore e ossigeno.
+Il "Hop Storage Index" indica quanto un luppolo ha perso freschezza.
+Il malto crystal/caramel viene "stufato" umido, caramellizzando gli zuccheri all'interno del chicco.
+I malti crystal non contengono amidi da convertire: possono essere messi in infusione anche fuori dal mash.
+Il malto acidulato contiene acido lattico ed è usato per abbassare il pH del mash.
+Ogni 1% di malto acidulato abbassa il pH del mash di circa 0,1 punti (regola empirica).
+Il gesso (CaSO₄) esalta la secchezza dell'amaro, il cloruro di calcio (CaCl₂) la rotondità maltata.
+Il rapporto solfati/cloruri è una delle leve più usate per bilanciare il profilo di una birra.
+Il calcio è importante nel mash: aiuta gli enzimi e la flocculazione del lievito.
+Il bicarbonato nell'acqua alza il pH del mash: le acque dure e alcaline si adattano bene alle birre scure.
+I malti scuri sono acidi: per questo Dublino, con acqua alcalina, è diventata patria delle stout.
+Il cloro e le clorammine dell'acqua di rete possono creare clorofenoli dal sapore medicinale.
+Mezza compressa di metabisolfito di potassio (Campden) neutralizza il cloro di circa 75 litri d'acqua.
+Lo sparge troppo caldo (oltre 78 °C) o con pH alto estrae tannini astringenti dalle bucce.
+La "fly sparge" è il risciacquo continuo, la "batch sparge" a lotti: entrambe funzionano bene.
+Il BIAB (Brew In A Bag) usa una sacca per contenere i grani ed evita lo sparge tradizionale.
+L'efficienza di mash in casa varia spesso tra il 65% e l'80%.
+Macinare più fine aumenta l'efficienza ma può bloccare il filtraggio: con il BIAB si può osare di più.
+Il guscio dell'orzo funziona da letto filtrante naturale durante il filtraggio.
+La lolla di riso si aggiunge per evitare filtraggi bloccati con tanto frumento o avena.
+L'avena dà una sensazione setosa al palato grazie ai beta-glucani.
+Un buon mosto di partenza (starter) aiuta il lievito a partire senza stress.
+Il tasso di inoculo consigliato per le lager è circa il doppio di quello per le ale.
+Il lievito secco non ha bisogno di starter, ma una reidratazione corretta lo rende più vitale.
+Il Kveik è un lievito tradizionale norvegese che fermenta pulito anche a 35–40 °C.
+Il Kveik veniva tramandato nelle famiglie norvegesi e conservato essiccato su anelli di legno.
+Il lievito flocculante si deposita rapidamente sul fondo, dando birre più limpide.
+L'attenuazione apparente indica quanta parte degli zuccheri è stata fermentata secondo il densimetro.
+Una FG stabile per tre giorni consecutivi è il segnale classico di fine fermentazione.
+Imbottigliare prima della fine della fermentazione è la causa principale di bottiglie esplosive.
+Lo zucchero da tavola (saccarosio) è perfettamente adatto al priming.
+La birra "verde" appena imbottigliata ha bisogno di almeno 2–3 settimane per carbonarsi bene.
+La temperatura di rifermentazione in bottiglia ideale per una ale è di 18–22 °C.
+La maturazione al freddo (lagering) affina il gusto e chiarifica la birra.
+La parola "lager" viene dal tedesco "lagern", cioè conservare, immagazzinare.
+Il termine "ale" in antico inglese indicava la birra non luppolata.
+La parola "birra" in italiano deriva dal tedesco "Bier".
+La parola spagnola "cerveza" deriva dal latino "cervisia", di origine gallica.
+Ninkasi era la dea sumera della birra: un inno a lei contiene una delle più antiche "ricette".
+La Cechia ha uno dei consumi di birra pro capite più alti al mondo.
+L'Oktoberfest di Monaco nacque nel 1810 per festeggiare un matrimonio reale.
+All'Oktoberfest possono servire birra solo i birrifici di Monaco.
+Il bicchiere Teku, molto usato nei pub artigianali, è stato disegnato in Italia.
+Le birre forti si servono meno fredde: il freddo eccessivo copre gli aromi.
+La temperatura di servizio ideale per una stout è intorno ai 10–13 °C.
+Il sedimento di lievito sul fondo della bottiglia è commestibile e ricco di vitamine del gruppo B.
+Versare la birra inclinando il bicchiere e raddrizzandolo alla fine dà la schiuma giusta.
+Una "session beer" è una birra a bassa gradazione pensata per berne più di una.
+Le Barleywine possono superare il 10% di alcol e invecchiare per anni.
+L'Eisbock si ottiene congelando parzialmente una Doppelbock e togliendo il ghiaccio, per concentrarla.
+Molte Doppelbock tedesche hanno nomi che finiscono in "-ator", in omaggio alla Salvator dei monaci paolani.
+I monaci paolani di Monaco bevevano Doppelbock durante la Quaresima: il "pane liquido".
+I luppoli "aroma" vengono aggiunti a fine bollitura per non disperdere gli oli volatili.
+Il mircene è uno degli oli essenziali più abbondanti nel luppolo e si disperde facilmente con il calore.
+Il linalolo dà note floreali e di lavanda a molti luppoli.
+Il sanitizer a base di acido peracetico o Star San funziona in pochi minuti senza risciacquo.
+Pulire e sanitizzare sono due cose diverse: prima si toglie lo sporco, poi si uccidono i microbi.
+La schiuma dello Star San non è un problema: "don't fear the foam" dicono gli homebrewer americani.
+Il luppolo cresce in senso orario attorno al suo sostegno.
+Il punto di ebollizione dell'acqua cala con l'altitudine: in montagna la bollitura isomerizza un po' meno luppolo.
+Le bottiglie da 0,33 L sono il formato più diffuso in Italia per la birra artigianale.
+Le birre ad alta gradazione richiedono più tempo per carbonarsi: il lievito lavora più lentamente in ambiente alcolico.
