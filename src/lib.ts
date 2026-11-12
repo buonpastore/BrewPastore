@@ -2,8 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 
 // URL e chiave "publishable" sono pubblici per design: la sicurezza è nelle policy del database (RLS).
 // Le variabili d'ambiente VITE_SUPABASE_* hanno la precedenza (utile per sviluppo/test).
-const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || "https://yfinekpfymzpfhrlfpkz.supabase.co";
-const key = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || "sb_publishable_7sKoSMI-AYzOWKgDx6nz4w_ko447jxG";
+const rawUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || "https://yfinekpfymzpfhrlfpkz.supabase.co";
+// accetta anche ".../rest/v1/" incollato per sbaglio
+const url = rawUrl.replace(/\/(rest|auth)\/v1\/?$/, "").replace(/\/+$/, "");
+const key = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() || "sb_publishable_7sKoSMI-AYzOWKgDx6nz4w_ko447jxG";
 export const configured = Boolean(url && key);
 export const supabase = createClient(url ?? "http://localhost", key ?? "missing");
 
