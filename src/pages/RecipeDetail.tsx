@@ -12,6 +12,7 @@ import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { BrewDay } from "./BrewDay";
+import { CleanNamesButton } from "../components/CleanNames";
 import { deleteRecipe, deletionSummary } from "../deleteHelpers";
 
 export const RECIPE_SECTIONS: { title?: string; fields: FieldDef[] }[] = [
@@ -138,6 +139,7 @@ export function RecipeDetail() {
               <FilePicker compact allowText textPlaceholder="Incolla qui il testo della ricetta (es. copiato da una chat con l'AI)" onFiles={(f) => { setPasted(f); setImporting(true); }} accept="image/*,application/pdf,.txt,.md"
                 title="📋 Importa ingredienti" hint="anche più screenshot" />
             )}
+            {isAdmin && <div className="row-actions" style={{ margin: "-6px 0 10px" }}><CleanNamesButton table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} onDone={() => setReloadIng((x) => x + 1)} /></div>}
             <RowsEditor table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} fields={ingFields}
               canEdit={isAdmin} orderBy={{ column: "sort_order" }} defaults={{ category: "malto", unit: "kg" }}
               reloadKey={reloadIng} />

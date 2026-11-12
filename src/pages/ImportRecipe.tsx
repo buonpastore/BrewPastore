@@ -23,6 +23,13 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
   const [paths, setPaths] = useState<string[]>([]);
   const [picked, setPicked] = useState<File[]>(initialFiles ?? []);
   const [fillFields, setFillFields] = useState(!recipeId);
+  const [existing, setExisting] = useState(0);
+  const [replace, setReplace] = useState(true);
+  useEffect(() => {
+    if (!recipeId) return;
+    supabase.from("recipe_ingredients").select("id", { count: "exact", head: true }).eq("recipe_id", recipeId)
+      .then(({ count }) => setExisting(count ?? 0));
+  }, [recipeId]);
   const [error, setError] = useState("");
 
   const read = async () => {
@@ -71,6 +78,10 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
         const { error } = await supabase.from("recipes").update(patch).eq("id", id);
         if (error) throw error;
       }
+      if (recipeId && replace && existing > 0) {
+        const { error } = await supabase.from("recipe_ingredients").delete().eq("recipe_id", id);
+        if (error) throw error;
+      }
       const { count } = await supabase.from("recipe_ingredients").select("id", { count: "exact", head: true }).eq("recipe_id", id);
       const rows = [];
       for (const [i, ing] of ingredients.entries()) {
@@ -115,6 +126,12 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
                     onChange={(e) => setData({ ...data, [k]: e.target.value === "" ? null : Number(e.target.value) })} />
                 </label>
               ))}
+              {recipeId && existing > 0 && (
+                <label className="check wide">
+                  <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
+                  sostituisci i {existing} ingredienti attuali (se togli la spunta vengono aggiunti in fondo)
+                </label>
+              )}
               {recipeId && (
                 <label className="check wide"><input type="checkbox" checked={fillFields} onChange={(e) => setFillFields(e.target.checked)} /> aggiorna anche i parametri della ricetta (OG, FG, IBU, mash…)</label>
               )}

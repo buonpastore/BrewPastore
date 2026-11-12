@@ -319,3 +319,9 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     ingredients,
   };
 }
+
+/** Pulisce il nome di un ingrediente già salvato (stesse regole dell'import). */
+export function cleanSavedName(name: string, category: string): string {
+  const n = tidyName(cleanIngredientName(name), category);
+  return n ? n.charAt(0).toUpperCase() + n.slice(1) : name;
+}

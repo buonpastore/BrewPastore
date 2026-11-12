@@ -14,6 +14,7 @@ import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
 import { BatchEvaluation } from "./Evaluation";
 import { BrewDay } from "./BrewDay";
+import { CleanNamesButton } from "../components/CleanNames";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { deleteBatches, deletionSummary } from "../deleteHelpers";
 
@@ -237,6 +238,7 @@ export function BatchDetail() {
   const [materials, setMaterials] = useState<Row[]>([]);
   const [tab, setTab] = useState("log");
   const [deleting, setDeleting] = useState(false);
+  const [reloadIng, setReloadIng] = useState(0);
   const nav = useNavigate();
 
   useEffect(() => {
@@ -316,7 +318,8 @@ export function BatchDetail() {
         {tab === "ingredienti" && (
           <>
             <p className="muted small">Copiati dalla ricetta alla creazione del batch: correggi le quantità realmente usate. Il costo usa la materia prima collegata.</p>
-            <RowsEditor table="batch_ingredients" parentKey="batch_id" parentId={batch.id} canEdit={isAdmin}
+            {isAdmin && <div className="row-actions" style={{ margin: "0 0 10px" }}><CleanNamesButton table="batch_ingredients" parentKey="batch_id" parentId={batch.id} onDone={() => setReloadIng((x) => x + 1)} /></div>}
+            <RowsEditor table="batch_ingredients" parentKey="batch_id" parentId={batch.id} canEdit={isAdmin} reloadKey={reloadIng}
               defaults={{ unit: "kg", category: "malto" }}
               fields={[
                 { key: "name", label: "Ingrediente", required: true },

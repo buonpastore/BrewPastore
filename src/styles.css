@@ -597,3 +597,8 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%); mask-image: linear-gradient(90deg, transparent, #000 45%); }
 .login::before { opacity: .16; background-size: min(110vw, 1000px) auto; background-position: center; }
 @media (max-width: 600px) { .app::before { width: 100vw; height: 70vw; opacity: .06; } .hero::after { width: 170px; opacity: .3; } }
+.clean-list { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+.clean-list li { display: flex; gap: 10px; align-items: flex-start; background: var(--surface-2); border-radius: var(--r-sm); padding: 9px 12px; }
+.clean-list li > div { flex: 1; min-width: 0; }
+.clean-list .from { color: var(--err); text-decoration: line-through; opacity: .8; margin-bottom: 4px; overflow-wrap: anywhere; }
+.clean-list input:not([type]) { width: 100%; }
