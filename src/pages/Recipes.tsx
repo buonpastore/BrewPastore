@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase, errMsg, sg, num, date, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ImportRecipe } from "./ImportRecipe";
+import { STYLE_OPTIONS } from "../styles-list";
 
 export function Recipes() {
   const { isAdmin } = useAuth();
@@ -10,6 +11,7 @@ export function Recipes() {
   const [rows, setRows] = useState<Row[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [q, setQ] = useState("");
+  const [style, setStyle] = useState("");
   const [importing, setImporting] = useState(false);
 
   useEffect(() => {
@@ -25,7 +27,9 @@ export function Recipes() {
     nav(`/ricette/${data.id}?edit=1`);
   };
 
-  const list = rows.filter((r) => (showArchived || !r.archived) && (r.name + " " + (r.style ?? "")).toLowerCase().includes(q.toLowerCase()));
+  const list = rows.filter((r) => (showArchived || !r.archived) && (!style || r.style === style) && (r.name + " " + (r.style ?? "")).toLowerCase().includes(q.toLowerCase()));
+  const usedStyles = [...new Set(rows.map((r) => r.style).filter(Boolean))] as string[];
+  const styleChoices = [...STYLE_OPTIONS.filter((o) => !o.disabled && usedStyles.includes(o.value)).map((o) => o.value), ...usedStyles.filter((s) => !STYLE_OPTIONS.some((o) => o.value === s))];
 
   return (
     <div>
@@ -40,6 +44,12 @@ export function Recipes() {
       </div>
       <div className="toolbar">
         <input placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} />
+        {styleChoices.length > 0 && (
+          <select value={style} onChange={(e) => setStyle(e.target.value)}>
+            <option value="">Tutti gli stili</option>
+            {styleChoices.map((s) => <option key={s}>{s}</option>)}
+          </select>
+        )}
         <label className="check"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> mostra archiviate</label>
       </div>
       {importing && <ImportRecipe onClose={() => setImporting(false)} />}

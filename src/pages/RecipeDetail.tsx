@@ -10,11 +10,12 @@ import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
 import { ImportRecipe } from "./ImportRecipe";
+import { STYLE_OPTIONS } from "../styles-list";
 
 export const RECIPE_SECTIONS: { title?: string; fields: FieldDef[] }[] = [
   { title: "Generale", fields: [
     { key: "name", label: "Nome", required: true },
-    { key: "style", label: "Stile" },
+    { key: "style", label: "Stile", type: "select", options: STYLE_OPTIONS, allowCustom: true },
     { key: "batch_size_l", label: "Volume batch (L)", type: "number" },
     { key: "description", label: "Descrizione", type: "textarea" },
   ]},

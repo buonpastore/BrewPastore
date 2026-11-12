@@ -92,6 +92,11 @@ Estrai la ricetta completa. Regole:
 - Se lo stesso luppolo è usato in momenti diversi, crea una riga per ogni aggiunta.
 - Mantieni le quantità e le unità della ricetta (kg/g/l/ml/pz). Una bustina di lievito = 1 pz se il peso non è indicato.
 - Se la ricetta propone alternative, scegli la prima e segnala le alternative in notes.
+- Per lo stile usa, se corrisponde, uno di questi nomi esatti: IPA, Weiss, Blanche, Dubbel, APA, English Ale, Winter Ale, Bock,
+  Doppelbock, Pilsner, Helles, Lager, Märzen, Dunkel, Schwarzbier, Vienna Lager, Rauchbier, Bitter, Golden Ale, Brown Ale,
+  Irish Red Ale, Porter, Stout, Imperial Stout, Barley Wine, Scotch Ale, American Amber Ale, Session IPA, Double IPA, NEIPA,
+  Black IPA, Cream Ale, Tripel, Quadrupel, Belgian Strong Ale, Saison, Belgian Blonde, Kölsch, Altbier, Dunkelweizen,
+  Weizenbock, Berliner Weisse, Gose, Lambic, Sour Ale, Italian Grape Ale, Birra alla frutta. Altrimenti scrivi lo stile com'è.
 - Se un dato manca usa null; non inventare valori.`;
 
 const QUOTE_SCHEMA = {

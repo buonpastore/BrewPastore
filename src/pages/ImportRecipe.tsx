@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FilePicker } from "../components/FilePicker";
+import { FieldInput } from "../components/fields";
+import { STYLE_OPTIONS } from "../styles-list";
 import { supabase, uploadFile, parseRecipe, findOrCreateMaterial, errMsg, MATERIAL_CATEGORIES, UNITS, type ParsedRecipe } from "../lib";
 
 interface Props {
@@ -87,7 +89,7 @@ export function ImportRecipe({ onClose, recipeId, onDone }: Props) {
           <>
             <div className="form-grid">
               {!recipeId && <label><span>Nome</span><input value={data.name ?? ""} onChange={(e) => setData({ ...data, name: e.target.value })} /></label>}
-              <label><span>Stile</span><input value={data.style ?? ""} onChange={(e) => setData({ ...data, style: e.target.value })} /></label>
+              <label><span>Stile</span><FieldInput f={{ key: "style", label: "Stile", type: "select", options: STYLE_OPTIONS, allowCustom: true }} value={data.style ?? ""} onChange={(v) => setData({ ...data, style: (v as string) || null })} /></label>
               <div className="muted small wide">
                 Batch {data.batch_size_l ?? "?"} L · OG {data.target_og ?? "?"} · FG {data.target_fg ?? "?"} · IBU {data.target_ibu ?? "?"} · Mash {data.mash_temp_c ?? "?"}°C × {data.mash_time_min ?? "?"} min
               </div>

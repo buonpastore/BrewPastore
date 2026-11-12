@@ -6,7 +6,9 @@ export interface FieldDef {
   key: string;
   label: string;
   type?: FieldType;
-  options?: { value: string; label: string }[] | string[];
+  options?: { value: string; label: string; disabled?: boolean }[] | string[];
+  /** per i menu a tendina: permette di scrivere un valore non in elenco */
+  allowCustom?: boolean;
   step?: string;
   placeholder?: string;
   required?: boolean;
@@ -15,7 +17,7 @@ export interface FieldDef {
   wide?: boolean;
 }
 
-export function optionList(o: FieldDef["options"]) {
+export function optionList(o: FieldDef["options"]): { value: string; label: string; disabled?: boolean }[] {
   return (o ?? []).map((x) => (typeof x === "string" ? { value: x, label: x } : x));
 }
 
@@ -43,13 +45,26 @@ export function FieldInput({ f, value, onChange }: { f: FieldDef; value: unknown
   switch (f.type) {
     case "textarea":
       return <textarea {...common} rows={4} value={toInput(f, value)} onChange={(e) => onChange(e.target.value)} />;
-    case "select":
+    case "select": {
+      const opts = optionList(f.options);
+      const cur = toInput(f, value);
+      const isCustom = cur !== "" && !opts.some((o) => o.value === cur);
       return (
-        <select {...common} value={toInput(f, value)} onChange={(e) => onChange(e.target.value)}>
+        <select {...common} value={cur} onChange={(e) => {
+          if (e.target.value === "__custom__") {
+            const v = prompt(`Scrivi ${f.label.toLowerCase()}`, isCustom ? cur : "");
+            if (v && v.trim()) onChange(v.trim());
+            return;
+          }
+          onChange(e.target.value);
+        }}>
           {!f.required && <option value="">—</option>}
-          {optionList(f.options).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          {isCustom && <option value={cur}>{cur}</option>}
+          {opts.map((o) => <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>)}
+          {f.allowCustom && <option value="__custom__">✏️ Altro (scrivi tu)…</option>}
         </select>
       );
+    }
     case "checkbox":
       return <input id={f.key} type="checkbox" checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />;
     case "number":
