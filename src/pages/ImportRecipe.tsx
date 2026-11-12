@@ -64,18 +64,29 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
   };
 
   const save = async () => {
+    let waterSkipped = false;
     if (!data) return;
     setStep("saving"); setError("");
     try {
       const { ingredients, ...fields } = data;
       let id = recipeId;
       if (!id) {
-        const { data: r, error } = await supabase.from("recipes").insert({ ...fields, name: fields.name || "Ricetta importata" }).select().single();
+        const rec = { ...fields, name: fields.name || "Ricetta importata" };
+        let { data: r, error } = await supabase.from("recipes").insert(rec).select().single();
+        if (error && isMissingWater(error)) {
+          // database non ancora aggiornato (file 0006): salva senza i campi dell'acqua
+          waterSkipped = true;
+          ({ data: r, error } = await supabase.from("recipes").insert(withoutWater(rec)).select().single());
+        }
         if (error) throw error;
-        id = r.id;
+        id = r!.id;
       } else if (fillFields) {
         const patch = Object.fromEntries(Object.entries(fields).filter(([k, v]) => v != null && k !== "name"));
-        const { error } = await supabase.from("recipes").update(patch).eq("id", id);
+        let { error } = await supabase.from("recipes").update(patch).eq("id", id);
+        if (error && isMissingWater(error)) {
+          waterSkipped = true;
+          ({ error } = await supabase.from("recipes").update(withoutWater(patch)).eq("id", id));
+        }
         if (error) throw error;
       }
       if (recipeId && replace && existing > 0) {
@@ -94,6 +105,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
         if (error) throw error;
       }
       await supabase.from("documents").insert(paths.map((p, i) => ({ title: `Fonte ricetta (import)${paths.length > 1 ? ` ${i + 1}` : ""}`, kind: "foto", storage_path: p, recipe_id: id })));
+      if (waterSkipped) alert("Ricetta salvata. L'acqua di mash e sparge non è stata salvata perché su Supabase manca ancora il file 0006_acqua_ricetta.sql: eseguilo e poi inserisci l'acqua dalla scheda Acqua.");
       onDone?.();
       onClose();
       if (!recipeId) nav(`/ricette/${id}`);
@@ -183,4 +195,11 @@ export function PickedList({ files, onRemove }: { files: File[]; onRemove: (i: n
       ))}
     </ul>
   );
+}
+
+const isMissingWater = (e: { message?: string }) => /mash_water_l|sparge_water_l/.test(e.message ?? "");
+function withoutWater<T extends Record<string, unknown>>(o: T) {
+  const { mash_water_l: _m, sparge_water_l: _s, ...rest } = o;
+  void _m; void _s;
+  return rest;
 }
