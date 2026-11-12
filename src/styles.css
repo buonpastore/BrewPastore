@@ -939,3 +939,4 @@ button.qe-title { width: 100%; background: none; border: 0; padding: 0; cursor: 
 .recipe-pick-btn strong { font-size: 1.05rem; color: var(--gold); }
 .recipe-pick-btn:hover, .recipe-pick-btn:active { border-color: var(--gold); }
 .qe-phase { scroll-margin-top: calc(var(--topbar-h) + 12px); }
+.mat-name { font-weight: 600; } .mat-name:hover { filter: brightness(1.15); text-decoration: none; }

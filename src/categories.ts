@@ -13,3 +13,7 @@ export const CAT_INFO: Record<string, { label: string; color: string; emoji: str
 };
 export const catColor = (c?: string | null) => (CAT_INFO[c ?? ""] ?? CAT_INFO.altro).color;
 export const catLabel = (c?: string | null) => (CAT_INFO[c ?? ""] ?? CAT_INFO.altro).label;
+
+/** Colore del NOME di un ingrediente: malti, luppoli e lieviti col loro colore; il resto neutro. */
+export const nameColor = (c?: string | null) =>
+  c === "malto" || c === "luppolo" || c === "lievito" ? catColor(c) : "var(--text)";

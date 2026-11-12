@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Wheat, Leaf, FlaskConical, Droplets, Sparkles, Package } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase, num, type Row } from "../lib";
-import { CAT_INFO } from "../categories";
+import { CAT_INFO, nameColor } from "../categories";
 
 const ORDER = ["malto", "luppolo", "lievito", "sali_acqua", "additivo", "bottiglie", "tappi", "etichette", "detergenti", "altro"];
 const ICONS: Record<string, ReactNode> = {
@@ -54,7 +54,7 @@ export function IngredientsView({ table, parentKey, parentId, volume, reloadKey 
                     <div key={i.id} className="ing-tile">
                       <span className="ing-tile-ico">{g.icon}</span>
                       <div className="ing-tile-body">
-                        <span className="ing-name">{i.name}</span>
+                        <span className="ing-name" style={{ color: nameColor(i.category) }}>{i.name}</span>
                         <strong className="ing-amount">{qty(i)}{pct != null && <span className="ing-pct">{num(pct, 0)}%</span>}</strong>
                         {i.step && <span className="ing-step">{i.step}</span>}
                         {pct != null && <div className="ing-bar"><span style={{ width: `${pct}%` }} /></div>}

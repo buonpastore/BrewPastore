@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.056", date: "13/11/2026 02:45", text: "Nomi degli ingredienti colorati: malti giallino, luppoli verdino, lieviti rossino, il resto neutro (materie prime, ingredienti, cottura)" },
   { version: "0.055", date: "13/11/2026 02:35", text: "Nuovo batch anche dalla sezione Batch con scelta della ricetta; i pulsanti di stato aprono solo la fase interessante" },
   { version: "0.054", date: "13/11/2026 02:20", text: "Scheda ricetta: riquadri ordinati (3+3 e 4), riassunto del procedimento e passi a schede con i dettagli in elenco" },
   { version: "0.053", date: "13/11/2026 02:05", text: "Ingredienti a riquadri con icona, nome colorato per categoria e quantità in evidenza" },

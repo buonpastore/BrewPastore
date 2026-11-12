@@ -1,6 +1,7 @@
 import { Droplets, Wheat, ShowerHead, Flame, Wind, Snowflake, FlaskConical, ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 import { num, type Row } from "../lib";
+import { nameColor } from "../categories";
 
 interface Props {
   ingredients: Row[];
@@ -45,7 +46,7 @@ function Items({ list, showStep }: { list: Row[]; showStep?: boolean }) {
       {list.map((i) => (
         <li key={i.id ?? i.name + i.step}>
           <span className={"bd-cat c-" + i.category} />
-          <strong>{i.name}</strong> <span className="muted">{qty(i)}</span>
+          <strong style={{ color: nameColor(i.category) }}>{i.name}</strong> <span className="muted">{qty(i)}</span>
           {showStep && i.step && <span className="badge">{i.step}</span>}
         </li>
       ))}
