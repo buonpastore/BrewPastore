@@ -774,3 +774,16 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .rc-trait span { font-size: .75rem; color: var(--muted); }
 .rc-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .25); flex: none; }
 .rc-desc { font-size: .85rem; color: var(--muted); margin: 0 0 8px; line-height: 1.4; }
+
+/* ---------------- batch: 4 pulsanti di stato larghi, uno per riga ---------------- */
+.quick-status { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 18px; }
+.qs-btn {
+  width: 100%; min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 18px; border-radius: 14px; cursor: pointer; touch-action: manipulation;
+  background: var(--surface); color: var(--text); border: 1px solid var(--line-strong); border-left: 5px solid var(--c);
+  font: 700 1.08rem var(--sans); transition: background .15s, transform .05s;
+}
+.qs-btn:hover { background: var(--surface-2); }
+.qs-btn:active { transform: scale(.99); background: color-mix(in srgb, var(--c) 18%, var(--surface)); }
+.qs-btn.done { background: color-mix(in srgb, var(--c) 10%, var(--surface)); }
+.qs-date { font-size: .85rem; font-weight: 600; color: var(--c); white-space: nowrap; }

@@ -68,11 +68,11 @@ const SECTIONS: { title?: string; fields: FieldDef[] }[] = [
   ]},
 ];
 
-const QUICK: { status: string; field: string; label: string }[] = [
-  { status: "cotta", field: "brew_date", label: "🔥 Cotta oggi" },
-  { status: "fermentazione", field: "fermentation_start", label: "🫧 In fermentazione da oggi" },
-  { status: "imbottigliato", field: "bottling_date", label: "🍾 Imbottigliata oggi" },
-  { status: "finito", field: "first_tasting_date", label: "🍻 Bevuta oggi!" },
+const QUICK: { status: string; field: string; label: string; color: string }[] = [
+  { status: "cotta", field: "brew_date", label: "🔥 Cotta oggi", color: "var(--gold)" },
+  { status: "fermentazione", field: "fermentation_start", label: "🫧 Fermentata oggi", color: "var(--teal)" },
+  { status: "imbottigliato", field: "bottling_date", label: "🍾 Imbottigliata oggi", color: "var(--magenta)" },
+  { status: "finito", field: "first_tasting_date", label: "🍻 Bevuta oggi", color: "var(--gold)" },
 ];
 
 function PrimingCalc({ batch }: { batch: Row }) {
@@ -293,6 +293,7 @@ export function BatchDetail() {
 
   const quick = async (q: (typeof QUICK)[number]) => {
     const today = new Date().toISOString().slice(0, 10);
+    if (batch![q.field] && batch![q.field] !== today && !confirm(`${q.label.replace(/^\S+\s/, "")}: era già segnata il ${date(batch![q.field])}. Cambiare la data in oggi?`)) return;
     const { data, error } = await supabase.from("batches").update({ status: q.status, [q.field]: today }).eq("id", batch!.id).select().single();
     if (error) return alert(errMsg(error));
     setBatch(data);
@@ -310,13 +311,21 @@ export function BatchDetail() {
           <h1>{batch.code} <span className={"badge st-" + batch.status}>{STATUS_LABELS[batch.status]}</span></h1>
           {recipe && <div className="muted">Ricetta: <Link to={`/ricette/${recipe.id}`}>{recipe.name}</Link> · obiettivo OG {sg(recipe.target_og)} / FG {sg(recipe.target_fg)}</div>}
         </div>
-        {isAdmin && (
-          <div className="row-actions wrap">
-            {QUICK.map((q) => <button key={q.status} className="btn small" onClick={() => quick(q)}>{q.label}</button>)}
-            <button className="btn small danger" onClick={() => setDeleting(true)}>🗑️ Elimina batch</button>
-          </div>
-        )}
+        {isAdmin && <button className="mini-btn" onClick={() => setDeleting(true)}>🗑️ <span>Elimina batch</span></button>}
       </div>
+      {isAdmin && (
+        <div className="quick-status">
+          {QUICK.map((q) => {
+            const done = batch[q.field];
+            return (
+              <button key={q.status} className={"qs-btn" + (done ? " done" : "")} style={{ ["--c" as string]: q.color }} onClick={() => quick(q)}>
+                <span className="qs-label">{q.label}</span>
+                {done && <span className="qs-date">✓ {date(done)}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {deleting && (
         <DeleteDialog title="Elimina batch" name={batch.code}
