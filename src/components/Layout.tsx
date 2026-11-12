@@ -16,16 +16,16 @@ export const GROUPS: Group[] = [
   {
     key: "produzione", label: "Produzione", icon: Beer, to: "/ricette", color: "var(--gold)",
     tabs: [
-      { to: "/ricette", label: "Ricette", icon: BookOpen, color: "var(--teal)" },
-      { to: "/batch", label: "Batch", icon: Beer, color: "var(--gold)" },
+      { to: "/ricette", label: "Ricette", icon: BookOpen, color: "var(--gold)" },
+      { to: "/batch", label: "Batch", icon: Beer, color: "var(--teal)" },
       { to: "/degustazioni", label: "Degustazioni", icon: Star, color: "var(--magenta)" },
     ],
   },
   {
     key: "conti", label: "Conti", icon: Coins, to: "/spese", color: "var(--teal)",
     tabs: [
-      { to: "/spese", label: "Spese condivise", icon: Wallet, color: "var(--hop)" },
-      { to: "/materie-prime", label: "Materie prime", icon: Wheat, color: "var(--gold)", also: ["/acquisti"] },
+      { to: "/spese", label: "Spese condivise", icon: Wallet, color: "var(--gold)" },
+      { to: "/materie-prime", label: "Materie prime", icon: Wheat, color: "var(--teal)", also: ["/acquisti"] },
       { to: "/impianto", label: "Preventivi impianto", icon: Wrench, color: "var(--magenta)" },
     ],
   },
@@ -81,7 +81,7 @@ export function Layout() {
               </NavLink>
               {g.tabs && active && (
                 <div className="sub">
-                  {g.tabs.map((t) => <NavLink key={t.to} to={t.to} className={tabActive(t, loc.pathname) ? "active" : ""}>{t.label}</NavLink>)}
+                  {g.tabs.map((t) => <NavLink key={t.to} to={t.to} style={{ ["--c" as string]: t.color }} className={tabActive(t, loc.pathname) ? "active" : ""}>{t.label}</NavLink>)}
                 </div>
               )}
             </div>

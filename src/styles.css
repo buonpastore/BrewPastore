@@ -276,9 +276,6 @@ td input, td select { min-height: 34px; padding: 5px 9px; }
   color: var(--text); box-shadow: var(--shadow); position: relative; overflow: hidden; transition: transform .15s, border-color .15s;
 }
 .card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--teal); }
-.cards > .card:nth-child(4n+2)::before { background: var(--gold); }
-.cards > .card:nth-child(4n+3)::before { background: var(--magenta); }
-.cards > .card:nth-child(4n+4)::before { background: var(--hop); }
 .card:hover { transform: translateY(-2px); border-color: var(--line-strong); color: var(--text); }
 .card h3 { margin: 0 0 4px; color: var(--text); font-size: 1.1rem; text-transform: none; letter-spacing: 0; }
 .stats { display: flex; gap: 14px; flex-wrap: wrap; font-size: .88rem; font-weight: 600; margin: 10px 0 8px; color: var(--muted); }
@@ -290,9 +287,6 @@ td input, td select { min-height: 34px; padding: 5px 9px; }
   display: flex; flex-direction: column; gap: 3px; position: relative; overflow: hidden;
 }
 .kpi::after { content: ""; position: absolute; right: 14px; top: 16px; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
-.kpis > .kpi:nth-child(4n+2)::after { background: var(--hop); }
-.kpis > .kpi:nth-child(4n+3)::after { background: var(--magenta); }
-.kpis > .kpi:nth-child(4n+4)::after { background: var(--orange); }
 .kpi > span:first-child { font-size: .78rem; font-weight: 600; color: var(--muted); padding-right: 14px; }
 .kpi strong { font-size: 1.55rem; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
 .kpi.main { background: linear-gradient(150deg, rgba(237, 165, 18, .18), rgba(237, 165, 18, .05)); border-color: rgba(237, 165, 18, .3); }
@@ -602,3 +596,39 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .clean-list li > div { flex: 1; min-width: 0; }
 .clean-list .from { color: var(--err); text-decoration: line-through; opacity: .8; margin-bottom: 4px; overflow-wrap: anywhere; }
 .clean-list input:not([type]) { width: 100%; }
+
+/* ---------------- solo tre colori: giallo · ciano · magenta ---------------- */
+.section-tabs a.active { background: var(--c, var(--gold)); color: #1f1500; }
+.section-tabs a.active svg { color: #1f1500; }
+.sidebar .sub a.active { color: var(--c, var(--gold)); }
+.sidebar .sub a.active::after { content: ""; position: absolute; left: -9px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--c, var(--gold)); }
+.sidebar .sub a { position: relative; }
+/* schede e riquadri: ciclo di tre colori */
+.card::before { background: var(--gold); }
+.cards > .card:nth-child(3n+2)::before { background: var(--teal); }
+.cards > .card:nth-child(3n+3)::before { background: var(--magenta); }
+.cards > .card:nth-child(3n+1)::before { background: var(--gold); }
+.kpi::after { background: var(--gold); }
+.kpis > .kpi:nth-child(3n+2)::after { background: var(--teal); }
+.kpis > .kpi:nth-child(3n+3)::after { background: var(--magenta); }
+.kpis > .kpi:nth-child(3n+1)::after { background: var(--gold); }
+.kpis > .kpi:nth-child(3n+1)::after { background: var(--gold); }
+.kpis > .kpi:nth-child(3n+2)::after { background: var(--teal); }
+.kpis > .kpi:nth-child(3n+3)::after { background: var(--magenta); }
+/* linea del tempo del batch: cotta giallo, fermentazione ciano, imbottigliata magenta, bevuta giallo */
+.timeline > div.done::before { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 4px rgba(237, 165, 18, .18); }
+.timeline > div.done:nth-child(2)::before { background: var(--teal); border-color: var(--teal); box-shadow: 0 0 0 4px rgba(18, 160, 129, .18); }
+.timeline > div.done:nth-child(3)::before { background: var(--magenta); border-color: var(--magenta); box-shadow: 0 0 0 4px rgba(220, 59, 90, .18); }
+.timeline > div.done:nth-child(4)::before { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 4px rgba(237, 165, 18, .18); }
+/* stati e indicatori "ok" con il ciano al posto del verde luppolo */
+:root { --ok: var(--teal); }
+.badge.st-cotta { background: rgba(237, 165, 18, .15); color: var(--gold); }
+.badge.st-maturazione { background: rgba(18, 160, 129, .13); color: var(--teal); }
+.badge.st-finito, .badge.insert { background: rgba(18, 160, 129, .15); color: var(--teal); }
+.metric.ok::before { background: var(--teal); box-shadow: 0 0 0 4px rgba(18, 160, 129, .15); }
+.metric.ok strong { color: var(--teal); }
+.kpi.pos strong { color: var(--teal); }
+.diff .to { color: var(--teal); }
+.bd-cat.c-luppolo { background: var(--teal); } .bd-cat.c-lievito { background: var(--magenta); } .bd-cat.c-additivo { background: var(--faint); }
+.hop-time strong { color: var(--gold); }
+.chem-cell strong.ok { color: var(--teal); }
