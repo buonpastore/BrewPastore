@@ -220,13 +220,23 @@ export function filesFromPaste(e: ClipboardEvent | ReactClipboardEvent): File[] 
     .filter((f): f is File => f !== null);
 }
 
-// ---------- immagine della pecora (sfondo in trasparenza) ----------
+// ---------- immagini della mascotte ----------
+const base = import.meta.env.BASE_URL;
+export const FACE_IMG = `${base}mascotte-faccia.webp`;
+export const SHEEP_IMG = `${base}pecora.webp`;
+// sfondo predefinito: la pecora dell'etichetta (sostituibile da Impostazioni)
+// URL assoluto: dentro una variabile CSS un percorso relativo verrebbe risolto rispetto al foglio di stile
+if (typeof document !== "undefined") document.documentElement.style.setProperty("--sheep", `url("${new URL(SHEEP_IMG, document.baseURI).href}")`);
+
+// ---------- immagine della pecora caricata dall'admin (facoltativa) ----------
 export const MASCOT_PATH = "branding/mascotte.png";
 
 /** Imposta la variabile CSS --sheep con un URL firmato dell'immagine caricata dall'admin. */
 export async function loadMascot() {
-  const { data } = await supabase.storage.from("documents").createSignedUrl(MASCOT_PATH, 60 * 60 * 24 * 7);
-  if (data?.signedUrl) document.documentElement.style.setProperty("--sheep", `url("${data.signedUrl}")`);
+  const { data, error } = await supabase.storage.from("documents").createSignedUrl(MASCOT_PATH, 60 * 60 * 24 * 7);
+  if (!error && data?.signedUrl && /^https?:\/\//.test(data.signedUrl) && !data.signedUrl.includes("undefined")) {
+    document.documentElement.style.setProperty("--sheep", `url("${data.signedUrl}")`);
+  }
 }
 
 /** Ritaglia (opzionale) e ridimensiona l'immagine in PNG. crop = frazioni [x, y, w, h]. */

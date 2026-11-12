@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase, type Row } from "../lib";
+import { supabase, FACE_IMG, type Row } from "../lib";
 
 const CAT: Record<string, string> = {
   curiosita: "🍺 Lo sapevi?",
@@ -61,7 +61,7 @@ export function QuotePopup() {
     <div className="modal-backdrop" onClick={close}>
       <div className="modal quote-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="La birra del giorno">
         <div className="quote-head sunburst">
-          <div className="quote-mascot">🐑🍺</div>
+          <img className="quote-mascot" src={FACE_IMG} alt="" />
           <h2>La birra del giorno</h2>
         </div>
         <div className="quote-body">

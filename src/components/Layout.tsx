@@ -4,7 +4,7 @@ import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
 } from "lucide-react";
-import { supabase } from "../lib";
+import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
 import { QuotePopup } from "./QuoteOfTheDay";
 
@@ -56,7 +56,7 @@ export function Layout() {
     <div className="app">
       <header className="topbar">
         <NavLink to="/" className="brand">
-          <span className="brand-logo">🐑</span>
+          <img className="brand-logo" src={FACE_IMG} alt="" />
           <span className="brand-text">
             <span className="brand-name">BrewPastore</span>
             <span className="brand-tag">birra da pascolo</span>

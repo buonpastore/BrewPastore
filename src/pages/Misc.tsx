@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, type Row } from "../lib";
+import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ChatPanel } from "../components/ChatPanel";
 import { HistoryList } from "../components/HistoryList";
@@ -28,7 +28,7 @@ export function Login() {
   return (
     <div className="login sunburst">
       <form className="modal login-card" onSubmit={login}>
-        <div className="login-mascot">🐑</div>
+        <img className="login-mascot" src={FACE_IMG} alt="La pecora del Buon Pastore" />
         <h1 className="login-title">BREW<br />PASTORE</h1>
         <div className="ribbon">birra da pascolo</div>
         {!configured && <p className="error">Configura VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (vedi README).</p>}
@@ -92,7 +92,7 @@ export function Dashboard() {
   return (
     <div>
       <div className="hero sunburst">
-        <span className="hero-mascot">🐑</span>
+        <img className="hero-mascot" src={FACE_IMG} alt="" />
         <div>
           <h1>Ciao {profile?.display_name}!</h1>
           <div className="ribbon">bentornato al pascolo</div>
@@ -273,7 +273,7 @@ function MascotUpload() {
   return (
     <div className="panel">
       <h2>🐑 Immagine della pecora</h2>
-      <p className="muted">Carica l'etichetta della birra (o qualsiasi immagine): comparirà in trasparenza sullo sfondo dell'app e nel benvenuto della Home.</p>
+      <p className="muted">Lo sfondo usa già la pecora dell'etichetta Buon Pastore. Se vuoi cambiarla carica un'altra immagine (es. l'etichetta di una nuova birra).</p>
       <label className="btn primary">
         Scegli immagine
         <input type="file" accept="image/*" hidden onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = ""; }} />
