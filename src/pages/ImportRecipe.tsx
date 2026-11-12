@@ -88,7 +88,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
         {step === "upload" && (
           <>
             <p>Incolla lo screenshot di una chat con un'AI (anche più screenshot se la ricetta è lunga), la foto di un foglio o un PDF. L'AI estrarrà ingredienti e parametri: potrai controllarli prima di salvare.</p>
-            <FilePicker onFiles={(f) => setPicked((p) => [...p, ...f].slice(0, 10))} accept="image/*,application/pdf,.txt,.md" />
+            <FilePicker allowText textPlaceholder="Incolla qui il testo della ricetta" onFiles={(f) => setPicked((p) => [...p, ...f].slice(0, 10))} accept="image/*,application/pdf,.txt,.md" />
             <PickedList files={picked} onRemove={(i) => setPicked(picked.filter((_, j) => j !== i))} />
           </>
         )}

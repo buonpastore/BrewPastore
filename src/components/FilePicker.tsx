@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ClipboardPaste, Upload } from "lucide-react";
+import { ClipboardPaste, Upload, Type } from "lucide-react";
 import { filesFromPaste } from "../lib";
 
 interface Props {
@@ -12,10 +12,21 @@ interface Props {
   globalPaste?: boolean;
   title?: string;
   compact?: boolean;
+  /** mostra anche una casella per incollare/scrivere testo (email, ordine, ricetta) */
+  allowText?: boolean;
+  textPlaceholder?: string;
 }
 
 /** Riquadro per caricare file: incolla (Ctrl+V o pulsante), trascina o scegli. Funziona anche da telefono. */
-export function FilePicker({ onFiles, accept = "image/*,application/pdf", multiple = true, hint, disabled, globalPaste = true, title, compact }: Props) {
+export function FilePicker({ onFiles, accept = "image/*,application/pdf", multiple = true, hint, disabled, globalPaste = true, title, compact, allowText, textPlaceholder }: Props) {
+  const [showText, setShowText] = useState(false);
+  const [text, setText] = useState("");
+  const sendText = () => {
+    const t = text.trim();
+    if (t.length < 10) return setMsg("Il testo è troppo corto.");
+    deliver([new File([t], `testo_${Date.now()}.txt`, { type: "text/plain" })]);
+    setText(""); setShowText(false);
+  };
   const [msg, setMsg] = useState("");
   const cb = useRef(onFiles);
   cb.current = onFiles;
@@ -71,7 +82,13 @@ export function FilePicker({ onFiles, accept = "image/*,application/pdf", multip
         role="textbox"
         aria-label="Incolla qui uno screenshot"
         inputMode="none"
-        onPaste={(e) => { const f = filesFromPaste(e); e.preventDefault(); if (f.length) deliver(f); else setMsg("Negli appunti non c'è un'immagine."); }}
+        onPaste={(e) => {
+          const f = filesFromPaste(e); e.preventDefault();
+          if (f.length) return deliver(f);
+          const t = e.clipboardData.getData("text/plain");
+          if (allowText && t.trim()) { setText(t); setShowText(true); return; }
+          setMsg("Negli appunti non c'è un'immagine.");
+        }}
         onBeforeInput={(e) => e.preventDefault()}
         onKeyDown={(e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); }}
         onDragOver={(e) => e.preventDefault()}
@@ -87,12 +104,25 @@ export function FilePicker({ onFiles, accept = "image/*,application/pdf", multip
       </div>
       <div className="row-actions center">
         <button type="button" className="btn primary" disabled={disabled} onClick={pasteFromClipboard}><ClipboardPaste size={17} /> Incolla</button>
+        {allowText && (
+          <button type="button" className="btn" disabled={disabled} onClick={() => setShowText(!showText)}><Type size={17} /> Da testo</button>
+        )}
         <label className={"btn" + (disabled ? " disabled" : "")}>
           <Upload size={17} /> Scegli file / foto
           <input type="file" hidden disabled={disabled} accept={accept} multiple={multiple}
             onChange={(e) => { deliver(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
         </label>
       </div>
+      {allowText && showText && (
+        <div className="text-input">
+          <textarea autoFocus rows={7} value={text} onChange={(e) => setText(e.target.value)}
+            placeholder={textPlaceholder ?? "Incolla qui il testo (email di conferma, ordine, lista prezzi…)"} />
+          <div className="row-actions">
+            <button type="button" className="btn primary" disabled={disabled || !text.trim()} onClick={sendText}>Usa questo testo</button>
+            <button type="button" className="btn" onClick={() => { setShowText(false); setText(""); }}>Annulla</button>
+          </div>
+        </div>
+      )}
       {msg && <p className="warn small" style={{ textAlign: "center" }}>{msg}</p>}
     </div>
   );

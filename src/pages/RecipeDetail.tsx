@@ -125,7 +125,7 @@ export function RecipeDetail() {
         {tab === "ingredienti" && (
           <>
             {isAdmin && !importing && (
-              <FilePicker compact onFiles={(f) => { setPasted(f); setImporting(true); }} accept="image/*,application/pdf,.txt,.md"
+              <FilePicker compact allowText textPlaceholder="Incolla qui il testo della ricetta (es. copiato da una chat con l'AI)" onFiles={(f) => { setPasted(f); setImporting(true); }} accept="image/*,application/pdf,.txt,.md"
                 title="📋 Incolla qui lo screenshot degli ingredienti" hint="Anche più screenshot (es. una chat con l'AI lunga): l'AI li legge e tu controlli prima di salvare." />
             )}
             <RowsEditor table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} fields={ingFields}

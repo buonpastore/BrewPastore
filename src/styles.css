@@ -497,3 +497,6 @@ label.block { display: block; margin-bottom: 12px; }
 .picker.compact .row-actions { margin: 0; flex-direction: column; justify-content: center; align-items: stretch; }
 .picker.compact > p { flex-basis: 100%; margin: 0; }
 @media (max-width: 600px) { .picker.compact .row-actions { flex-direction: row; width: 100%; } .picker.compact .row-actions > * { flex: 1; } }
+.text-input { flex-basis: 100%; margin-top: 10px; }
+.text-input textarea { min-height: 150px; font-size: .92rem; }
+.picker.compact .text-input .row-actions { flex-direction: row; justify-content: flex-start; margin-top: 8px; }

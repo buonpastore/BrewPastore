@@ -60,7 +60,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       </div>
       <p className="muted">Costo medio ponderato su tutti gli acquisti (spedizione inclusa). I prezzi arrivano dagli acquisti registrati.</p>
       {isAdmin && !importing && (
-        <FilePicker compact onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
+        <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
           title="📋 Incolla qui lo screenshot dell'acquisto" hint="I prezzi aggiornano subito i costi medi." />
       )}
       {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}
