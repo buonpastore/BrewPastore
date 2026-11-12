@@ -643,3 +643,5 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .water-calc td { padding: 6px 8px; }
 .water-calc td:last-child { text-align: right; white-space: nowrap; }
 .water-calc tr.tot td { font-weight: 700; border-top: 2px solid var(--line-strong); }
+.update-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: rgba(237, 165, 18, .12); border: 1px solid rgba(237, 165, 18, .45); border-radius: var(--r); padding: 10px 14px; margin: -6px 0 18px; font-weight: 600; }
+.version { text-align: center; margin-top: 24px; }

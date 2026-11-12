@@ -7,6 +7,7 @@ import {
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
 import { QuotePopup } from "./QuoteOfTheDay";
+import { UpdateBanner } from "./UpdateBanner";
 
 interface Tab { to: string; label: string; icon: LucideIcon; color: string; also?: string[] }
 interface Group { key: string; label: string; icon: LucideIcon; to: string; color: string; tabs?: Tab[] }
@@ -93,6 +94,7 @@ export function Layout() {
       </nav>
 
       <main className="content">
+        <UpdateBanner />
         {current.tabs && (
           <>
             <div className="section-title">{current.label}</div>

@@ -235,6 +235,7 @@ export function Settings() {
         <p className="muted small">Gli utenti si aggiungono da Supabase → Authentication → Users. Il ruolo si cambia dalla tabella <code>profiles</code>.</p>
       </div>
       <HistoryPage embedded />
+      <p className="muted small version">BrewPastore · versione del {__BUILD_TIME__}</p>
     </div>
   );
 }
