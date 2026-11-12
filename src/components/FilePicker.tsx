@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ClipboardPaste, Upload, Type } from "lucide-react";
+import { ImageUp, FileUp, Type } from "lucide-react";
 import { filesFromPaste } from "../lib";
 
 interface Props {
@@ -74,56 +74,59 @@ export function FilePicker({ onFiles, accept = "image/*,application/pdf", multip
 
   return (
     <div className={"picker" + (compact ? " compact" : "")}>
-      {/* area tratteggiata: riceve anche l'incolla da telefono (tieni premuto → Incolla) */}
-      <div
-        className="dropzone"
-        contentEditable={!disabled}
-        suppressContentEditableWarning
-        role="textbox"
-        aria-label="Incolla qui uno screenshot"
-        inputMode="none"
-        onPaste={(e) => {
-          const f = filesFromPaste(e); e.preventDefault();
-          if (f.length) return deliver(f);
-          const t = e.clipboardData.getData("text/plain");
-          if (allowText && t.trim()) { setText(t); setShowText(true); return; }
-          setMsg("Negli appunti non c'è un'immagine.");
-        }}
-        onBeforeInput={(e) => e.preventDefault()}
-        onKeyDown={(e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); }}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); deliver(Array.from(e.dataTransfer.files)); }}
-      >
-        <div contentEditable={false} className="dropzone-inner">
-          <strong>{title ?? "📋 Incolla qui lo screenshot"}</strong>
-          <span className="muted small">
-            Computer: <kbd>Ctrl</kbd>+<kbd>V</kbd> (Mac <kbd>⌘</kbd>+<kbd>V</kbd>) o trascina il file · Telefono: tieni premuto qui → <em>Incolla</em>
+      <div className="picker-row">
+        {/* area tratteggiata: riceve anche l'incolla da telefono (tieni premuto → Incolla) */}
+        <div
+          className="dropzone"
+          contentEditable={!disabled}
+          suppressContentEditableWarning
+          role="textbox"
+          aria-label="Incolla qui uno screenshot"
+          inputMode="none"
+          onPaste={(e) => {
+            const f = filesFromPaste(e); e.preventDefault();
+            if (f.length) return deliver(f);
+            const t = e.clipboardData.getData("text/plain");
+            if (allowText && t.trim()) { setText(t); setShowText(true); return; }
+            setMsg("Negli appunti non c'è un'immagine.");
+          }}
+          onBeforeInput={(e) => e.preventDefault()}
+          onKeyDown={(e) => { if (!(e.ctrlKey || e.metaKey)) e.preventDefault(); }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => { e.preventDefault(); deliver(Array.from(e.dataTransfer.files)); }}
+        >
+          <span contentEditable={false} className="dropzone-inner">
+            <strong>{title ?? "📋 Incolla qui"}</strong>
+            <span className="muted small">Ctrl+V · trascina un file{hint ? ` · ${hint}` : ""}</span>
           </span>
-          {hint && <span className="muted small">{hint}</span>}
         </div>
-      </div>
-      <div className="row-actions center">
-        <button type="button" className="btn primary" disabled={disabled} onClick={pasteFromClipboard}><ClipboardPaste size={17} /> Incolla</button>
-        {allowText && (
-          <button type="button" className="btn" disabled={disabled} onClick={() => setShowText(!showText)}><Type size={17} /> Da testo</button>
-        )}
-        <label className={"btn" + (disabled ? " disabled" : "")}>
-          <Upload size={17} /> Scegli file / foto
-          <input type="file" hidden disabled={disabled} accept={accept} multiple={multiple}
-            onChange={(e) => { deliver(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
-        </label>
+        <div className="picker-btns">
+          <button type="button" className="mini-btn" disabled={disabled} onClick={pasteFromClipboard} title="Incolla uno screenshot dagli appunti">
+            <ImageUp size={16} /> <span>Screenshot</span>
+          </button>
+          <label className={"mini-btn" + (disabled ? " disabled" : "")} title="Scegli un file, una foto o un PDF">
+            <FileUp size={16} /> <span>File</span>
+            <input type="file" hidden disabled={disabled} accept={accept} multiple={multiple}
+              onChange={(e) => { deliver(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
+          </label>
+          {allowText && (
+            <button type="button" className={"mini-btn" + (showText ? " on" : "")} disabled={disabled} onClick={() => setShowText(!showText)} title="Incolla o scrivi del testo">
+              <Type size={16} /> <span>Testo</span>
+            </button>
+          )}
+        </div>
       </div>
       {allowText && showText && (
         <div className="text-input">
           <textarea autoFocus rows={7} value={text} onChange={(e) => setText(e.target.value)}
             placeholder={textPlaceholder ?? "Incolla qui il testo (email di conferma, ordine, lista prezzi…)"} />
           <div className="row-actions">
-            <button type="button" className="btn primary" disabled={disabled || !text.trim()} onClick={sendText}>Usa questo testo</button>
-            <button type="button" className="btn" onClick={() => { setShowText(false); setText(""); }}>Annulla</button>
+            <button type="button" className="btn small primary" disabled={disabled || !text.trim()} onClick={sendText}>Usa questo testo</button>
+            <button type="button" className="btn small" onClick={() => { setShowText(false); setText(""); }}>Annulla</button>
           </div>
         </div>
       )}
-      {msg && <p className="warn small" style={{ textAlign: "center" }}>{msg}</p>}
+      {msg && <p className="warn small">{msg}</p>}
     </div>
   );
 }

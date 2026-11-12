@@ -479,7 +479,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
             ) : (
               <>
                 <FilePicker onFiles={(f) => setAiPicked((p) => [...p, ...f].slice(0, 10))} accept="image/*,application/pdf,.eml,.txt"
-                  hint="Se il preventivo è lungo puoi incollare più screenshot." />
+                  hint="anche più screenshot" />
                 <PickedList files={aiPicked} onRemove={(i) => setAiPicked(aiPicked.filter((_, j) => j !== i))} />
               </>
             )}

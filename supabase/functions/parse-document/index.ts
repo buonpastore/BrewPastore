@@ -92,7 +92,6 @@ Estrai la ricetta completa. Regole:
 - Elenca TUTTI gli ingredienti: malti, luppoli (con il momento di aggiunta), lievito, sali e acidi per l'acqua, additivi.
 - Se lo stesso luppolo è usato in momenti diversi, crea una riga per ogni aggiunta.
 - Mantieni le quantità e le unità della ricetta (kg/g/l/ml/pz). Lieviti a unità: una bustina = 1 pz.
-- L'avena (anche in fiocchi) va nella categoria "altro", non "malto".
 - Se la ricetta propone alternative, scegli la prima e segnala le alternative in notes.
 - Per lo stile usa, se corrisponde, uno di questi nomi esatti: IPA, Weiss, Blanche, Dubbel, APA, English Ale, Winter Ale, Bock,
   Doppelbock, Pilsner, Helles, Lager, Märzen, Dunkel, Schwarzbier, Vienna Lager, Rauchbier, Bitter, Golden Ale, Brown Ale,
@@ -147,7 +146,7 @@ di acquisto (fattura, conferma d'ordine, email, scontrino). Regole:
 - Se c'è uno sconto sull'intero ordine, ripartiscilo proporzionalmente sulle righe e segnalalo in notes.
 - Quantità: converti in quantità totale (numero confezioni x contenuto). Usa kg/g per solidi, l/ml per liquidi, pz per oggetti.
 - Le spese di spedizione vanno in shipping_cost e NON come riga.
-- Categorie: l'avena (anche in fiocchi) va in "altro", non in "malto". I lieviti vanno a unità: quantità = numero di bustine/confezioni, unità "pz".
+- I lieviti vanno a unità: quantità = numero di bustine/confezioni, unità "pz".
 - Se il documento è uno screenshot di un carrello o di un listino, usa i prezzi mostrati (IVA inclusa se è un negozio online per privati).
 - Se un dato manca usa null; non inventare.`;
 

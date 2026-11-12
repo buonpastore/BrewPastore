@@ -45,7 +45,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
       </div>
       {isAdmin && !importing && (
         <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
-          title="📋 Incolla qui screenshot, fattura o testo" hint="L'AI legge le righe e te le fa controllare prima di salvare." />
+          title="📋 Importa un acquisto" />
       )}
       {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}
       <div className="table-wrap">
@@ -167,9 +167,9 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
         <h2>📄 Importa acquisto</h2>
         {step === "upload" && (
           <>
-            <p>Carica il PDF della fattura (Mr Malt, Birramia…), uno o più <strong>screenshot</strong> dell'ordine o del carrello, la foto dello scontrino o l'email salvata come <code>.eml</code>. L'AI legge le righe e tu le controlli prima di salvare.</p>
+            <p className="muted">Fattura PDF, screenshot dell'ordine, foto dello scontrino, email <code>.eml</code> o testo: controlli le righe prima di salvare.</p>
             <FilePicker onFiles={addFiles} accept="application/pdf,image/*,.eml,.txt,.html" allowText
-              hint="Puoi aggiungere più screenshot dello stesso ordine (max 10): verranno uniti." />
+              hint="più screenshot dello stesso ordine vengono uniti" />
             <PickedList files={picked} onRemove={(i) => setPicked(picked.filter((_, j) => j !== i))} />
           </>
         )}

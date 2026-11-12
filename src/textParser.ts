@@ -46,7 +46,6 @@ const BRANDS = /mr\.?\s*malt[®]?|birramia|brewferm/gi;
 export function guessCategory(name: string): string {
   const n = name.toLowerCase().replace(BRANDS, "");
   if (/\bkit\b/.test(n) || EQUIPMENT.test(n)) return "altro";
-  if (/avena|\boat/.test(n)) return "altro"; // l'avena non è un malto
   if (/luppol|\bhop|pellet|cascade|citra|mosaic|simcoe|saaz|hallertau|magnum|centennial|amarillo|galaxy|nelson/.test(n)) return "luppolo";
   if (/lievit|yeast|safale|saflager|safbrew|us-?05|s-?04|w-?34\/70|wlp|wyeast|lallemand|fermentis|nottingham|verdant|bry-?97|kveik/.test(n)) return "lievito";
   if (/star\s?san|pbw|percarbonat|detergen|sanific|igieniz|chemipro|soda caustica/.test(n)) return "detergenti";
@@ -55,7 +54,7 @@ export function guessCategory(name: string): string {
   if (/bottigli/.test(n)) return "bottiglie";
   if (/tapp/.test(n)) return "tappi";
   if (/etichett/.test(n)) return "etichette";
-  if (/malt|pils|pilsner|munich|monaco|vienna|crystal|\bcara(?!ff)|frumento|wheat|chocolate|roast|carafa|biscuit|melanoid|acidulat/.test(n)) return "malto";
+  if (/malt|pils|pilsner|munich|monaco|vienna|crystal|\bcara(?!ff)|frumento|wheat|avena|\boat|fiocch|chocolate|roast|carafa|biscuit|melanoid|acidulat/.test(n)) return "malto";
   return "altro";
 }
 
@@ -149,5 +148,152 @@ export function parseOrderText(text: string): TextOrder {
     shipping_cost: Math.round(shipping * 100) / 100, total_amount: totalDoc,
     notes: items.length ? "Letto direttamente dal testo (senza AI): controlla quantità e categorie." : null,
     items,
+  };
+}
+
+// =====================================================================
+// Ricette da testo (es. copiate da una chat con un'AI), senza AI
+// =====================================================================
+export interface TextRecipe {
+  name: string | null;
+  style: string | null;
+  batch_size_l: number | null;
+  boil_time_min: number | null;
+  mash_temp_c: number | null;
+  mash_time_min: number | null;
+  target_og: number | null;
+  target_fg: number | null;
+  target_ibu: number | null;
+  target_ebc: number | null;
+  efficiency_pct: number | null;
+  procedure: string | null;
+  notes: string | null;
+  ingredients: { name: string; category: string; quantity: number; unit: string; step: string | null }[];
+}
+
+const UNIT_RX = "kg|chili|chilogrammi|g|gr|grammi|ml|cl|l|lt|litri|bustin[ae]|buste?|pz|pezzi|confezion[ei]|pacchett[oi]|cucchiain[oi]|compress[ae]|pastigli[ae]";
+const QTY = new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*(${UNIT_RX})\\b\\.?`, "i");
+
+function normUnit(u: string): string {
+  const x = u.toLowerCase();
+  if (/^(kg|chili|chilogrammi)$/.test(x)) return "kg";
+  if (/^(g|gr|grammi)$/.test(x)) return "g";
+  if (x === "ml") return "ml";
+  if (x === "cl") return "cl";
+  if (/^(l|lt|litri)$/.test(x)) return "l";
+  return "pz";
+}
+
+const num = (s: string) => Number(s.replace(",", "."));
+const SKIP_LINE = /^(volume|batch|lotto|litri|acqua\b|og\b|fg\b|ibu\b|ebc\b|srm\b|abv\b|efficien|mash\b.*°|ammostamento\b.*°|bollitura\b|temperatura|ph\b|densit|gravity|resa|colore|amaro\b|totale)/i;
+
+/** Ricava lo step di aggiunta (mash, 60 min, whirlpool, dry hop…) dal testo della riga. */
+function stepOf(line: string, category: string): string | null {
+  const l = line.toLowerCase();
+  if (/dry[\s-]?hop|a freddo|in fermentazione|in fermentatore/.test(l)) {
+    const d = l.match(/giorno\s*(\d+)|(\d+)\s*(?:°|º)?\s*giorno|day\s*(\d+)/);
+    return d ? `dry hop giorno ${d[1] ?? d[2] ?? d[3]}` : "dry hop";
+  }
+  if (/whirlpool|flame\s?out|fine bollitura|a fuoco spento|hop stand/.test(l)) {
+    const t = l.match(/(\d{2})\s*°\s*c/);
+    return t ? `whirlpool ${t[1]}°C` : "whirlpool";
+  }
+  if (/first wort|fwh/.test(l)) return "first wort";
+  const m = l.match(/(\d{1,3})\s*(?:min\b|minuti|'|’)/) ?? l.match(/@\s*(\d{1,3})\b/);
+  if (m && category !== "malto") return `${m[1]} min`;
+  if (category === "lievito") return "inoculo";
+  if (category === "malto" || /mash|ammostament|avena|\boat|fiocch/.test(l)) return "mash";
+  return null;
+}
+
+function cleanIngredientName(line: string): string {
+  return line
+    .replace(QTY, " ")
+    .replace(/\(?\s*(?:a|@|per|dopo)?\s*\d{1,3}\s*(?:min\b|minuti|'|’)\s*\)?/gi, " ")
+    .replace(/\b(?:in\s+|a\s+)?\d{2}\s*°\s*c\b/gi, " ")
+    .replace(/\b(?:in\s+|nel\s+|al\s+|a\s+)?(?:dry[\s-]?hop(?:ping)?|whirlpool|hop\s?stand|flame\s?out|first wort|fine bollitura|a fuoco spento|mash|ammostamento|inoculo|bollitura|fermentatore|fermentazione|giorno\s*\d+|day\s*\d+)\b/gi, " ")
+    .replace(/^\s*(?:di|del|della|dei)\s+/i, "")
+    .replace(/[|•*–—:;=→]+/g, " ")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+(?:in|a|al|nel|per|e)\s*$/i, "")
+    .replace(/^[\s,.-]+|[\s,.-]+$/g, "")
+    .trim();
+}
+
+export function parseRecipeText(text: string, knownStyles: string[] = []): TextRecipe {
+  const raw = text.replace(/\*\*|__|`/g, "");
+  const lines = raw.split(/\r?\n/).map((l) => l.replace(/^\s*(?:[-*•+]|\d+[.)])\s+/, "").replace(/^#+\s*/, "").trim()).filter(Boolean);
+  const find = (rx: RegExp) => { const m = raw.match(rx); return m ? m : null; };
+
+  const og = find(/\b(?:OG|O\.G\.|densit[aà] iniziale|gravity iniziale)\b[^\d\n]{0,25}(1[.,]\d{3})/i);
+  const fg = find(/\b(?:FG|F\.G\.|densit[aà] finale|gravity finale)\b[^\d\n]{0,25}(1[.,]\d{3})/i);
+  const ibu = find(/\bIBU\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)|(\d{1,3}(?:[.,]\d)?)\s*IBU\b/i);
+  const ebc = find(/\bEBC\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)|(\d{1,3}(?:[.,]\d)?)\s*EBC\b/i);
+  const srm = find(/\bSRM\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)|(\d{1,3}(?:[.,]\d)?)\s*SRM\b/i);
+  const vol = find(/(?:volume|batch|lotto|litri finali|in fermentatore|per)\b[^\d\n]{0,25}(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i) ?? find(/\b(\d{1,3}(?:[.,]\d)?)\s*(?:l|litri)\s*(?:di birra|finali|batch)/i);
+  const eff = find(/efficien[a-z]*\b[^\d\n]{0,15}(\d{2}(?:[.,]\d)?)\s*%/i);
+  const mash = find(/(?:mash|ammostamento|infusione|single infusion|saccarificazione)[^\n]{0,60}?(\d{2}(?:[.,]\d)?)\s*°\s*C?[^\n]{0,30}?(\d{2,3})\s*(?:min|minuti|')/i)
+    ?? find(/(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:per|x)\s*(\d{2,3})\s*(?:min|minuti|')/i);
+  const boil = find(/bollitura[^\n\d]{0,20}(\d{2,3})\s*(?:min|minuti|')/i) ?? find(/(\d{2,3})\s*(?:min|minuti)\s*(?:di\s*)?bollitura/i);
+
+  const ingredients: TextRecipe["ingredients"] = [];
+  for (const l of lines) {
+    if (SKIP_LINE.test(l)) continue;
+    // tabelle markdown: | Malto Pils | 5 kg | mash |
+    const line = l.includes("|") ? l.split("|").map((c) => c.trim()).filter(Boolean).join(" ") : l;
+    if (/^[-:\s|]+$/.test(line)) continue;
+    const q = line.match(QTY);
+    if (!q) continue;
+    if (/^(ecco|ricetta|per\b|questa|una\b|un\b|ti\b|di seguito)/i.test(line)) continue;
+    let name = cleanIngredientName(line);
+    if (!name || name.length < 2 || /^(ingredienti|malti|luppoli|lievito|acqua|sali)$/i.test(name)) continue;
+    let category = guessCategory(name);
+    if (category === "altro" && /\b(us-?05|s-?04|s-?33|w-?34|t-?58|be-?256|k-?97|wb-?06|nottingham|verdant|bry-?97|london|belle saison|m\d{2})\b/i.test(name)) category = "lievito";
+    if (category === "detergenti") continue;
+    if (/^acqua\b/i.test(name)) continue;
+    if (category === "altro" && /^(l|lt|litri)$/i.test(q[2])) continue; // "20 litri" è un volume, non un ingrediente
+    let unit = normUnit(q[2]);
+    let quantity = num(q[1]);
+    if (unit === "cl") { unit = "l"; quantity = quantity / 100; }
+    if (category === "lievito" && (unit === "g" || unit === "ml")) {
+      // "11,5 g" di lievito secco = 1 bustina
+      name = `${name} (${q[1]} ${q[2]})`; quantity = 1; unit = "pz";
+    }
+    ingredients.push({ name: name.charAt(0).toUpperCase() + name.slice(1), category, quantity, unit, step: stepOf(line, category) });
+  }
+
+  // nome e stile: prima riga "titolo" senza quantità
+  const SECTION = /^(ingredienti|parametri|dati|malti|cereali|fermentabili|luppoli|lievit[oi]|acqua(?: e sali)?|sali|procedimento|processo|istruzioni|note|mash|bollitura|fermentazione|imbottigliamento|profilo|ricetta|recipe)\s*:?$/i;
+  const title = lines.slice(0, 3).find((l) => !QTY.test(l) && !/^[^:]{1,30}:\s*\S/.test(l) && !/%|°/.test(l) && l.length <= 70 && !SECTION.test(l) && !/^[|:\-\s]+$/.test(l) && !/\b(OG|FG|IBU|EBC)\b/.test(l));
+  let name: string | null = title ? title.replace(/^(?:ricetta|recipe)\s*[:\-–]?\s*/i, "").replace(/[🍺🍻]/g, "").trim() : null;
+  const intro = raw.match(/ricetta (?:per|di) (?:una|un|la|il)?\s*([^\n,.:]{3,40}?)\s+(?:da|per|di)\s+\d/i);
+  if (!name || /^(ecco|certo|ok|perfetto|ottimo|ciao)\b/i.test(name)) name = intro ? intro[1].trim() : null;
+  // stile: prima nel titolo, poi la prima menzione nel testo (non quella nei nomi dei malti)
+  const esc = (x: string) => x.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const styleIn = (t: string) => {
+    let best: { s: string; i: number } | null = null;
+    for (const st of knownStyles) {
+      const m = new RegExp(`\\b${esc(st)}\\b`).exec(t.toLowerCase());
+      if (m && (!best || m.index < best.i || (m.index === best.i && st.length > best.s.length))) best = { s: st, i: m.index };
+    }
+    return best?.s ?? null;
+  };
+  const prose = lines.filter((l) => !QTY.test(l) || /^(ecco|ricetta|per\b)/i.test(l)).join("\n");
+  const style = styleIn(name ?? "") ?? styleIn(intro?.[0] ?? "") ?? styleIn(prose);
+
+  const g = (m: RegExpMatchArray | null, i = 1) => (m ? num(m[i] ?? m[i + 1]) : null);
+  return {
+    name, style,
+    batch_size_l: g(vol),
+    boil_time_min: g(boil),
+    mash_temp_c: mash ? num(mash[1]) : null,
+    mash_time_min: mash ? num(mash[2]) : null,
+    target_og: g(og), target_fg: g(fg), target_ibu: g(ibu),
+    target_ebc: ebc ? g(ebc) : srm ? Math.round(g(srm)! * 1.97) : null,
+    efficiency_pct: g(eff),
+    procedure: null,
+    notes: ingredients.length ? "Letta direttamente dal testo (senza AI): controlla quantità e momenti di aggiunta." : null,
+    ingredients,
   };
 }

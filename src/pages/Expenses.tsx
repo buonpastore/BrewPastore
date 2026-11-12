@@ -204,7 +204,7 @@ function NewExpense({ profiles, me, onClose, onSaved }: { profiles: Row[]; me: s
         <h2>🧾 Nuova spesa</h2>
         {receipt
           ? <p className="ok small">✓ Scontrino caricato {busy ? "" : "— controlla i dati qui sotto"}</p>
-          : <FilePicker onFiles={upload} multiple={false} disabled={Boolean(busy)} hint="Lo scontrino è facoltativo: l'AI prova a leggere importo e data." />}
+          : <FilePicker onFiles={upload} multiple={false} disabled={Boolean(busy)} title="📋 Scontrino (facoltativo)" />}
         {busy && <p className="muted">⏳ {busy}</p>}
         <div className="form-grid">
           <label className="wide"><span>Descrizione</span><input required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="es. Malti Mr Malt, bottiglie, tappi…" /></label>

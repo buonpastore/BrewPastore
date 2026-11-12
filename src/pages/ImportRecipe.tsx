@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FilePicker } from "../components/FilePicker";
 import { FieldInput } from "../components/fields";
-import { STYLE_OPTIONS } from "../styles-list";
+import { STYLE_OPTIONS, OUR_STYLES, FAMOUS_STYLES } from "../styles-list";
+import { parseRecipeText } from "../textParser";
 import { supabase, uploadFile, parseRecipe, findOrCreateMaterial, errMsg, MATERIAL_CATEGORIES, UNITS, type ParsedRecipe } from "../lib";
 
 interface Props {
@@ -31,7 +32,14 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
       const ps: string[] = [];
       for (const f of picked) ps.push(await uploadFile("recipes/import", f));
       setPaths(ps);
-      setData(await parseRecipe(ps));
+      // testo incollato: prima la lettura diretta (non serve l'AI)
+      let parsed: ParsedRecipe | null = null;
+      if (picked.every((f) => f.type.startsWith("text/") || /\.(txt|md)$/i.test(f.name))) {
+        const texts = await Promise.all(picked.map((f) => f.text()));
+        const local = parseRecipeText(texts.join("\n"), [...OUR_STYLES, ...FAMOUS_STYLES]);
+        if (local.ingredients.length) parsed = local;
+      }
+      setData(parsed ?? await parseRecipe(ps));
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
   };
@@ -84,7 +92,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
   return (
     <div className="modal-backdrop">
       <div className="modal wide">
-        <h2>📸 Importa ricetta da screenshot</h2>
+        <h2>📸 Importa ricetta</h2>
         {step === "upload" && (
           <>
             <p>Incolla lo screenshot di una chat con un'AI (anche più screenshot se la ricetta è lunga), la foto di un foglio o un PDF. L'AI estrarrà ingredienti e parametri: potrai controllarli prima di salvare.</p>
@@ -106,17 +114,17 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
               )}
             </div>
             <div className="table-wrap">
-              <table>
+              <table className="review-table">
                 <thead><tr><th>Ingrediente</th><th>Categoria</th><th>Q.tà</th><th>Unità</th><th>Quando</th><th /></tr></thead>
                 <tbody>
                   {data.ingredients.map((ing, i) => (
                     <tr key={i}>
-                      <td><input value={ing.name} onChange={(e) => setIng(i, "name", e.target.value)} /></td>
-                      <td><select value={ing.category} onChange={(e) => setIng(i, "category", e.target.value)}>{MATERIAL_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></td>
-                      <td><input type="number" step="any" value={ing.quantity} onChange={(e) => setIng(i, "quantity", e.target.value)} style={{ width: 80 }} /></td>
-                      <td><select value={ing.unit} onChange={(e) => setIng(i, "unit", e.target.value)}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
-                      <td><input value={ing.step ?? ""} onChange={(e) => setIng(i, "step", e.target.value)} /></td>
-                      <td><button className="icon" onClick={() => setData({ ...data, ingredients: data.ingredients.filter((_, j) => j !== i) })}>🗑️</button></td>
+                      <td data-label="Ingrediente" className="rv-wide"><input value={ing.name} onChange={(e) => setIng(i, "name", e.target.value)} /></td>
+                      <td data-label="Categoria"><select value={ing.category} onChange={(e) => setIng(i, "category", e.target.value)}>{MATERIAL_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></td>
+                      <td data-label="Quantità"><input type="number" step="any" value={ing.quantity} onChange={(e) => setIng(i, "quantity", e.target.value)} style={{ width: 80 }} /></td>
+                      <td data-label="Unità"><select value={ing.unit} onChange={(e) => setIng(i, "unit", e.target.value)}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
+                      <td data-label="Quando"><input value={ing.step ?? ""} onChange={(e) => setIng(i, "step", e.target.value)} /></td>
+                      <td className="rv-del"><button className="icon" onClick={() => setData({ ...data, ingredients: data.ingredients.filter((_, j) => j !== i) })}>🗑️</button></td>
                     </tr>
                   ))}
                 </tbody>
