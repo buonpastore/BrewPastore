@@ -538,3 +538,12 @@ label.block { display: block; margin-bottom: 12px; }
   .picker-btns .mini-btn { flex: 1; justify-content: center; }
 }
 .mini-btn > span { display: inline; font: inherit; color: inherit; margin: 0; letter-spacing: 0; }
+
+/* barra in basso: ogni sezione con il suo colore */
+@media (max-width: 860px) {
+  .bottom-nav a { position: relative; }
+  .bottom-nav a svg { color: var(--c, var(--faint)); opacity: .55; transition: opacity .15s, transform .15s; }
+  .bottom-nav a.active { color: var(--c, var(--gold)); }
+  .bottom-nav a.active svg { opacity: 1; transform: translateY(-1px); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c, var(--gold)) 45%, transparent)); }
+  .bottom-nav a.active::before { content: ""; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--c, var(--gold)); }
+}

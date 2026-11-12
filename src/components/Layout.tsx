@@ -12,9 +12,9 @@ interface Tab { to: string; label: string; icon: LucideIcon; color: string; also
 interface Group { key: string; label: string; icon: LucideIcon; to: string; color: string; tabs?: Tab[] }
 
 export const GROUPS: Group[] = [
-  { key: "home", label: "Home", icon: House, to: "/", color: "var(--gold)" },
+  { key: "home", label: "Home", icon: House, to: "/", color: "var(--text)" },
   {
-    key: "produzione", label: "Produzione", icon: Beer, to: "/ricette", color: "var(--teal)",
+    key: "produzione", label: "Produzione", icon: Beer, to: "/ricette", color: "var(--gold)",
     tabs: [
       { to: "/ricette", label: "Ricette", icon: BookOpen, color: "var(--teal)" },
       { to: "/batch", label: "Batch", icon: Beer, color: "var(--gold)" },
@@ -22,7 +22,7 @@ export const GROUPS: Group[] = [
     ],
   },
   {
-    key: "conti", label: "Conti", icon: Coins, to: "/spese", color: "var(--hop)",
+    key: "conti", label: "Conti", icon: Coins, to: "/spese", color: "var(--teal)",
     tabs: [
       { to: "/spese", label: "Spese condivise", icon: Wallet, color: "var(--hop)" },
       { to: "/materie-prime", label: "Materie prime", icon: Wheat, color: "var(--gold)", also: ["/acquisti"] },
@@ -114,7 +114,7 @@ export function Layout() {
           const Icon = g.icon;
           const active = current.key === g.key;
           return (
-            <NavLink key={g.key} to={g.to} end={g.to === "/"} className={active ? "active" : ""}>
+            <NavLink key={g.key} to={g.to} end={g.to === "/"} className={active ? "active" : ""} style={{ ["--c" as string]: g.color }}>
               <Icon size={22} strokeWidth={active ? 2.4 : 1.8} />
               <span>{g.label}</span>
             </NavLink>
