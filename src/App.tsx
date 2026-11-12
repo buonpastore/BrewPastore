@@ -8,6 +8,7 @@ import { BatchDetail } from "./pages/BatchDetail";
 import { Purchases, PurchaseDetail } from "./pages/Purchases";
 import { Materials } from "./pages/Materials";
 import { Expenses } from "./pages/Expenses";
+import { Tastings } from "./pages/Tastings";
 import { EquipmentProjects, EquipmentProject, EquipmentQuote } from "./pages/Equipment";
 import { ChatPage, Dashboard, HistoryPage, Login, Settings } from "./pages/Misc";
 
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="ricette/:id" element={<RecipeDetail />} />
           <Route path="batch" element={<Batches />} />
           <Route path="batch/:id" element={<BatchDetail />} />
+          <Route path="degustazioni" element={<Tastings />} />
           <Route path="acquisti" element={<Purchases />} />
           <Route path="acquisti/:id" element={<PurchaseDetail />} />
           <Route path="materie-prime" element={<Materials />} />

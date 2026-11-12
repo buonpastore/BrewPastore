@@ -12,6 +12,7 @@ import { ChatPanel } from "../components/ChatPanel";
 import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
+import { TastingsPanel } from "./Tastings";
 
 const sgField = (key: string, label: string): FieldDef => ({ key, label, type: "number", step: "0.001", render: (v) => sg(v as number) });
 
@@ -220,7 +221,7 @@ export function BatchDetail() {
 
       <Tabs active={tab} onChange={setTab} tabs={[
         ["log", "Log cotta"], ["acqua", "Correzioni acqua"], ["ingredienti", "Ingredienti usati"],
-        ["diario", "Diario fermentazione"], ["carbonazione", "Carbonazione"], ["costi", "Costi"],
+        ["diario", "Diario fermentazione"], ["carbonazione", "Carbonazione"], ["degustazioni", "Degustazioni"], ["costi", "Costi"],
         ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico versioni"],
       ]} />
 
@@ -271,6 +272,7 @@ export function BatchDetail() {
           </>
         )}
         {tab === "costi" && <CostsTab batch={batch} canEdit={isAdmin} materials={materials} />}
+        {tab === "degustazioni" && <TastingsPanel batchId={batch.id} />}
         {tab === "documenti" && <DocumentsPanel batchId={batch.id} />}
         {tab === "chat" && <ChatPanel batchId={batch.id} />}
         {tab === "storico" && <HistoryList relatedTo={{ id: batch.id, key: "batch_id" }} />}

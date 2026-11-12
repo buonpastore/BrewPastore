@@ -51,6 +51,7 @@ export const TABLE_LABELS: Record<string, string> = {
   expenses: "Spesa",
   expense_shares: "Quota spesa",
   settlements: "Rimborso",
+  tastings: "Degustazione",
   equipment_projects: "Progetto impianto",
   equipment_quotes: "Preventivo",
   equipment_quote_items: "Riga preventivo",

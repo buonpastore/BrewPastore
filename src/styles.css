@@ -438,3 +438,41 @@ ul.plain li:last-child { border-bottom: 0; }
 .dropzone-inner strong { font-size: 1.02rem; }
 kbd { font: 600 .78rem var(--sans); background: var(--surface-3); border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; }
 .btn.disabled { opacity: .5; pointer-events: none; }
+
+/* ---------------- degustazioni ---------------- */
+.stars { display: inline-flex; gap: 2px; vertical-align: middle; }
+.stars button { background: none; border: 0; padding: 1px; color: var(--surface-3); cursor: pointer; line-height: 0; }
+.stars button:disabled { cursor: default; }
+.stars button.on { color: var(--gold); }
+.stars button:not(:disabled):hover { transform: scale(1.12); }
+.tasting-avg { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.tasting-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.tasting { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--shadow); }
+.tasting header { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.tasting dl { margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.tasting dt { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.tasting dd { margin: 0; }
+.rank { width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; font-weight: 700; font-size: .85rem; background: var(--surface-3); }
+ul.plain li:first-child .rank { background: var(--gold); color: #1d1505; }
+.rating-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: var(--surface-2); border-radius: var(--r); margin-bottom: 14px; flex-wrap: wrap; }
+.rating-row > span { font-weight: 600; }
+label.block { display: block; margin-bottom: 12px; }
+
+/* ---------------- schede di sezione (Produzione / Conti) ---------------- */
+.section-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -6px 0 22px; padding-bottom: 2px; }
+.section-tabs::-webkit-scrollbar { display: none; }
+.section-tabs a {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; white-space: nowrap;
+  color: var(--muted); font-weight: 600; font-size: .92rem; background: var(--surface); border: 1px solid var(--line);
+}
+.section-tabs a:hover { color: var(--text); border-color: var(--line-strong); }
+.section-tabs a.active { color: #1d1505; background: var(--gold); border-color: transparent; }
+.section-tabs a.active svg { color: #1d1505; }
+.section-tabs svg { color: var(--c, var(--muted)); }
+.section-title { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); margin: 0 0 10px; }
+.sidebar .sub { margin: 0 0 6px 30px; display: flex; flex-direction: column; gap: 1px; border-left: 1px solid var(--line); padding-left: 8px; }
+.sidebar .sub a { padding: 6px 10px; font-size: .9rem; }
+.sidebar .sub a.active::before { display: none; }
+.sidebar .sub a.active { color: var(--gold); background: transparent; }
+@media (max-width: 860px) { .section-tabs { margin: -2px -16px 18px; padding: 0 16px 2px; } }
+.sidebar > div > a { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 11px; color: var(--muted); font-weight: 500; position: relative; }

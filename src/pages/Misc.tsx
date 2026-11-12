@@ -208,6 +208,7 @@ export function Settings() {
           <button className="btn small" onClick={saveName}>Salva</button>
         </div>
         <SetPassword />
+        <button className="btn danger" style={{ marginTop: 8 }} onClick={() => supabase.auth.signOut()}>Esci da BrewPastore</button>
       </div>
       {isAdmin && <MascotUpload />}
       <div className="panel">
