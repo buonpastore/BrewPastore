@@ -5,8 +5,6 @@ import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
 import { RowsEditor } from "../components/RowsEditor";
 import { DocumentsPanel } from "../components/DocumentsPanel";
-import { ChatPanel } from "../components/ChatPanel";
-import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
 import { ImportRecipe } from "./ImportRecipe";
@@ -126,7 +124,7 @@ export function RecipeDetail() {
 
       <Tabs active={tab} onChange={setTab} tabs={[
         ["scheda", "Scheda"], ["ingredienti", "Ingredienti"], ["cottura", "Cottura"], ["batch", `Batch (${batches.length})`],
-        ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico versioni"],
+        ["documenti", "Documenti"],
       ]} />
 
       <div className="panel">
@@ -165,8 +163,6 @@ export function RecipeDetail() {
         )}
         {tab === "cottura" && <RecipeBrewDay recipe={recipe} />}
         {tab === "documenti" && <DocumentsPanel recipeId={recipe.id} />}
-        {tab === "chat" && <ChatPanel recipeId={recipe.id} />}
-        {tab === "storico" && <HistoryList relatedTo={{ id: recipe.id, key: "recipe_id" }} />}
       </div>
     </div>
   );
