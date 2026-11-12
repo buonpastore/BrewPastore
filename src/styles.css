@@ -702,3 +702,17 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
   /* pulsanti rapidi di stato più grandi */
   .page-head .row-actions .btn.small { min-height: 44px; padding: 8px 12px; font-size: .92rem; flex: 1 1 45%; }
 }
+
+/* ---------------- nuovo batch ---------------- */
+.new-batch { background: linear-gradient(160deg, rgba(237, 165, 18, .12), rgba(237, 165, 18, .03)); border: 1px solid rgba(237, 165, 18, .45); border-radius: var(--r); padding: 16px; margin-bottom: 16px; }
+.nb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 1.05rem; }
+.nb-name { width: 100%; min-height: 54px; font-size: 1.3rem; font-weight: 700; }
+.nb-date { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.nb-date input { min-height: 52px; font-size: 1.1rem; width: 100%; }
+.nb-date .btn { min-height: 52px; padding: 0 22px; font-size: 1rem; }
+.nb-label { display: block; font-size: .78rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.nb-status { display: flex; flex-wrap: wrap; gap: 8px; }
+.nb-chip { min-height: 44px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--muted); font: 600 .92rem var(--sans); cursor: pointer; }
+.nb-chip.on { background: var(--gold); color: #1f1500; border-color: transparent; }
+.nb-chip.on.st-fermentazione, .nb-chip.on.st-maturazione { background: var(--teal); }
+.nb-chip.on.st-imbottigliato { background: var(--magenta); }

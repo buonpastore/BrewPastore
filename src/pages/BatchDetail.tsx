@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   supabase, errMsg, sg, eur, num, date, STATUS_LABELS, MATERIAL_CATEGORIES, UNITS, loadMaterials,
   primingGrams, residualCo2, PRIMING_FACTORS, fmtUnitPrice, type Row,
@@ -175,6 +175,45 @@ function CostsTab({ batch, canEdit, materials }: { batch: Row; canEdit: boolean;
   );
 }
 
+/** Primo riquadro di un batch appena creato: nome, data di cotta e stato, subito modificabili. */
+function NewBatchCard({ batch, onSaved, onDone }: { batch: Row; onSaved: (b: Row) => void; onDone: () => void }) {
+  const [code, setCode] = useState(batch.code ?? "");
+  const [msg, setMsg] = useState("");
+  const today = new Date().toISOString().slice(0, 10);
+  const save = async (patch: Row) => {
+    const { data, error } = await supabase.from("batches").update(patch).eq("id", batch.id).select().single();
+    if (error) return setMsg(errMsg(error));
+    onSaved(data); setMsg("✓ salvato");
+    window.setTimeout(() => setMsg(""), 1500);
+  };
+  return (
+    <div className="new-batch">
+      <div className="nb-head">
+        <strong>🍺 Nuovo batch creato</strong>
+        <span className="ok small">{msg}</span>
+      </div>
+      <label className="block"><span>Nome del batch</span>
+        <input className="nb-name" value={code} onChange={(e) => setCode(e.target.value)} onBlur={() => code.trim() && code !== batch.code && save({ code: code.trim() })} />
+      </label>
+      <label className="block"><span>Data di cotta</span>
+        <div className="nb-date">
+          <input type="date" value={batch.brew_date ?? ""} onChange={(e) => save({ brew_date: e.target.value || null })} />
+          <button className="btn" onClick={() => save({ brew_date: today, status: batch.status === "pianificato" ? "cotta" : batch.status })}>Oggi</button>
+        </div>
+      </label>
+      <div className="block"><span className="nb-label">Stato</span>
+        <div className="nb-status">
+          {Object.entries(STATUS_LABELS).map(([k, v]) => (
+            <button key={k} className={"nb-chip st-" + k + (batch.status === k ? " on" : "")} onClick={() => save({ status: k })}>{v}</button>
+          ))}
+        </div>
+      </div>
+      <p className="muted small">Ingredienti e acqua sono stati copiati dalla ricetta. Ora inserisci i valori della cotta qui sotto: si salvano da soli.</p>
+      <button className="btn small" onClick={onDone}>Fatto, nascondi questo riquadro</button>
+    </div>
+  );
+}
+
 function BatchBrewDay({ batch, recipe }: { batch: Row; recipe: Row | null }) {
   const [ings, setIngs] = useState<Row[]>([]);
   const [water, setWater] = useState<Row[]>([]);
@@ -238,6 +277,8 @@ export function BatchDetail() {
   const [recipe, setRecipe] = useState<Row | null>(null);
   const [materials, setMaterials] = useState<Row[]>([]);
   const [tab, setTab] = useState("dati");
+  const [sp, setSp] = useSearchParams();
+  const isNew = sp.get("nuovo") === "1";
   const [deleting, setDeleting] = useState(false);
   const [reloadIng, setReloadIng] = useState(0);
   const nav = useNavigate();
@@ -298,6 +339,7 @@ export function BatchDetail() {
       ]} />
 
       <div className="panel">
+        {tab === "dati" && isNew && isAdmin && <NewBatchCard batch={batch} onSaved={setBatch} onDone={() => setSp({}, { replace: true })} />}
         {tab === "dati" && <QuickEntry batch={batch} canEdit={isAdmin} onSaved={setBatch} />}
         {tab === "log" && <RecordForm table="batches" row={batch} sections={SECTIONS.filter((s) => !["Carbonazione", "pH", "Gravity"].includes(s.title ?? ""))} canEdit={isAdmin} onSaved={setBatch} />}
         {tab === "cottura" && <BatchBrewDay batch={batch} recipe={recipe} />}

@@ -65,8 +65,7 @@ export function RecipeDetail() {
   }, [id]);
 
   const newBatch = async () => {
-    const code = prompt("Nome/codice del batch", `${recipe!.name} #${batches.length + 1}`);
-    if (!code) return;
+    const code = `${recipe!.name} #${batches.length + 1}`;
     const { data: b, error } = await supabase.from("batches").insert({
       recipe_id: id, code, mash_water_l: recipe!.mash_water_l ?? null, sparge_water_l: recipe!.sparge_water_l ?? null,
     }).select().single();
@@ -78,7 +77,7 @@ export function RecipeDetail() {
         batch_id: b.id, material_id: i.material_id, name: i.name, category: i.category, quantity: i.quantity, unit: i.unit, step: i.step,
       })));
     }
-    nav(`/batch/${b.id}`);
+    nav(`/batch/${b.id}?nuovo=1`);
   };
 
   const duplicate = async () => {
