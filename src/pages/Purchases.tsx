@@ -64,24 +64,21 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
       {!embedded && <div className="page-head"><h1>Acquisti materie prime</h1></div>}
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Data</th><th>Fornitore</th><th>N° doc.</th><th>Righe</th><th>Merce</th><th>Spedizione</th><th>Totale</th>{isAdmin && <th />}</tr></thead>
+          <thead><tr><th>Data</th><th>Fornitore</th><th>Prezzo</th><th>Articoli</th>{isAdmin && <th />}</tr></thead>
           <tbody>
             {rows.map((p) => {
               const goods = (p.purchase_items as Row[]).reduce((s, i) => s + Number(i.total_price), 0);
               return (
                 <tr key={p.id}>
-                  <td>{date(p.purchase_date)}</td>
+                  <td className="nowrap">{date(p.purchase_date)}</td>
                   <td><Link to={`/acquisti/${p.id}`}>{p.supplier}</Link></td>
-                  <td>{p.invoice_number ?? "—"}</td>
+                  <td className="nowrap"><strong>{eur(goods + Number(p.shipping_cost))}</strong></td>
                   <td>{p.purchase_items.length}</td>
-                  <td>{eur(goods)}</td>
-                  <td>{eur(p.shipping_cost)}</td>
-                  <td><strong>{eur(goods + Number(p.shipping_cost))}</strong></td>
                   {isAdmin && <td><button className="icon" title="Elimina acquisto" onClick={() => removePurchase(p, goods)}>🗑️</button></td>}
                 </tr>
               );
             })}
-            {!rows.length && <tr><td colSpan={7} className="muted">Nessun acquisto. Importane uno qui sotto (es. il PDF o il testo dell'ordine Mr Malt).</td></tr>}
+            {!rows.length && <tr><td colSpan={5} className="muted">Nessun acquisto. Importane uno qui sotto (es. il PDF o il testo dell'ordine Mr Malt).</td></tr>}
           </tbody>
         </table>
       </div>

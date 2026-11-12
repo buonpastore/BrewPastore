@@ -765,3 +765,12 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .pay-method.on { border-color: var(--gold); background: rgba(237, 165, 18, .16); color: var(--gold-2); }
 .rebuild-report { margin-top: 10px; padding: 10px 12px; background: var(--surface-2); border-radius: var(--r-sm); display: flex; flex-direction: column; gap: 4px; }
 .mini-btn:disabled { opacity: .7; }
+
+/* ---------------- schede ricetta: caratteristiche della birra ---------------- */
+.rc-style { color: var(--gold); font-weight: 600; margin-bottom: 10px; }
+.rc-traits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.rc-trait { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rc-trait strong { font-size: 1.02rem; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.rc-trait span { font-size: .75rem; color: var(--muted); }
+.rc-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .25); flex: none; }
+.rc-desc { font-size: .85rem; color: var(--muted); margin: 0 0 8px; line-height: 1.4; }

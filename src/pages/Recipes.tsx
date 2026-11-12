@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase, errMsg, sg, num, date, type Row } from "../lib";
+import { supabase, errMsg, num, date, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ImportRecipe } from "./ImportRecipe";
 import { STYLE_OPTIONS } from "../styles-list";
+import { abvOf, ebcColor, ebcName, ibuName } from "../beerLook";
 
 export function Recipes() {
   const { isAdmin } = useAuth();
@@ -59,12 +60,23 @@ export function Recipes() {
           return (
             <Link key={r.id} to={`/ricette/${r.id}`} className="card">
               <h3>{r.name} {r.archived && <span className="badge">archiviata</span>}</h3>
-              <div className="muted">{r.style ?? "—"}</div>
-              <div className="stats">
-                <span>OG {sg(r.target_og)}</span><span>FG {sg(r.target_fg)}</span>
-                <span>IBU {num(r.target_ibu, 0)}</span><span>{num(r.batch_size_l, 1)} L</span>
+              <div className="rc-style">{r.style ?? "stile non indicato"}</div>
+              <div className="rc-traits">
+                {abvOf(r.target_og, r.target_fg) != null && (
+                  <div className="rc-trait"><strong>{num(abvOf(r.target_og, r.target_fg), 1)}%</strong><span>alcol</span></div>
+                )}
+                {r.target_ibu != null && (
+                  <div className="rc-trait"><strong>{num(r.target_ibu, 0)} IBU</strong><span>{ibuName(Number(r.target_ibu))}</span></div>
+                )}
+                {r.target_ebc != null && (
+                  <div className="rc-trait">
+                    <strong><i className="rc-swatch" style={{ background: ebcColor(Number(r.target_ebc)) }} />{num(r.target_ebc, 0)} EBC</strong>
+                    <span>{ebcName(Number(r.target_ebc))}</span>
+                  </div>
+                )}
               </div>
-              <div className="muted small">{(r.batches as Row[]).length} batch · ultima cotta {date(last)}</div>
+              {r.description && <p className="rc-desc">{String(r.description).replace(/ · /g, ", ").slice(0, 110)}{String(r.description).length > 110 ? "…" : ""}</p>}
+              <div className="muted small">{(r.batches as Row[]).length ? `${(r.batches as Row[]).length} ${(r.batches as Row[]).length === 1 ? "cotta" : "cotte"} · ultima il ${date(last)}` : "nessuna cotta ancora"}</div>
             </Link>
           );
         })}

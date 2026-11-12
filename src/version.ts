@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.048", date: "13/11/2026 01:05", text: "Ricette: nelle schede stile, gradazione, amaro (IBU) e colore (EBC); ordini: solo data, fornitore, prezzo e articoli" },
   { version: "0.047", date: "13/11/2026 00:55", text: "Materie prime: «Rileggi tutti gli ordini salvati» sistema le righe importate male; nascoste le voci senza acquisti (create dalle ricette)" },
   { version: "0.046", date: "13/11/2026 00:40", text: "Spese: «Ho mandato soldi» mostra le tue quote non ancora pagate, le selezioni e scegli solo il metodo" },
   { version: "0.045", date: "13/11/2026 00:24", text: "Numero di versione beta (+0,001 a ogni modifica) e registro delle versioni in Impostazioni" },
