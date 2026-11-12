@@ -10,6 +10,7 @@ import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
 import { ImportRecipe } from "./ImportRecipe";
+import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
 
 export const RECIPE_SECTIONS: { title?: string; fields: FieldDef[] }[] = [
@@ -45,6 +46,7 @@ export function RecipeDetail() {
   const [materials, setMaterials] = useState<Row[]>([]);
   const [tab, setTab] = useState("scheda");
   const [importing, setImporting] = useState(false);
+  const [pasted, setPasted] = useState<File[] | undefined>();
   const [reloadIng, setReloadIng] = useState(0);
 
   useEffect(() => {
@@ -122,11 +124,14 @@ export function RecipeDetail() {
         )}
         {tab === "ingredienti" && (
           <>
-            {isAdmin && <button className="btn small" style={{ marginBottom: 12 }} onClick={() => setImporting(true)}>📸 Compila da screenshot</button>}
+            {isAdmin && !importing && (
+              <FilePicker compact onFiles={(f) => { setPasted(f); setImporting(true); }} accept="image/*,application/pdf,.txt,.md"
+                title="📋 Incolla qui lo screenshot degli ingredienti" hint="Anche più screenshot (es. una chat con l'AI lunga): l'AI li legge e tu controlli prima di salvare." />
+            )}
             <RowsEditor table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} fields={ingFields}
               canEdit={isAdmin} orderBy={{ column: "sort_order" }} defaults={{ category: "malto", unit: "kg" }}
               reloadKey={reloadIng} />
-            {importing && <ImportRecipe recipeId={recipe.id} onClose={() => setImporting(false)}
+            {importing && <ImportRecipe recipeId={recipe.id} initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }}
               onDone={() => { setReloadIng((x) => x + 1); loadMaterials().then(setMaterials); }} />}
           </>
         )}

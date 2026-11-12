@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   supabase, uploadFile, parseDocument, findOrCreateMaterial, loadMaterials, errMsg, eur, date,
@@ -16,6 +16,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
   const nav = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [importing, setImporting] = useState(false);
+  const [pasted, setPasted] = useState<File[] | undefined>();
 
   useEffect(() => {
     supabase.from("purchases").select("*, purchase_items(total_price)").order("purchase_date", { ascending: false })
@@ -41,7 +42,11 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
           </div>
         )}
       </div>
-      {importing && <ImportPurchase onClose={() => setImporting(false)} />}
+      {isAdmin && !importing && (
+        <FilePicker compact onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
+          title="📋 Incolla qui lo screenshot o la fattura" hint="L'AI legge le righe e te le fa controllare prima di salvare." />
+      )}
+      {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}
       <div className="table-wrap">
         <table>
           <thead><tr><th>Data</th><th>Fornitore</th><th>N° doc.</th><th>Righe</th><th>Merce</th><th>Spedizione</th><th>Totale</th></tr></thead>
@@ -71,17 +76,18 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
 interface ReviewItem { description: string; material_name: string; material_id: string; category: string; quantity: number; unit: string; total_price: number }
 
 /** Upload → lettura AI → revisione → salvataggio acquisto */
-export function ImportPurchase({ onClose }: { onClose: () => void }) {
+export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void; initialFiles?: File[] }) {
   const nav = useNavigate();
   const [step, setStep] = useState<"upload" | "reading" | "review" | "saving">("upload");
-  const [picked, setPicked] = useState<File[]>([]);
+  const [picked, setPicked] = useState<File[]>(initialFiles ?? []);
   const [uploaded, setUploaded] = useState<{ path: string; name: string; type: string; size: number }[]>([]);
   const [head, setHead] = useState<Omit<ParsedDocument, "items">>({ supplier: "", date: null, invoice_number: null, currency: "EUR", shipping_cost: 0, total_amount: null, notes: null });
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [materials, setMaterials] = useState<Row[]>([]);
   const [error, setError] = useState("");
 
-  useEffect(() => { loadMaterials().then(setMaterials); }, []);
+  const [materialsLoaded, setMaterialsLoaded] = useState(false);
+  useEffect(() => { loadMaterials().then((m) => { setMaterials(m); setMaterialsLoaded(true); }); }, []);
 
   const addFiles = (files: File[]) => {
     if (!files.length) return;
@@ -106,6 +112,12 @@ export function ImportPurchase({ onClose }: { onClose: () => void }) {
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
   };
+
+  const started = useRef(false);
+  useEffect(() => {
+    if (initialFiles?.length && !started.current && materialsLoaded) { started.current = true; read(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [materialsLoaded]);
 
   const setItem = (i: number, patch: Partial<ReviewItem>) => setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const goods = items.reduce((s, i) => s + Number(i.total_price || 0), 0);

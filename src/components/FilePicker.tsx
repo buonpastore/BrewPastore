@@ -10,10 +10,12 @@ interface Props {
   disabled?: boolean;
   /** ascolta Ctrl+V su tutta la pagina mentre il componente è visibile */
   globalPaste?: boolean;
+  title?: string;
+  compact?: boolean;
 }
 
 /** Riquadro per caricare file: incolla (Ctrl+V o pulsante), trascina o scegli. Funziona anche da telefono. */
-export function FilePicker({ onFiles, accept = "image/*,application/pdf", multiple = true, hint, disabled, globalPaste = true }: Props) {
+export function FilePicker({ onFiles, accept = "image/*,application/pdf", multiple = true, hint, disabled, globalPaste = true, title, compact }: Props) {
   const [msg, setMsg] = useState("");
   const cb = useRef(onFiles);
   cb.current = onFiles;
@@ -60,7 +62,7 @@ export function FilePicker({ onFiles, accept = "image/*,application/pdf", multip
   };
 
   return (
-    <div className="picker">
+    <div className={"picker" + (compact ? " compact" : "")}>
       {/* area tratteggiata: riceve anche l'incolla da telefono (tieni premuto → Incolla) */}
       <div
         className="dropzone"
@@ -76,7 +78,7 @@ export function FilePicker({ onFiles, accept = "image/*,application/pdf", multip
         onDrop={(e) => { e.preventDefault(); deliver(Array.from(e.dataTransfer.files)); }}
       >
         <div contentEditable={false} className="dropzone-inner">
-          <strong>📋 Incolla qui lo screenshot</strong>
+          <strong>{title ?? "📋 Incolla qui lo screenshot"}</strong>
           <span className="muted small">
             Computer: <kbd>Ctrl</kbd>+<kbd>V</kbd> (Mac <kbd>⌘</kbd>+<kbd>V</kbd>) o trascina il file · Telefono: tieni premuto qui → <em>Incolla</em>
           </span>

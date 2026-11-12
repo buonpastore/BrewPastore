@@ -492,3 +492,8 @@ label.block { display: block; margin-bottom: 12px; }
 .calc-details { background: var(--surface-2); border-radius: var(--r); padding: 10px 16px; margin-bottom: 8px; }
 .calc-details summary { cursor: pointer; font-weight: 600; color: var(--gold); padding: 4px 0; }
 .panel > div > h2:first-child { margin-top: 0; }
+.picker.compact { margin: 0 0 18px; display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.picker.compact .dropzone { flex: 1 1 320px; padding: 14px 16px; margin: 0; }
+.picker.compact .row-actions { margin: 0; flex-direction: column; justify-content: center; align-items: stretch; }
+.picker.compact > p { flex-basis: 100%; margin: 0; }
+@media (max-width: 600px) { .picker.compact .row-actions { flex-direction: row; width: 100%; } .picker.compact .row-actions > * { flex: 1; } }

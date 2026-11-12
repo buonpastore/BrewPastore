@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FilePicker } from "../components/FilePicker";
 import { FieldInput } from "../components/fields";
@@ -10,15 +10,17 @@ interface Props {
   /** se presente, aggiunge gli ingredienti a questa ricetta invece di crearne una nuova */
   recipeId?: string;
   onDone?: () => void;
+  /** screenshot già incollati nella pagina: la lettura parte subito */
+  initialFiles?: File[];
 }
 
 /** Carica uno screenshot (es. chat con un'AI) e crea/compila una ricetta. */
-export function ImportRecipe({ onClose, recipeId, onDone }: Props) {
+export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props) {
   const nav = useNavigate();
   const [step, setStep] = useState<"upload" | "reading" | "review" | "saving">("upload");
   const [data, setData] = useState<ParsedRecipe | null>(null);
   const [paths, setPaths] = useState<string[]>([]);
-  const [picked, setPicked] = useState<File[]>([]);
+  const [picked, setPicked] = useState<File[]>(initialFiles ?? []);
   const [fillFields, setFillFields] = useState(!recipeId);
   const [error, setError] = useState("");
 
@@ -33,6 +35,12 @@ export function ImportRecipe({ onClose, recipeId, onDone }: Props) {
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
   };
+
+  const started = useRef(false);
+  useEffect(() => {
+    if (initialFiles?.length && !started.current) { started.current = true; read(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setIng = (i: number, k: string, v: unknown) => {
     if (!data) return;

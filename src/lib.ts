@@ -149,8 +149,11 @@ async function invokeParser(storagePath: string | string[], mode: string): Promi
   const paths = Array.isArray(storagePath) ? storagePath : [storagePath];
   const { data, error } = await supabase.functions.invoke("parse-document", { body: { storage_paths: paths, mode } });
   if (error) {
+    const NOT_ACTIVE = "La lettura con l'AI non è ancora attiva: va installata la funzione «parse-document» su Supabase (vedi README, passo 2).";
+    if ((error as { name?: string }).name === "FunctionsFetchError") throw new Error(NOT_ACTIVE);
     // prova a leggere il messaggio d'errore restituito dalla funzione
     const ctx = (error as { context?: Response }).context;
+    if (ctx?.status === 404) throw new Error(NOT_ACTIVE);
     if (ctx && typeof ctx.json === "function") {
       const body = await ctx.json().catch(() => null);
       if (body?.error) throw new Error(body.error);

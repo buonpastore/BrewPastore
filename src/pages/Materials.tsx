@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, type Row } from "../lib";
 import { ImportPurchase } from "./Purchases";
+import { FilePicker } from "../components/FilePicker";
 import { useAuth } from "../auth";
 
 export function Materials({ embedded = false }: { embedded?: boolean }) {
@@ -12,6 +13,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   const [history, setHistory] = useState<Row[]>([]);
   const [reload, setReload] = useState(0);
   const [importing, setImporting] = useState(false);
+  const [pasted, setPasted] = useState<File[] | undefined>();
 
   useEffect(() => {
     supabase.from("material_costs").select("*").order("category").order("name").then(({ data }) => setRows(data ?? []));
@@ -57,7 +59,11 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
         {isAdmin && <button className="btn primary" onClick={() => setImporting(true)}>📸 Carica prezzi da screenshot / fattura</button>}
       </div>
       <p className="muted">Costo medio ponderato su tutti gli acquisti (spedizione inclusa). I prezzi arrivano dagli acquisti registrati.</p>
-      {importing && <ImportPurchase onClose={() => setImporting(false)} />}
+      {isAdmin && !importing && (
+        <FilePicker compact onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
+          title="📋 Incolla qui lo screenshot dell'acquisto" hint="I prezzi aggiornano subito i costi medi." />
+      )}
+      {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}
       <div className="toolbar">
         <input placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={cat} onChange={(e) => setCat(e.target.value)}>
