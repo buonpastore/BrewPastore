@@ -8,6 +8,7 @@ import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
 import { QuotePopup } from "./QuoteOfTheDay";
 import { UpdateBanner } from "./UpdateBanner";
+import { VERSION_LABEL } from "../version";
 
 interface Tab { to: string; label: string; icon: LucideIcon; color: string; also?: string[] }
 interface Group { key: string; label: string; icon: LucideIcon; to: string; color: string; tabs?: Tab[] }
@@ -60,7 +61,7 @@ export function Layout() {
           <img className="brand-logo" src={FACE_IMG} alt="" />
           <span className="brand-text">
             <span className="brand-name">BrewPastore</span>
-            <span className="brand-tag">birre da pascolo</span>
+            <span className="brand-tag">birre da pascolo <span className="brand-ver">{VERSION_LABEL}</span></span>
           </span>
         </NavLink>
         <div className="user">
@@ -90,6 +91,7 @@ export function Layout() {
         })}
         <div className="sidebar-foot">
           <button className="sidebar-logout" onClick={() => supabase.auth.signOut()}><LogOut size={17} /> Esci</button>
+          <NavLink to="/impostazioni#versioni" className="sidebar-ver">BrewPastore {VERSION_LABEL}</NavLink>
         </div>
       </nav>
 

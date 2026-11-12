@@ -740,3 +740,20 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .exp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 480px; }
 .exp-actions .btn { min-height: 50px; width: 100%; font-size: .98rem; white-space: nowrap; padding: 8px 10px; }
 @media (max-width: 380px) { .exp-actions .btn { font-size: .88rem; } }
+
+/* ---------------- versioni ---------------- */
+.brand-ver { font-family: var(--sans); font-style: normal; font-size: .66rem; font-weight: 700; color: var(--muted); margin-left: 4px; letter-spacing: .02em; }
+.sidebar-ver { display: block; padding: 8px 12px 0; font-size: .74rem; color: var(--faint) !important; }
+.sidebar-ver:hover { color: var(--muted) !important; }
+.rel-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.rel-ver { font-family: var(--title); font-size: 1.9rem; color: var(--gold); line-height: 1.1; }
+.rel-progress { display: flex; flex-direction: column; gap: 4px; min-width: 180px; flex: 0 1 260px; }
+.rel-bar { height: 8px; border-radius: 8px; background: var(--surface-3); overflow: hidden; }
+.rel-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--teal), var(--magenta)); border-radius: 8px; }
+.rel-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; }
+.rel-list li { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.rel-list li:last-child { border-bottom: 0; }
+.rel-num { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
+.rel-list li.latest .rel-num { color: var(--gold); }
+.rel-list li.latest .rel-text { font-weight: 600; }
+@media (max-width: 600px) { .rel-list li { grid-template-columns: 54px 1fr; } .rel-date { grid-column: 2; } }

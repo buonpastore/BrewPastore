@@ -5,6 +5,7 @@ import { useAuth } from "../auth";
 import { ChatPanel } from "../components/ChatPanel";
 import { HistoryList } from "../components/HistoryList";
 import { QuoteCard, useQuoteOfTheDay } from "../components/QuoteOfTheDay";
+import { CHANGELOG, VERSION_LABEL, IS_BETA } from "../version";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -234,8 +235,9 @@ export function Settings() {
         </table>
         <p className="muted small">Gli utenti si aggiungono da Supabase → Authentication → Users. Il ruolo si cambia dalla tabella <code>profiles</code>.</p>
       </div>
+      <Releases />
       <HistoryPage embedded />
-      <p className="muted small version">BrewPastore · versione del {__BUILD_TIME__}</p>
+      <p className="muted small version">BrewPastore {VERSION_LABEL} · pubblicata il {__BUILD_TIME__}</p>
     </div>
   );
 }
@@ -293,6 +295,42 @@ function MascotUpload() {
         </>
       )}
       {msg && <p className="ok">{msg}</p>}
+    </div>
+  );
+}
+
+/** Registro delle versioni dell'app (beta: +0,001 a ogni modifica, fino alla 1.0). */
+function Releases() {
+  const [all, setAll] = useState(false);
+  const list = all ? CHANGELOG : CHANGELOG.slice(0, 8);
+  const progress = Math.min(100, Number(CHANGELOG[0].version) * 100);
+  return (
+    <div className="panel" id="versioni">
+      <h2>📦 Versioni dell'app</h2>
+      <div className="rel-head">
+        <div>
+          <div className="rel-ver">{VERSION_LABEL}</div>
+          <div className="muted small">{IS_BETA ? "Siamo in beta: ogni modifica aggiunge 0,001. Alla 1.0 si esce dalla beta." : "Versione stabile"}</div>
+        </div>
+        {IS_BETA && (
+          <div className="rel-progress" title={`${progress.toFixed(1)}% verso la 1.0`}>
+            <div className="rel-bar"><span style={{ width: `${Math.max(2, progress)}%` }} /></div>
+            <span className="muted small">verso la 1.0</span>
+          </div>
+        )}
+      </div>
+      <ol className="rel-list">
+        {list.map((r, i) => (
+          <li key={r.version} className={i === 0 ? "latest" : ""}>
+            <span className="rel-num">{r.version.replace(".", ",")}</span>
+            <span className="rel-text">{r.text}</span>
+            <span className="rel-date muted small">{r.date}</span>
+          </li>
+        ))}
+      </ol>
+      {CHANGELOG.length > 8 && (
+        <button className="btn small" onClick={() => setAll(!all)}>{all ? "Mostra solo le ultime" : `Mostra tutte le ${CHANGELOG.length} versioni`}</button>
+      )}
     </div>
   );
 }
