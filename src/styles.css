@@ -757,3 +757,9 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .rel-list li.latest .rel-num { color: var(--gold); }
 .rel-list li.latest .rel-text { font-weight: 600; }
 @media (max-width: 600px) { .rel-list li { grid-template-columns: 54px 1fr; } .rel-date { grid-column: 2; } }
+.due-list { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+.due-list li { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; padding: 12px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); cursor: pointer; min-height: 60px; }
+.due-list li.on { border-color: var(--gold); background: rgba(237, 165, 18, .1); }
+.due-amt { font-size: 1.1rem; }
+.due-total { font-size: 1.05rem; margin: 6px 0 12px; }
+.pay-method.on { border-color: var(--gold); background: rgba(237, 165, 18, .16); color: var(--gold-2); }

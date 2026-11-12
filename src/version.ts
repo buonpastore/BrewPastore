@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.046", date: "13/11/2026 00:40", text: "Spese: «Ho mandato soldi» mostra le tue quote non ancora pagate, le selezioni e scegli solo il metodo" },
   { version: "0.045", date: "13/11/2026 00:24", text: "Numero di versione beta (+0,001 a ogni modifica) e registro delle versioni in Impostazioni" },
   { version: "0.044", date: "13/11/2026 00:23", text: "Spese: 'Ho fatto una spesa' e 'Ho mandato soldi' sulla stessa riga, larghi uguali" },
   { version: "0.043", date: "13/11/2026 00:22", text: "Materie prime: elimina acquisto dall'elenco, elimina singole righe d'acquisto e materie prime create per errore" },

@@ -206,7 +206,7 @@ export function Expenses() {
         </div>
       )}
       {showNew && <NewExpense profiles={profiles} me={me} onClose={() => setShowNew(false)} onSaved={refresh} />}
-      {showPay && <NewSettlement profiles={profiles} me={me} initial={showPay} onClose={() => setShowPay(null)} onSaved={refresh} />}
+      {showPay && <NewSettlement profiles={profiles} me={me} initial={showPay} expenses={expenses} settlements={settlements} nameOf={nameOf} onClose={() => setShowPay(null)} onSaved={refresh} />}
     </div>
   );
 }
@@ -312,18 +312,43 @@ function NewExpense({ profiles, me, onClose, onSaved }: { profiles: Row[]; me: s
   );
 }
 
-function NewSettlement({ profiles, me, initial, onClose, onSaved }: {
-  profiles: Row[]; me: string; initial: { to?: string; amount?: number; expense_id?: string }; onClose: () => void; onSaved: () => void;
+function NewSettlement({ profiles, me, initial, expenses, settlements, nameOf, onClose, onSaved }: {
+  profiles: Row[]; me: string; initial: { to?: string; amount?: number; expense_id?: string };
+  expenses: Row[]; settlements: Row[]; nameOf: (id: string) => string; onClose: () => void; onSaved: () => void;
 }) {
+  // le mie quote non ancora pagate (spese anticipate da altri)
+  const due = expenses.flatMap((e) => (e.expense_shares as Row[])
+    .filter((sh) => sh.user_id === me && e.paid_by !== me && Number(sh.amount) > 0
+      && !settlements.some((x) => x.expense_id === e.id && x.from_user === me && x.to_user === e.paid_by))
+    .map((sh) => ({ expense: e, amount: Number(sh.amount) })));
+  const [mode, setMode] = useState<"quote" | "libero">(due.some((d) => !initial.to || d.expense.paid_by === initial.to) ? "quote" : "libero");
+  const [sel, setSel] = useState<string[]>(due.filter((d) => !initial.to || d.expense.paid_by === initial.to).map((d) => d.expense.id));
   const others = profiles.filter((p) => p.id !== me);
   const [to, setTo] = useState(initial.to ?? others[0]?.id ?? "");
   const [amount, setAmount] = useState(initial.amount != null ? String(initial.amount) : "");
   const [method, setMethod] = useState("bonifico");
   const [day, setDay] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const save = async (e: React.FormEvent) => {
+  const chosen = due.filter((d) => sel.includes(d.expense.id));
+  const total = chosen.reduce((s, d) => s + d.amount, 0);
+  const byPerson = [...new Set(chosen.map((d) => d.expense.paid_by))].map((id) => ({ id, sum: chosen.filter((d) => d.expense.paid_by === id).reduce((s, d) => s + d.amount, 0) }));
+
+  const saveQuote = async () => {
+    if (!chosen.length) return setError("Seleziona almeno una spesa");
+    setBusy(true); setError("");
+    const { error } = await supabase.from("settlements").insert(chosen.map((d) => ({
+      to_user: d.expense.paid_by, amount: d.amount, method, paid_on: day, expense_id: d.expense.id,
+      notes: notes || `Quota di «${d.expense.description}»`,
+    })));
+    setBusy(false);
+    if (error) return setError(errMsg(error));
+    onSaved(); onClose();
+  };
+
+  const saveFree = async (e: React.FormEvent) => {
     e.preventDefault(); setError("");
     const { error } = await supabase.from("settlements").insert({
       to_user: to, amount: Number(amount.replace(",", ".")), method, paid_on: day, notes: notes || null, expense_id: initial.expense_id ?? null,
@@ -334,22 +359,79 @@ function NewSettlement({ profiles, me, initial, onClose, onSaved }: {
 
   return (
     <div className="modal-backdrop">
-      <form className="modal" onSubmit={save}>
+      <div className="modal">
         <h2>💸 Ho mandato soldi</h2>
-        <div className="form-grid">
-          <label><span>A chi</span><select value={to} onChange={(e) => setTo(e.target.value)}>{others.map((p) => <option key={p.id} value={p.id}>{p.display_name}</option>)}</select></label>
-          <label><span>Importo €</span><input required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
-          <label><span>Come</span><select value={method} onChange={(e) => setMethod(e.target.value)}>{Object.entries(METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-          <label><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>
-          <label className="wide"><span>Note</span><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="es. CRO bonifico, causale…" /></label>
+        <div className="tabs" style={{ margin: "0 0 14px" }}>
+          <button className={mode === "quote" ? "active" : ""} onClick={() => setMode("quote")}>Le mie quote da pagare ({due.length})</button>
+          <button className={mode === "libero" ? "active" : ""} onClick={() => setMode("libero")}>Importo libero</button>
         </div>
-        <p className="muted small">Il destinatario dovrà confermare di averli ricevuti.</p>
-        {error && <p className="error">{error}</p>}
-        <div className="row-actions">
-          <button className="btn primary">Registra</button>
-          <button type="button" className="btn" onClick={onClose}>Annulla</button>
-        </div>
-      </form>
+
+        {mode === "quote" && (
+          due.length === 0 ? <p>🎉 Non hai quote da pagare: sei in pari con tutte le spese.</p> : (
+            <>
+              <div className="row-actions" style={{ marginTop: 0 }}>
+                <button className="mini-btn" onClick={() => setSel(due.map((d) => d.expense.id))}>Seleziona tutte</button>
+                <button className="mini-btn" onClick={() => setSel([])}>Nessuna</button>
+              </div>
+              <ul className="due-list">
+                {due.map((d) => (
+                  <li key={d.expense.id} className={sel.includes(d.expense.id) ? "on" : ""}
+                    onClick={() => setSel(sel.includes(d.expense.id) ? sel.filter((x) => x !== d.expense.id) : [...sel, d.expense.id])}>
+                    <input type="checkbox" readOnly checked={sel.includes(d.expense.id)} />
+                    <div>
+                      <strong>{d.expense.description}</strong>
+                      <div className="muted small">{date(d.expense.expense_date)} · anticipata da {nameOf(d.expense.paid_by)}</div>
+                    </div>
+                    <strong className="due-amt">{eur(d.amount)}</strong>
+                  </li>
+                ))}
+              </ul>
+              {chosen.length > 0 && (
+                <p className="due-total">
+                  Totale <strong>{eur(total)}</strong>
+                  {byPerson.map((p) => <span key={p.id} className="muted small"> · a {nameOf(p.id)} {eur(p.sum)}</span>)}
+                </p>
+              )}
+              <span className="nb-label">Come hai pagato?</span>
+              <div className="pay-methods">
+                {Object.entries(METHODS).map(([k, v]) => (
+                  <button key={k} className={"pay-method" + (method === k ? " on" : "")} onClick={() => setMethod(k)}>{v}</button>
+                ))}
+              </div>
+              <div className="form-grid" style={{ marginTop: 12 }}>
+                <label><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>
+                <label><span>Note (facoltative)</span><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="es. CRO bonifico" /></label>
+              </div>
+              {error && <p className="error">{error}</p>}
+              <div className="qe-sheet-btns">
+                <button className="btn" onClick={onClose}>Annulla</button>
+                <button className="btn primary" disabled={busy || !chosen.length} onClick={saveQuote}>
+                  {busy ? "Registro…" : `Segna ${chosen.length} come pagat${chosen.length === 1 ? "a" : "e"}`}
+                </button>
+              </div>
+            </>
+          )
+        )}
+
+        {mode === "libero" && (
+          <form onSubmit={saveFree}>
+            <div className="form-grid">
+              <label><span>A chi</span><select value={to} onChange={(e) => setTo(e.target.value)}>{others.map((p) => <option key={p.id} value={p.id}>{p.display_name}</option>)}</select></label>
+              <label><span>Importo €</span><input required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
+              <label><span>Come</span><select value={method} onChange={(e) => setMethod(e.target.value)}>{Object.entries(METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+              <label><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>
+              <label className="wide"><span>Note</span><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="es. CRO bonifico, causale…" /></label>
+            </div>
+            <p className="muted small">Usalo per un pagamento non legato a una spesa precisa. Il destinatario dovrà confermare di averli ricevuti.</p>
+            {error && <p className="error">{error}</p>}
+            <div className="row-actions">
+              <button className="btn primary">Registra</button>
+              <button type="button" className="btn" onClick={onClose}>Annulla</button>
+            </div>
+          </form>
+        )}
+        {mode === "quote" && due.length === 0 && <div className="row-actions"><button className="btn" onClick={onClose}>Chiudi</button></div>}
+      </div>
     </div>
   );
 }
