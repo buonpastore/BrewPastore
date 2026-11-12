@@ -11,6 +11,7 @@ import { DocumentsPanel } from "../components/DocumentsPanel";
 import { FilePicker } from "../components/FilePicker";
 import { PickedList } from "./ImportRecipe";
 import { parseOrderText } from "../textParser";
+import { rebuildPurchasesFromDocuments, type RebuildReport } from "../rebuild";
 
 export function Purchases({ embedded = false }: { embedded?: boolean }) {
   const { isAdmin } = useAuth();
@@ -23,6 +24,20 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
     supabase.from("purchases").select("*, purchase_items(total_price)").order("purchase_date", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
   }, []);
+
+  const [rebuilding, setRebuilding] = useState<string | null>(null);
+  const [report, setReport] = useState<RebuildReport | null>(null);
+  const rebuild = async () => {
+    if (!confirm("Rileggo tutti gli ordini dai documenti salvati con la lettura aggiornata e sostituisco le loro righe?\n(Funziona per gli ordini importati da testo; quelli da PDF o foto restano com'erano.)")) return;
+    setReport(null);
+    try {
+      const r = await rebuildPurchasesFromDocuments((m) => setRebuilding(m));
+      setReport(r);
+      const { data } = await supabase.from("purchases").select("*, purchase_items(total_price)").order("purchase_date", { ascending: false });
+      setRows(data ?? []);
+    } catch (e) { alert(errMsg(e)); }
+    setRebuilding(null);
+  };
 
   const removePurchase = async (p: Row, goods: number) => {
     if (!confirm(`Eliminare l'acquisto ${p.supplier} del ${date(p.purchase_date)} (${p.purchase_items.length} righe, ${eur(goods + Number(p.shipping_cost))})?\nI costi medi verranno ricalcolati.`)) return;
@@ -77,7 +92,17 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
             <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
               title="📋 Incolla qui" hint="fattura, screenshot, scontrino o testo" />
           )}
-          <button className="mini-btn" onClick={manual}>✏️ <span>Inserimento manuale</span></button>
+          <div className="row-actions">
+            <button className="mini-btn" onClick={manual}>✏️ <span>Inserimento manuale</span></button>
+            <button className="mini-btn" disabled={rebuilding !== null} onClick={rebuild}>♻️ <span>{rebuilding ?? "Rileggi tutti gli ordini salvati"}</span></button>
+          </div>
+          {report && (
+            <div className="rebuild-report">
+              {report.ok.map((x) => <div key={x} className="ok small">✓ {x}</div>)}
+              {report.skipped.map((x) => <div key={x} className="muted small">– {x}</div>)}
+              {report.errors.map((x) => <div key={x} className="error small">✗ {x}</div>)}
+            </div>
+          )}
         </div>
       )}
       {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}

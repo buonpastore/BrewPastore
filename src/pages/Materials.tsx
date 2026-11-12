@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, fmtUnitPrice, fmtBaseQty, toBase, type Row } from "../lib";
 import { Link } from "react-router-dom";
+import { deleteMaterialsWithoutPurchases } from "../rebuild";
 import { useAuth } from "../auth";
 
 export function Materials({ embedded = false }: { embedded?: boolean }) {
@@ -87,7 +88,13 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
     setReload((x) => x + 1);
   };
 
-  const list = rows.filter((r) => (!cat || r.category === cat) && r.name.toLowerCase().includes(q.toLowerCase()));
+  const [showEmpty, setShowEmpty] = useState(false);
+  const empty = rows.filter((r) => Number(r.purchases_count) === 0);
+  const list = rows.filter((r) => (showEmpty || Number(r.purchases_count) > 0) && (!cat || r.category === cat) && r.name.toLowerCase().includes(q.toLowerCase()));
+  const cleanEmpty = async () => {
+    if (!confirm(`Eliminare le ${empty.length} materie prime senza nessun acquisto?\nSono quelle create importando le ricette o rimaste da import sbagliati. Nelle ricette gli ingredienti restano.`)) return;
+    try { await deleteMaterialsWithoutPurchases(); setReload((x) => x + 1); } catch (e) { alert(errMsg(e)); }
+  };
   const totalSpent = list.reduce((s, r) => s + Number(r.total_spent), 0);
 
   return (
@@ -104,6 +111,13 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
         </select>
         <span className="muted">Speso in totale: <strong>{eur(totalSpent)}</strong></span>
       </div>
+      {empty.length > 0 && (
+        <div className="row-actions" style={{ marginTop: -4, marginBottom: 12 }}>
+          <span className="muted small">{empty.length} materie prime senza acquisti {showEmpty ? "mostrate" : "nascoste"} (create dalle ricette o da import sbagliati)</span>
+          <button className="mini-btn" onClick={() => setShowEmpty(!showEmpty)}>{showEmpty ? "Nascondi" : "Mostra"}</button>
+          {isAdmin && <button className="mini-btn" onClick={cleanEmpty}>🗑️ <span>Elimina quelle senza acquisti</span></button>}
+        </div>
+      )}
       <div className="table-wrap">
         <table>
           <thead><tr><th>Materia prima</th><th>Categoria</th><th>Acquistato</th><th>Speso</th><th>Costo medio</th><th>Ultimo acquisto</th><th>Acquisti</th>{isAdmin && <th />}</tr></thead>

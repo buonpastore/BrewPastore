@@ -763,3 +763,5 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .due-amt { font-size: 1.1rem; }
 .due-total { font-size: 1.05rem; margin: 6px 0 12px; }
 .pay-method.on { border-color: var(--gold); background: rgba(237, 165, 18, .16); color: var(--gold-2); }
+.rebuild-report { margin-top: 10px; padding: 10px 12px; background: var(--surface-2); border-radius: var(--r-sm); display: flex; flex-direction: column; gap: 4px; }
+.mini-btn:disabled { opacity: .7; }
