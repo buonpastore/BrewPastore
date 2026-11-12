@@ -81,7 +81,7 @@ export function Expenses() {
     <div>
       <div className="page-head">
         <h1>Spese condivise</h1>
-        <div className="row-actions">
+        <div className="exp-actions">
           <button className="btn primary" onClick={() => setShowNew(true)}>🧾 Ho fatto una spesa</button>
           <button className="btn" onClick={() => setShowPay({})}>💸 Ho mandato soldi</button>
         </div>
