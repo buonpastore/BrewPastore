@@ -26,9 +26,11 @@ export function Login() {
   };
 
   return (
-    <div className="login">
-      <form className="modal" onSubmit={login}>
-        <h1>🍺 BrewPastore</h1>
+    <div className="login sunburst">
+      <form className="modal login-card" onSubmit={login}>
+        <div className="login-mascot">🐑🍺</div>
+        <h1 className="login-title">BREW<br />PASTORE</h1>
+        <div className="ribbon">birra da pascolo</div>
         {!configured && <p className="error">Configura VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (vedi README).</p>}
         <label><span>Email</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></label>
         <label><span>Password</span><input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></label>
@@ -89,8 +91,14 @@ export function Dashboard() {
 
   return (
     <div>
-      <h1>Ciao {profile?.display_name} 👋</h1>
-      {q && <div className="panel"><QuoteCard quote={q} onAnother={another} /></div>}
+      <div className="hero sunburst">
+        <span className="hero-mascot">🐑</span>
+        <div>
+          <h1>Ciao {profile?.display_name}!</h1>
+          <div className="ribbon">bentornato al pascolo</div>
+        </div>
+      </div>
+      {q && <div className="panel quote-panel"><QuoteCard quote={q} onAnother={another} /></div>}
 
       {(myBalance != null && Math.abs(myBalance) > 0.005) || pending > 0 ? (
         <div className="panel">

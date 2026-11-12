@@ -59,12 +59,17 @@ export function QuotePopup() {
   if (!open || !quote) return null;
   return (
     <div className="modal-backdrop" onClick={close}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="La birra del giorno">
-        <h2>La birra del giorno</h2>
-        <QuoteCard quote={quote} />
-        <div className="row-actions center">
-          <button className="btn" onClick={another}>🎲 Un'altra</button>
-          <button className="btn primary" onClick={close}>Salute! 🍻</button>
+      <div className="modal quote-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="La birra del giorno">
+        <div className="quote-head sunburst">
+          <div className="quote-mascot">🐑🍺</div>
+          <h2>La birra del giorno</h2>
+        </div>
+        <div className="quote-body">
+          <QuoteCard quote={quote} />
+          <div className="row-actions center">
+            <button className="btn" onClick={another}>🎲 Un'altra</button>
+            <button className="btn primary" onClick={close}>Salute! 🍻</button>
+          </div>
         </div>
       </div>
     </div>

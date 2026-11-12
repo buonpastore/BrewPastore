@@ -24,7 +24,10 @@ export function Layout() {
     <div className="app">
       <header className="topbar">
         <button className="icon menu-btn" onClick={() => setMenu(!menu)} aria-label="Menu">☰</button>
-        <NavLink to="/" className="brand">🍺 BrewPastore</NavLink>
+        <NavLink to="/" className="brand">
+          <span className="brand-logo">🐑</span>
+          <div><span className="brand-name">BREWPASTORE</span><span className="brand-ribbon">birra da pascolo</span></div>
+        </NavLink>
         <div className="user">
           <span>{profile?.display_name}</span>
           <span className={"badge " + (isAdmin ? "admin" : "")}>{isAdmin ? "admin" : "consultazione"}</span>
