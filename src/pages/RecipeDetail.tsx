@@ -16,7 +16,6 @@ export const RECIPE_SECTIONS: { title?: string; fields: FieldDef[] }[] = [
     { key: "name", label: "Nome", required: true },
     { key: "style", label: "Stile" },
     { key: "batch_size_l", label: "Volume batch (L)", type: "number" },
-    { key: "efficiency_pct", label: "Efficienza (%)", type: "number" },
     { key: "description", label: "Descrizione", type: "textarea" },
   ]},
   { title: "Obiettivi", fields: [

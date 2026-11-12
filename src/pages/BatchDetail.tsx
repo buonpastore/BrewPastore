@@ -12,7 +12,7 @@ import { ChatPanel } from "../components/ChatPanel";
 import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import type { FieldDef } from "../components/fields";
-import { TastingsPanel } from "./Tastings";
+import { BatchEvaluation } from "./Evaluation";
 
 const sgField = (key: string, label: string): FieldDef => ({ key, label, type: "number", step: "0.001", render: (v) => sg(v as number) });
 
@@ -180,7 +180,7 @@ export function BatchDetail() {
   useEffect(() => {
     supabase.from("batches").select("*").eq("id", id!).single().then(({ data }) => {
       setBatch(data);
-      if (data) supabase.from("recipes").select("id, name, target_og, target_fg").eq("id", data.recipe_id).single().then(({ data: r }) => setRecipe(r));
+      if (data) supabase.from("recipes").select("id, name, target_og, target_fg, efficiency_pct, batch_size_l").eq("id", data.recipe_id).single().then(({ data: r }) => setRecipe(r));
     });
     loadMaterials().then(setMaterials);
   }, [id]);
@@ -220,7 +220,7 @@ export function BatchDetail() {
 
       <Tabs active={tab} onChange={setTab} tabs={[
         ["log", "Log cotta"], ["acqua", "Correzioni acqua"], ["ingredienti", "Ingredienti usati"],
-        ["diario", "Diario fermentazione"], ["carbonazione", "Carbonazione"], ["degustazioni", "Degustazioni"], ["costi", "Costi"],
+        ["diario", "Diario fermentazione"], ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"], ["costi", "Costi"],
         ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico versioni"],
       ]} />
 
@@ -271,7 +271,7 @@ export function BatchDetail() {
           </>
         )}
         {tab === "costi" && <CostsTab batch={batch} canEdit={isAdmin} materials={materials} />}
-        {tab === "degustazioni" && <TastingsPanel batchId={batch.id} />}
+        {tab === "valutazioni" && <BatchEvaluation batch={batch} recipe={recipe} />}
         {tab === "documenti" && <DocumentsPanel batchId={batch.id} />}
         {tab === "chat" && <ChatPanel batchId={batch.id} />}
         {tab === "storico" && <HistoryList relatedTo={{ id: batch.id, key: "batch_id" }} />}
