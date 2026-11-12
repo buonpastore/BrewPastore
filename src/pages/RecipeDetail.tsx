@@ -13,6 +13,7 @@ import { STYLE_OPTIONS } from "../styles-list";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { BrewDay } from "./BrewDay";
 import { RecipeOverview } from "./RecipeOverview";
+import { createBatchFromRecipe } from "../newBatch";
 import { RecipeWater } from "./Water";
 import { buildProcedure } from "../procedure";
 import { CleanNamesButton } from "../components/CleanNames";
@@ -67,19 +68,8 @@ export function RecipeDetail() {
   }, [id]);
 
   const newBatch = async () => {
-    const code = `${recipe!.name} #${batches.length + 1}`;
-    const { data: b, error } = await supabase.from("batches").insert({
-      recipe_id: id, code, mash_water_l: recipe!.mash_water_l ?? null, sparge_water_l: recipe!.sparge_water_l ?? null,
-    }).select().single();
-    if (error) return alert(errMsg(error));
-    // copia gli ingredienti della ricetta nel batch (poi si possono correggere)
-    const { data: ings } = await supabase.from("recipe_ingredients").select("*").eq("recipe_id", id!).order("sort_order");
-    if (ings?.length) {
-      await supabase.from("batch_ingredients").insert(ings.map((i) => ({
-        batch_id: b.id, material_id: i.material_id, name: i.name, category: i.category, quantity: i.quantity, unit: i.unit, step: i.step,
-      })));
-    }
-    nav(`/batch/${b.id}?nuovo=1`);
+    try { const bid = await createBatchFromRecipe(recipe!); nav(`/batch/${bid}?nuovo=1`); }
+    catch (e) { alert(errMsg(e)); }
   };
 
   const duplicate = async () => {

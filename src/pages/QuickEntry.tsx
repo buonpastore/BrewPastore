@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus, Plus, Check, Save, Trash2 } from "lucide-react";
+import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus, Plus, Check, Save, Trash2, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase, errMsg, num, type Row } from "../lib";
 
@@ -207,7 +207,26 @@ function QuickEvents({ batch, canEdit }: { batch: Row; canEdit: boolean }) {
 }
 
 /** Inserimento rapido dei dati del batch, pensato per il telefono durante la cotta. */
-export function QuickEntry({ batch, canEdit, onSaved, onDelete }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void }) {
+/** Fasi da tenere aperte in base allo stato del batch. */
+export function phasesFor(status?: string | null): string[] {
+  switch (status) {
+    case "fermentazione": case "maturazione": return ["Fermentazione"];
+    case "imbottigliato": return ["Imbottigliamento"];
+    case "finito": return ["Consumi"];
+    default: return ["Acqua", "Mash", "Sparge", "Fine bollitura"];
+  }
+}
+
+export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, focusStatus }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null }) {
+  const [open, setOpen] = useState<Set<string>>(() => new Set(phasesFor(batch.status)));
+  const rootRef = useRef<HTMLDivElement>(null);
+  // dopo un pulsante di stato: apri solo le fasi interessanti e portale in vista
+  useEffect(() => {
+    if (!focusKey) return;
+    setOpen(new Set(phasesFor(focusStatus ?? batch.status)));
+    window.setTimeout(() => rootRef.current?.querySelector(".qe-phase.open")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+  }, [focusKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const toggle = (t: string) => setOpen((o) => { const n = new Set(o); if (n.has(t)) n.delete(t); else n.add(t); return n; });
   const flushers = useRef(new Set<() => Promise<void>>()).current;
   const [saveMsg, setSaveMsg] = useState("");
   const saveAll = async () => {
@@ -221,19 +240,24 @@ export function QuickEntry({ batch, canEdit, onSaved, onDelete }: { batch: Row; 
   };
   return (
     <FlushCtx.Provider value={flushers}>
-    <div className="quick-entry">
+    <div className="quick-entry" ref={rootRef}>
       {PHASES.map((p) => {
         const done = p.fields.filter((f) => batch[f.key] != null && batch[f.key] !== "").length;
         return (
-          <section key={p.title} className="qe-phase" style={{ ["--c" as string]: p.color }}>
-            <h3 className="qe-title">
+          <section key={p.title} className={"qe-phase" + (open.has(p.title) ? " open" : "")} style={{ ["--c" as string]: p.color }}>
+            <button type="button" className="qe-title" onClick={() => toggle(p.title)} aria-expanded={open.has(p.title)}>
               <span className="qe-ico">{p.icon}</span>{p.title}
               <span className={"qe-count" + (done === p.fields.length ? " full" : "")}>{done}/{p.fields.length}</span>
-            </h3>
-            <div className="qe-fields">
-              {p.fields.map((f) => <BigField key={f.key} f={f} batch={batch} canEdit={canEdit} onSaved={onSaved} />)}
-            </div>
-            {p.title === "Fermentazione" && <QuickEvents batch={batch} canEdit={canEdit} />}
+              <ChevronDown size={20} className="qe-chev" />
+            </button>
+            {open.has(p.title) && (
+              <>
+                <div className="qe-fields">
+                  {p.fields.map((f) => <BigField key={f.key} f={f} batch={batch} canEdit={canEdit} onSaved={onSaved} />)}
+                </div>
+                {p.title === "Fermentazione" && <QuickEvents batch={batch} canEdit={canEdit} />}
+              </>
+            )}
           </section>
         );
       })}

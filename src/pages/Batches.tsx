@@ -1,11 +1,27 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase, date, sg, eur, errMsg, STATUS_LABELS, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { deleteBatches } from "../deleteHelpers";
+import { createBatchFromRecipe } from "../newBatch";
 
 export function Batches() {
   const { isAdmin } = useAuth();
+  const nav = useNavigate();
+  const [choose, setChoose] = useState<Row[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const startNew = async () => {
+    const { data } = await supabase.from("recipes").select("*").eq("archived", false).order("name");
+    const recipes = data ?? [];
+    if (!recipes.length) return alert("Prima crea o importa una ricetta: il batch nasce da una ricetta.");
+    if (recipes.length === 1) return create(recipes[0]);   // una sola ricetta: la prendo da solo
+    setChoose(recipes);
+  };
+  const create = async (r: Row) => {
+    setBusy(true);
+    try { const bid = await createBatchFromRecipe(r); nav(`/batch/${bid}?nuovo=1`); }
+    catch (e) { alert(errMsg(e)); setBusy(false); }
+  };
   const remove = async (b: Row) => {
     if (!confirm(`Eliminare il batch «${b.code}» con tutti i suoi dati (log, diario, costi, degustazioni)?`)) return;
     try { await deleteBatches([b.id]); setRows((r) => r.filter((x) => x.id !== b.id)); } catch (e) { alert(errMsg(e)); }
@@ -26,7 +42,7 @@ export function Batches() {
     <div>
       <div className="page-head">
         <h1>Batch</h1>
-        <span className="muted small">Per creare un batch apri una ricetta e premi "Nuovo batch".</span>
+        {isAdmin && <button className="btn primary" disabled={busy} onClick={startNew}>{busy ? "Creo…" : "🍺 Nuovo batch"}</button>}
       </div>
       <div className="toolbar">
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -60,6 +76,22 @@ export function Batches() {
           </tbody>
         </table>
       </div>
+      {choose && (
+        <div className="modal-backdrop" onClick={() => setChoose(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>🍺 Nuovo batch: quale ricetta?</h2>
+            <div className="recipe-pick">
+              {choose.map((r) => (
+                <button key={r.id} className="recipe-pick-btn" disabled={busy} onClick={() => create(r)}>
+                  <strong>{r.name}</strong>
+                  <span className="muted small">{[r.style, r.batch_size_l && `${String(r.batch_size_l).replace(".", ",")} L`].filter(Boolean).join(" · ")}</span>
+                </button>
+              ))}
+            </div>
+            <button className="btn" style={{ width: "100%", marginTop: 10 }} onClick={() => setChoose(null)}>Annulla</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

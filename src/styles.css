@@ -925,3 +925,17 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .ov-steps .ov-step-items li { display: block; padding: 0 0 0 14px; gap: 0; }
 .ov-steps .ov-step-text { margin: 6px 0 0 38px; }
 @media (max-width: 600px) { .ov-steps .ov-step-text, .ov-steps .ov-step-items { margin-left: 4px; } }
+
+/* fasi richiudibili nell'inserimento dati */
+button.qe-title { width: 100%; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; text-align: left; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; font-size: .95rem; color: var(--c); min-height: 44px; }
+.qe-phase:not(.open) .qe-title { margin-bottom: 0; }
+.qe-phase:not(.open) { opacity: .85; }
+.qe-chev { color: var(--muted); transition: transform .2s; flex: none; }
+.qe-phase.open .qe-chev { transform: rotate(180deg); }
+.qe-count { margin-left: auto; }
+/* scelta ricetta per il nuovo batch */
+.recipe-pick { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.recipe-pick-btn { min-height: 60px; text-align: left; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 10px 16px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; }
+.recipe-pick-btn strong { font-size: 1.05rem; color: var(--gold); }
+.recipe-pick-btn:hover, .recipe-pick-btn:active { border-color: var(--gold); }
+.qe-phase { scroll-margin-top: calc(var(--topbar-h) + 12px); }

@@ -281,6 +281,8 @@ export function BatchDetail() {
   const isNew = sp.get("nuovo") === "1";
   const [deleting, setDeleting] = useState(false);
   const [reloadIng, setReloadIng] = useState(0);
+  const [focusKey, setFocusKey] = useState(0);
+  const [focusStatus, setFocusStatus] = useState<string | null>(null);
   const nav = useNavigate();
 
   useEffect(() => {
@@ -297,6 +299,7 @@ export function BatchDetail() {
     const { data, error } = await supabase.from("batches").update({ status: q.status, [q.field]: today }).eq("id", batch!.id).select().single();
     if (error) return alert(errMsg(error));
     setBatch(data);
+    setTab("dati"); setFocusStatus(q.status); setFocusKey((k) => k + 1);   // apri solo la fase interessante
     await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${STATUS_LABELS[q.status]}` });
   };
 
@@ -349,7 +352,7 @@ export function BatchDetail() {
 
       <div className="panel">
         {tab === "dati" && isNew && isAdmin && <NewBatchCard batch={batch} onSaved={setBatch} onDone={() => setSp({}, { replace: true })} />}
-        {tab === "dati" && <QuickEntry batch={batch} canEdit={isAdmin} onSaved={setBatch} onDelete={() => setDeleting(true)} />}
+        {tab === "dati" && <QuickEntry key={batch.id} batch={batch} canEdit={isAdmin} onSaved={setBatch} onDelete={() => setDeleting(true)} focusKey={focusKey} focusStatus={focusStatus} />}
         {tab === "log" && <RecordForm table="batches" row={batch} sections={SECTIONS.filter((s) => !["Carbonazione", "pH", "Gravity"].includes(s.title ?? ""))} canEdit={isAdmin} onSaved={setBatch} />}
         {tab === "cottura" && <BatchBrewDay batch={batch} recipe={recipe} />}
         {tab === "chimici" && (
