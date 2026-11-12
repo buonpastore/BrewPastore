@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.050", date: "13/11/2026 01:30", text: "Batch: pulsanti Salva ed Elimina in fondo all'inserimento dati, cestino nell'elenco batch; su telefono pulsanti e caselle grandi in tutta l'app" },
   { version: "0.049", date: "13/11/2026 01:15", text: "Batch: pulsanti Cotta / Fermentata / Imbottigliata / Bevuta oggi grandi, uno per riga, con la data quando fatto" },
   { version: "0.048", date: "13/11/2026 01:05", text: "Ricette: nelle schede stile, gradazione, amaro (IBU) e colore (EBC); ordini: solo data, fornitore, prezzo e articoli" },
   { version: "0.047", date: "13/11/2026 00:55", text: "Materie prime: «Rileggi tutti gli ordini salvati» sistema le righe importate male; nascoste le voci senza acquisti (create dalle ricette)" },

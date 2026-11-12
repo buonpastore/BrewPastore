@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase, date, sg, eur, STATUS_LABELS, type Row } from "../lib";
+import { supabase, date, sg, eur, errMsg, STATUS_LABELS, type Row } from "../lib";
+import { useAuth } from "../auth";
+import { deleteBatches } from "../deleteHelpers";
 
 export function Batches() {
+  const { isAdmin } = useAuth();
+  const remove = async (b: Row) => {
+    if (!confirm(`Eliminare il batch «${b.code}» con tutti i suoi dati (log, diario, costi, degustazioni)?`)) return;
+    try { await deleteBatches([b.id]); setRows((r) => r.filter((x) => x.id !== b.id)); } catch (e) { alert(errMsg(e)); }
+  };
   const [rows, setRows] = useState<Row[]>([]);
   const [costs, setCosts] = useState<Record<string, Row>>({});
   const [status, setStatus] = useState("");
@@ -29,7 +36,7 @@ export function Batches() {
       </div>
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Batch</th><th>Ricetta</th><th>Stato</th><th>Cotta</th><th>Imbottigliata</th><th>OG → FG</th><th>ABV</th><th>Bottiglie</th><th>€/bottiglia</th></tr></thead>
+          <thead><tr><th>Batch</th><th>Ricetta</th><th>Stato</th><th>Cotta</th><th>Imbottigliata</th><th>OG → FG</th><th>ABV</th><th>Bottiglie</th><th>€/bottiglia</th>{isAdmin && <th />}</tr></thead>
           <tbody>
             {list.map((b) => {
               const c = costs[b.id];
@@ -45,6 +52,7 @@ export function Batches() {
                   <td>{b.abv != null ? `${b.abv}%` : "—"}</td>
                   <td>{b.bottles_count ?? "—"}</td>
                   <td>{total != null && b.bottles_count ? eur(total / b.bottles_count) : "—"}</td>
+                  {isAdmin && <td><button className="icon" title="Elimina batch" onClick={() => remove(b)}>🗑️</button></td>}
                 </tr>
               );
             })}

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus, Plus, Check } from "lucide-react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus, Plus, Check, Save, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase, errMsg, num, type Row } from "../lib";
 
@@ -59,7 +59,11 @@ function parseValue(raw: string, kind: Kind): number | null {
 }
 const show = (v: unknown, kind: Kind) => (v == null || v === "" ? "" : Number(v).toFixed(DEC[kind]).replace(".", ","));
 
+/** Ogni casella registra qui il suo "salva subito", usato dal pulsante Salva. */
+const FlushCtx = createContext<Set<() => Promise<void>>>(new Set());
+
 function BigField({ f, batch, canEdit, onSaved }: { f: Field; batch: Row; canEdit: boolean; onSaved: (b: Row) => void }) {
+  const flushers = useContext(FlushCtx);
   const [text, setText] = useState(show(batch[f.key], f.kind));
   const [state, setState] = useState<"" | "saving" | "ok" | "err">("");
   const [err, setErr] = useState("");
@@ -67,6 +71,7 @@ function BigField({ f, batch, canEdit, onSaved }: { f: Field; batch: Row; canEdi
   useEffect(() => { setText(show(batch[f.key], f.kind)); }, [batch[f.key]]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = async (v: number | null) => {
+    pending.current = false;
     setState("saving");
     const { data, error } = await supabase.from("batches").update({ [f.key]: v }).eq("id", batch.id).select().single();
     if (error) { setState("err"); setErr(errMsg(error)); return; }
@@ -74,17 +79,29 @@ function BigField({ f, batch, canEdit, onSaved }: { f: Field; batch: Row; canEdi
     window.setTimeout(() => setState((s) => (s === "ok" ? "" : s)), 1500);
   };
   const schedule = (raw: string) => {
-    setText(raw);
+    setText(raw); pending.current = true;
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => save(parseValue(raw, f.kind)), 900);
   };
   const bump = (dir: 1 | -1) => {
     const cur = parseValue(text, f.kind) ?? (f.kind === "sg" ? 1.05 : f.kind === "ph" ? 5.4 : 0);
     const next = Math.max(0, Math.round((cur + dir * STEP[f.kind]) * 1000) / 1000);
-    setText(show(next, f.kind));
+    setText(show(next, f.kind)); pending.current = true;
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => save(next), 700);
   };
+  // salva subito se c'è un valore in attesa
+  const textRef = useRef(text); textRef.current = text;
+  const pending = useRef(false);
+  useEffect(() => {
+    const flush = async () => {
+      if (!pending.current) return;
+      window.clearTimeout(timer.current); pending.current = false;
+      await save(parseValue(textRef.current, f.kind));
+    };
+    flushers.add(flush);
+    return () => { flushers.delete(flush); };
+  }); // eslint-disable-line react-hooks/exhaustive-deps
   const v = parseValue(text, f.kind);
   const warn = f.key === "mash_ph" && v != null && (v < 5.2 || v > 5.6);
 
@@ -190,8 +207,20 @@ function QuickEvents({ batch, canEdit }: { batch: Row; canEdit: boolean }) {
 }
 
 /** Inserimento rapido dei dati del batch, pensato per il telefono durante la cotta. */
-export function QuickEntry({ batch, canEdit, onSaved }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void }) {
+export function QuickEntry({ batch, canEdit, onSaved, onDelete }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void }) {
+  const flushers = useRef(new Set<() => Promise<void>>()).current;
+  const [saveMsg, setSaveMsg] = useState("");
+  const saveAll = async () => {
+    setSaveMsg("Salvo…");
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    await Promise.all([...flushers].map((fn) => fn()));
+    const { data } = await supabase.from("batches").select("*").eq("id", batch.id).single();
+    if (data) onSaved(data);
+    setSaveMsg("✓ Tutto salvato");
+    window.setTimeout(() => setSaveMsg(""), 2500);
+  };
   return (
+    <FlushCtx.Provider value={flushers}>
     <div className="quick-entry">
       {PHASES.map((p) => {
         const done = p.fields.filter((f) => batch[f.key] != null && batch[f.key] !== "").length;
@@ -209,6 +238,13 @@ export function QuickEntry({ batch, canEdit, onSaved }: { batch: Row; canEdit: b
         );
       })}
       {batch.abv != null && <p className="qe-abv">🍺 Grado alcolico: <strong>{num(batch.abv, 1)}% vol</strong></p>}
+      {canEdit && (
+        <div className="qe-bottom">
+          <button className="big-action primary" onClick={saveAll}><Save size={20} /> {saveMsg || "Salva"}</button>
+          {onDelete && <button className="big-action danger" onClick={onDelete}><Trash2 size={20} /> Elimina batch</button>}
+        </div>
+      )}
     </div>
+    </FlushCtx.Provider>
   );
 }

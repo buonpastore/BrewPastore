@@ -787,3 +787,44 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .qs-btn:active { transform: scale(.99); background: color-mix(in srgb, var(--c) 18%, var(--surface)); }
 .qs-btn.done { background: color-mix(in srgb, var(--c) 10%, var(--surface)); }
 .qs-date { font-size: .85rem; font-weight: 600; color: var(--c); white-space: nowrap; }
+
+/* ---------------- fondo inserimento dati batch: Salva / Elimina ---------------- */
+.qe-bottom { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.big-action { width: 100%; min-height: 58px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; font: 700 1.1rem var(--sans); cursor: pointer; touch-action: manipulation; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); }
+.big-action.primary { background: var(--gold); color: #1f1500; border-color: transparent; box-shadow: 0 4px 14px rgba(237, 165, 18, .25); }
+.big-action.danger { background: transparent; color: var(--err); border-color: rgba(255, 107, 139, .45); }
+.big-action:active { transform: scale(.99); }
+
+/* =====================================================================
+   TELEFONO: pulsanti e caselle grandi in tutta l'app (come "Inserisci dati")
+   ===================================================================== */
+@media (max-width: 860px) {
+  body { font-size: 16px; }
+  .btn { min-height: 48px; padding: 10px 16px; font-size: 1rem; border-radius: 12px; }
+  .btn.small { min-height: 44px; padding: 8px 14px; font-size: .95rem; }
+  .mini-btn { height: 44px; padding: 0 14px; font-size: .92rem; border-radius: 11px; }
+  .icon { min-width: 44px; min-height: 44px; font-size: 1.15rem; }
+  input, select, textarea { font-size: 16px; min-height: 48px; border-radius: 12px; }   /* 16px evita lo zoom automatico su iPhone */
+  input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; min-height: 0; }
+  label > span { font-size: .85rem; margin-bottom: 6px; }
+  .form-grid { grid-template-columns: 1fr; gap: 14px; }
+  .inline-form { flex-direction: column; align-items: stretch; }
+  .inline-form > * { width: 100%; }
+  .row-actions { gap: 10px; }
+  .page-head .row-actions { width: 100%; }
+  .page-head .row-actions > .btn { flex: 1 1 auto; }
+  .tabs button { padding: 11px 16px; font-size: .95rem; }
+  .section-tabs a { padding: 10px 16px; font-size: .95rem; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar > * { width: 100%; }
+  .toolbar .tasting-avg { justify-content: center; }
+  .modal .row-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .modal .row-actions > .btn { width: 100%; }
+  .grid-dl { grid-template-columns: 1fr 1fr; }
+  .grid-dl dd { font-size: 1.1rem; }
+  td, th { padding: 12px 10px; }
+  .card { padding: 18px; }
+  .exp-actions .btn { min-height: 54px; }
+  .chat-form textarea { min-height: 52px; }
+  .chat-form .btn { min-height: 52px; }
+}
