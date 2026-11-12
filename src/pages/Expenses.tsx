@@ -54,10 +54,14 @@ export function Expenses() {
     refresh();
   };
   const removeExpense = async (e: Row) => {
-    if (!confirm(`Eliminare la spesa "${e.description}"?`)) return;
-    if (e.receipt_path) await supabase.storage.from("documents").remove([e.receipt_path]);
+    const linked = settlements.filter((x) => x.expense_id === e.id);
+    const extra = linked.length ? `\n\nVerranno cancellati anche ${linked.length} pagament${linked.length === 1 ? "o" : "i"} delle quote collegat${linked.length === 1 ? "o" : "i"}.` : "";
+    if (!confirm(`Eliminare la spesa «${e.description}» di ${eur(e.amount)}?${extra}`)) return;
+    // i pagamenti collegati: li cancella il database (file 0007); qui li togliamo anche nel caso non sia ancora stato eseguito
+    if (linked.length) await supabase.from("settlements").delete().in("id", linked.map((x) => x.id));
     const { error } = await supabase.from("expenses").delete().eq("id", e.id);
     if (error) return alert(errMsg(error));
+    if (e.receipt_path) await supabase.storage.from("documents").remove([e.receipt_path]);
     refresh();
   };
 
@@ -134,7 +138,7 @@ export function Expenses() {
               </ul>
               <footer>
                 {e.receipt_path ? <button className="link small" onClick={() => openFile(e.receipt_path).catch((x) => alert(errMsg(x)))}>📎 scontrino</button> : <span />}
-                {(e.paid_by === me || isAdmin) && <button className="icon" title="Elimina spesa" onClick={() => removeExpense(e)}>🗑️</button>}
+                {(e.paid_by === me || isAdmin) && <button className="btn small danger" onClick={() => removeExpense(e)}>🗑️ Elimina spesa</button>}
               </footer>
             </article>
           ))}
