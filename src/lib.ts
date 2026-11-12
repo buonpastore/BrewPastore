@@ -214,3 +214,24 @@ export function filesFromPaste(e: ClipboardEvent | ReactClipboardEvent): File[] 
     })
     .filter((f): f is File => f !== null);
 }
+
+// ---------- immagine della pecora (sfondo in trasparenza) ----------
+export const MASCOT_PATH = "branding/mascotte.png";
+
+/** Imposta la variabile CSS --sheep con un URL firmato dell'immagine caricata dall'admin. */
+export async function loadMascot() {
+  const { data } = await supabase.storage.from("documents").createSignedUrl(MASCOT_PATH, 60 * 60 * 24 * 7);
+  if (data?.signedUrl) document.documentElement.style.setProperty("--sheep", `url("${data.signedUrl}")`);
+}
+
+/** Ritaglia (opzionale) e ridimensiona l'immagine in PNG. crop = frazioni [x, y, w, h]. */
+export async function prepareMascot(file: File, crop?: [number, number, number, number]): Promise<Blob> {
+  const img = await createImageBitmap(file);
+  const [cx, cy, cw, ch] = crop ?? [0, 0, 1, 1];
+  const sx = img.width * cx, sy = img.height * cy, sw = img.width * cw, sh = img.height * ch;
+  const scale = Math.min(1, 900 / Math.max(sw, sh));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(sw * scale); canvas.height = Math.round(sh * scale);
+  canvas.getContext("2d")!.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  return new Promise((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error("Conversione non riuscita"))), "image/png"));
+}

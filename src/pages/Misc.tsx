@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, type Row } from "../lib";
+import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ChatPanel } from "../components/ChatPanel";
 import { HistoryList } from "../components/HistoryList";
@@ -28,7 +28,7 @@ export function Login() {
   return (
     <div className="login sunburst">
       <form className="modal login-card" onSubmit={login}>
-        <div className="login-mascot">🐑🍺</div>
+        <div className="login-mascot">🐑</div>
         <h1 className="login-title">BREW<br />PASTORE</h1>
         <div className="ribbon">birra da pascolo</div>
         {!configured && <p className="error">Configura VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (vedi README).</p>}
@@ -149,24 +149,29 @@ export function ChatPage() {
   );
 }
 
-export function HistoryPage() {
+/** Storico versioni: pagina intera (/storico) o sezione dentro Impostazioni. */
+export function HistoryPage({ embedded = false }: { embedded?: boolean }) {
   const [table, setTable] = useState("");
-  const [limit, setLimit] = useState(100);
+  const [limit, setLimit] = useState(embedded ? 30 : 100);
   return (
     <div>
-      <div className="page-head">
-        <h1>Storico versioni</h1>
-        <span className="muted">Ogni modifica crea una nuova versione. Clicca per vedere cosa è cambiato.</span>
-      </div>
+      {embedded ? (
+        <h2 id="storico">🕓 Storico versioni</h2>
+      ) : (
+        <div className="page-head">
+          <h1>Storico versioni</h1>
+        </div>
+      )}
+      <p className="muted">Ogni modifica crea una nuova versione: tocca una riga per vedere cosa è cambiato{embedded ? "" : " e, se sei admin, ripristinare la versione precedente"}.</p>
       <div className="toolbar">
         <select value={table} onChange={(e) => setTable(e.target.value)}>
-          <option value="">Tutto</option>
+          <option value="">Tutte le modifiche</option>
           {Object.entries(TABLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
       </div>
       <div className="panel">
         <HistoryList tableFilter={table || undefined} limit={limit} />
-        <button className="btn small" onClick={() => setLimit(limit + 100)}>Carica altre</button>
+        <button className="btn small" style={{ marginTop: 12 }} onClick={() => setLimit(limit + 50)}>Mostra altre</button>
       </div>
     </div>
   );
@@ -191,7 +196,10 @@ export function Settings() {
 
   return (
     <div>
-      <h1>Impostazioni</h1>
+      <div className="page-head">
+        <h1>Impostazioni</h1>
+        <a className="btn small" href="#/impostazioni" onClick={(e) => { e.preventDefault(); document.getElementById("storico")?.scrollIntoView({ behavior: "smooth" }); }}>🕓 Vai allo storico versioni</a>
+      </div>
       {msg && <p className="ok">{msg}</p>}
       <div className="panel">
         <h2>Il mio profilo</h2>
@@ -201,6 +209,7 @@ export function Settings() {
         </div>
         <SetPassword />
       </div>
+      {isAdmin && <MascotUpload />}
       <div className="panel">
         <h2>Prezzi utenze (per il costo dei batch)</h2>
         <table>
@@ -224,6 +233,64 @@ export function Settings() {
         </table>
         <p className="muted small">Gli utenti si aggiungono da Supabase → Authentication → Users. Il ruolo si cambia dalla tabella <code>profiles</code>.</p>
       </div>
+      <HistoryPage embedded />
+    </div>
+  );
+}
+
+// posizione della pecora nell'etichetta "Buon Pastore" (frazioni di larghezza/altezza)
+const LABEL_SHEEP_CROP: [number, number, number, number] = [0.33, 0.26, 0.37, 0.54];
+
+function MascotUpload() {
+  const [file, setFile] = useState<File | null>(null);
+  const [cropLabel, setCropLabel] = useState(true);
+  const [preview, setPreview] = useState("");
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!file) return;
+    let url = "";
+    prepareMascot(file, cropLabel ? LABEL_SHEEP_CROP : undefined).then((b) => { url = URL.createObjectURL(b); setPreview(url); });
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [file, cropLabel]);
+
+  const save = async () => {
+    if (!file) return;
+    setBusy(true); setMsg("");
+    try {
+      const blob = await prepareMascot(file, cropLabel ? LABEL_SHEEP_CROP : undefined);
+      const { error } = await supabase.storage.from("documents").upload(MASCOT_PATH, blob, { upsert: true, contentType: "image/png" });
+      if (error) throw error;
+      await loadMascot();
+      setMsg("Immagine salvata ✓ La vedrete tutti in trasparenza sullo sfondo.");
+      setFile(null); setPreview("");
+    } catch (e) { setMsg(errMsg(e)); }
+    setBusy(false);
+  };
+
+  return (
+    <div className="panel">
+      <h2>🐑 Immagine della pecora</h2>
+      <p className="muted">Carica l'etichetta della birra (o qualsiasi immagine): comparirà in trasparenza sullo sfondo dell'app e nel benvenuto della Home.</p>
+      <label className="btn primary">
+        Scegli immagine
+        <input type="file" accept="image/*" hidden onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = ""; }} />
+      </label>
+      {file && (
+        <>
+          <label className="check" style={{ margin: "14px 0" }}>
+            <input type="checkbox" checked={cropLabel} onChange={(e) => setCropLabel(e.target.checked)} />
+            È l'etichetta intera: ritaglia solo la pecora con il boccale
+          </label>
+          {preview && <div className="mascot-preview"><img src={preview} alt="Anteprima" /></div>}
+          <div className="row-actions">
+            <button className="btn primary" disabled={busy} onClick={save}>{busy ? "Salvo…" : "Usa questa immagine"}</button>
+            <button className="btn" onClick={() => { setFile(null); setPreview(""); }}>Annulla</button>
+          </div>
+        </>
+      )}
+      {msg && <p className="ok">{msg}</p>}
     </div>
   );
 }

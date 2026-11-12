@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase, type Profile } from "./lib";
+import { supabase, loadMascot, type Profile } from "./lib";
 
 interface AuthState {
   session: Session | null;
@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!session) { setProfiles([]); return; }
+    loadMascot();
     supabase.from("profiles").select("id, display_name, role").order("display_name")
       .then(({ data }) => { setProfiles((data as Profile[]) ?? []); setLoading(false); });
   }, [session?.user.id]);
