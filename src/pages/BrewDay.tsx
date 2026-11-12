@@ -14,7 +14,7 @@ interface Props {
   procedure?: string | null;
 }
 
-const qty = (i: Row) => `${num(Number(i.quantity), 3)} ${i.unit === "pz" ? (Number(i.quantity) === 1 ? "bustina/pz" : "bustine/pz") : i.unit}`;
+const qty = (i: Row) => `${num(Number(i.quantity), 3)} ${i.unit === "pz" ? (i.category === "lievito" ? (Number(i.quantity) === 1 ? "bustina" : "bustine") : "pz") : i.unit}`;
 const minutesOf = (step?: string | null) => {
   if (!step) return null;
   const m = String(step).toLowerCase().match(/(\d{1,3})\s*(?:min|'|’)/);

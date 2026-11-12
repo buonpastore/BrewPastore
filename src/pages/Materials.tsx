@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, fmtUnitPrice, fmtBaseQty, toBase, type Row } from "../lib";
 import { Link } from "react-router-dom";
 import { deleteMaterialsWithoutPurchases } from "../rebuild";
+import { catColor } from "../categories";
 import { useAuth } from "../auth";
 
 export function Materials({ embedded = false }: { embedded?: boolean }) {
@@ -126,7 +127,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
               <Fragment key={m.material_id}>
                 <tr>
                   <td><button className="link" onClick={() => toggle(m.material_id)}>{open === m.material_id ? "▾" : "▸"} {m.name}</button></td>
-                  <td><span className="badge">{m.category}</span></td>
+                  <td><span className="badge cat" style={{ ["--c" as string]: catColor(m.category) }}>{m.category.replace("_", " ")}</span></td>
                   <td className="nowrap">{fmtBaseQty(m.qty_purchased, m.category, m.base_unit)}</td>
                   <td>{eur(m.total_spent)}</td>
                   <td className="nowrap"><strong>{fmtUnitPrice(m.avg_unit_cost, m.category, m.base_unit)}</strong></td>

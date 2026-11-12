@@ -828,3 +828,26 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
   .chat-form textarea { min-height: 52px; }
   .chat-form .btn { min-height: 52px; }
 }
+
+/* ---------------- colori delle categorie di ingredienti ---------------- */
+:root {
+  --cat-malto: #f2cf63;      /* giallino */
+  --cat-luppolo: #9fd356;    /* verdino */
+  --cat-lievito: #e5483d;    /* rosso */
+  --cat-bottiglie: #2f8a57;  /* verde scuro */
+  --cat-sali: #4fb0e0;       /* azzurro */
+  --cat-additivo: #ef8f3a;   /* arancio */
+  --cat-tappi: #a9b2bc;      /* grigio argento */
+  --cat-etichette: #a678e2;  /* viola */
+  --cat-detergenti: #63d1cf; /* ciano chiaro */
+  --cat-altro: #9a8d78;      /* grigio caldo */
+}
+.badge.cat { background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); }
+.bd-cat.c-malto { background: var(--cat-malto); }
+.bd-cat.c-luppolo { background: var(--cat-luppolo); }
+.bd-cat.c-lievito { background: var(--cat-lievito); }
+.bd-cat.c-sali_acqua { background: var(--cat-sali); }
+.bd-cat.c-additivo { background: var(--cat-additivo); }
+.bd-cat.c-bottiglie { background: var(--cat-bottiglie); }
+.bd-cat.c-altro { background: var(--cat-altro); }
+.ing-bar span { background: var(--c); }

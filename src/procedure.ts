@@ -14,7 +14,7 @@ export interface ProcInput {
 }
 
 const n = (x: number) => x.toLocaleString("it-IT", { maximumFractionDigits: 2 });
-const q = (i: { quantity: number; unit: string }) => (i.unit === "pz" ? `${n(i.quantity)} ${i.quantity === 1 ? "bustina" : "bustine"}` : `${n(i.quantity)} ${i.unit}`);
+const q = (i: { quantity: number; unit: string; category?: string }) => (i.unit === "pz" ? (i.category === "lievito" ? `${n(i.quantity)} ${i.quantity === 1 ? "bustina" : "bustine"}` : `${n(i.quantity)} pz`) : `${n(i.quantity)} ${i.unit}`);
 const minOf = (s: string | null) => { const m = (s ?? "").match(/(\d{1,3})\s*(?:min|'|’)/i); return m ? Number(m[1]) : null; };
 
 export function buildProcedure(p: ProcInput): string {

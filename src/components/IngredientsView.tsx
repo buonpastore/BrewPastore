@@ -2,17 +2,19 @@ import { useEffect, useState } from "react";
 import { Wheat, Leaf, FlaskConical, Droplets, Sparkles, Package } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase, num, type Row } from "../lib";
+import { CAT_INFO } from "../categories";
 
-const GROUPS: { cat: string[]; title: string; color: string; icon: ReactNode }[] = [
-  { cat: ["malto"], title: "Malti", color: "var(--gold)", icon: <Wheat size={18} /> },
-  { cat: ["luppolo"], title: "Luppoli", color: "var(--teal)", icon: <Leaf size={18} /> },
-  { cat: ["lievito"], title: "Lievito", color: "var(--magenta)", icon: <FlaskConical size={18} /> },
-  { cat: ["sali_acqua"], title: "Sali e correzioni dell'acqua", color: "var(--muted)", icon: <Droplets size={18} /> },
-  { cat: ["additivo"], title: "Zuccheri e additivi", color: "var(--muted)", icon: <Sparkles size={18} /> },
-];
+const ORDER = ["malto", "luppolo", "lievito", "sali_acqua", "additivo", "bottiglie", "tappi", "etichette", "detergenti", "altro"];
+const ICONS: Record<string, ReactNode> = {
+  malto: <Wheat size={18} />, luppolo: <Leaf size={18} />, lievito: <FlaskConical size={18} />,
+  sali_acqua: <Droplets size={18} />, additivo: <Sparkles size={18} />,
+};
+const GROUPS = ORDER.map((c) => ({ cat: [c], title: CAT_INFO[c].label, color: CAT_INFO[c].color, icon: ICONS[c] ?? <span>{CAT_INFO[c].emoji}</span> }));
 const kg = (i: Row) => (i.unit === "kg" ? Number(i.quantity) : i.unit === "g" ? Number(i.quantity) / 1000 : 0);
 const grams = (i: Row) => (i.unit === "g" ? Number(i.quantity) : i.unit === "kg" ? Number(i.quantity) * 1000 : 0);
-const qty = (i: Row) => (i.unit === "pz" ? `${num(Number(i.quantity), 2)} ${Number(i.quantity) === 1 ? "bustina" : "bustine"}` : `${num(Number(i.quantity), 3)} ${i.unit}`);
+const qty = (i: Row) => (i.unit === "pz"
+  ? (i.category === "lievito" ? `${num(Number(i.quantity), 2)} ${Number(i.quantity) === 1 ? "bustina" : "bustine"}` : `${num(Number(i.quantity), 2)} pz`)
+  : `${num(Number(i.quantity), 3)} ${i.unit}`);
 
 /** Lista ingredienti divisa per tipo, con i colori del piano di cotta. */
 export function IngredientsView({ table, parentKey, parentId, volume, reloadKey }: { table: string; parentKey: string; parentId: string; volume?: number | null; reloadKey?: unknown }) {
@@ -29,7 +31,7 @@ export function IngredientsView({ table, parentKey, parentId, volume, reloadKey 
   const maltKg = rows.filter((i) => i.category === "malto").reduce((s, i) => s + kg(i), 0);
   const hopG = rows.filter((i) => i.category === "luppolo").reduce((s, i) => s + grams(i), 0);
   const known = new Set(GROUPS.flatMap((g) => g.cat));
-  const groups = [...GROUPS, { cat: rows.map((r) => r.category).filter((c) => !known.has(c)), title: "Altro", color: "var(--muted)", icon: <Package size={18} /> }];
+  const groups = [...GROUPS.map((g) => (g.cat[0] === "altro" ? { ...g, cat: ["altro", ...rows.map((r) => r.category).filter((c) => !known.has(c))], icon: <Package size={18} /> } : g))];
 
   return (
     <div>
