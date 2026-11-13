@@ -80,7 +80,7 @@ export function Layout() {
         <NavLink to="/" className="brand">
           <img className="brand-logo" src={FACE_IMG} alt="" />
           <span className="brand-text">
-            <span className="brand-name">BrewPastore</span>
+            <span className="brand-name">Pastorizia</span>
             <span className="brand-tag">birre da pascolo <span className="brand-ver">{VERSION_LABEL}</span></span>
           </span>
         </NavLink>
@@ -111,7 +111,7 @@ export function Layout() {
         })}
         <div className="sidebar-foot">
           <button className="sidebar-logout" onClick={() => supabase.auth.signOut()}><LogOut size={17} /> Esci</button>
-          <NavLink to="/impostazioni#versioni" className="sidebar-ver">BrewPastore {VERSION_LABEL}</NavLink>
+          <NavLink to="/impostazioni#versioni" className="sidebar-ver">Pastorizia {VERSION_LABEL}</NavLink>
         </div>
       </nav>
 

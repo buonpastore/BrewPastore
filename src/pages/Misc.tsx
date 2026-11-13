@@ -34,7 +34,7 @@ export function Login() {
     <div className="login sunburst">
       <form className="modal login-card" onSubmit={login}>
         <img className="login-mascot" src={FACE_IMG} alt="La pecora del Buon Pastore" />
-        <h1 className="login-title">BREW<br />PASTORE</h1>
+        <h1 className="login-title">PASTORIZIA</h1>
         <div className="ribbon">birre da pascolo</div>
         {!configured && <p className="error">Configura VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (vedi README).</p>}
         <label><span>Email</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></label>
@@ -254,7 +254,7 @@ export function Settings() {
           <button className="btn small" onClick={saveName}>Salva</button>
         </div>
         <SetPassword />
-        <button className="btn danger" style={{ marginTop: 8 }} onClick={() => supabase.auth.signOut()}>Esci da BrewPastore</button>
+        <button className="btn danger" style={{ marginTop: 8 }} onClick={() => supabase.auth.signOut()}>Esci da Pastorizia</button>
       </div>
       {isAdmin && <MascotUpload />}
       <div className="panel">
@@ -289,7 +289,7 @@ export function Settings() {
       </div>
       <Releases />
       <HistoryPage embedded />
-      <p className="muted small version">BrewPastore {VERSION_LABEL} · pubblicata il {__BUILD_TIME__}</p>
+      <p className="muted small version">Pastorizia {VERSION_LABEL} · pubblicata il {__BUILD_TIME__}</p>
     </div>
   );
 }

@@ -33,7 +33,7 @@ export function UpdateBanner() {
   if (!available) return null;
   return (
     <div className="update-banner" role="status">
-      <span>🍺 È disponibile una nuova versione di BrewPastore</span>
+      <span>🍺 È disponibile una nuova versione di Pastorizia</span>
       <button className="btn small primary" onClick={() => window.location.reload()}>Aggiorna</button>
     </div>
   );

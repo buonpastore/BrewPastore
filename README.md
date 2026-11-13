@@ -1,4 +1,4 @@
-# 🍺 BrewPastore
+# 🍺 Pastorizia
 
 Web app per gestire la produzione di birra di 3 soci: ricette, log delle cotte, costi, spese condivise, preventivi impianto e chat.
 

@@ -1,6 +1,6 @@
 {
-  "name": "BrewPastore",
-  "short_name": "BrewPastore",
+  "name": "Pastorizia",
+  "short_name": "Pastorizia",
   "description": "Gestione produzione birra",
   "start_url": "./",
   "scope": "./",

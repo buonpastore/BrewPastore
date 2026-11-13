@@ -1,11 +1,12 @@
 /**
- * Versione di BrewPastore.
+ * Versione di Pastorizia.
  * Fase beta: ogni modifica pubblicata aumenta la versione di 0,001 fino ad arrivare alla 1.0.
  * Per una nuova versione aggiungere una voce IN CIMA all'elenco.
  */
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.125", date: "14/11/2026 00:20", text: "L'app ora si chiama Pastorizia" },
   { version: "0.124", date: "14/11/2026 00:10", text: "Batch: la CO₂ obiettivo proposta viene dalla ricetta (es. «Carbonazione 2,5–3,0 volumi» → 2,8); se non c'è, è la media tipica dello stile" },
   { version: "0.123", date: "13/11/2026 23:55", text: "Batch: i dati vuoti hanno un valore proposto (pH 5,5, acqua e OG/FG dalla ricetta, corrente e acqua calcolate, bottiglie dai litri, priming…): se non li tocchi vengono salvati con «Salva e chiudi». Corrente e acqua ora sono nella cotta" },
   { version: "0.122", date: "13/11/2026 23:40", text: "Ricetta → Batch: la tabella non allarga più la pagina sul telefono (nome e data su due righe, OG/FG insieme)" },

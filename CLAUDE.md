@@ -1,4 +1,4 @@
-# BrewPastore — istruzioni per le modifiche
+# Pastorizia (ex BrewPastore) — istruzioni per le modifiche
 
 - **Versione beta**: a OGNI modifica pubblicata aggiungere una voce IN CIMA a `CHANGELOG` in `src/version.ts`,
   con versione precedente + 0,001 (es. 0.045 → 0.046), data e ora italiane (gg/mm/aaaa hh:mm) e una descrizione
