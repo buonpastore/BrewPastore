@@ -2,7 +2,7 @@ import { CapDot } from "../components/CapColor";
 import { sortByCat, nameColor } from "../categories";
 import { Fragment, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Pencil, Calculator, X } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Calculator, X } from "lucide-react";
 import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
@@ -99,7 +99,7 @@ export function BeerCosts() {
       <div className="bc-help">
         <h3>Come li calcolo</h3>
         <ul>
-          <li><Hourglass size={14} className="ic-guess" /> <strong>Presunto</strong> dalla cotta all'imbottigliamento: materie prime + corrente + acqua + bottiglie e tappi teorici (litri ÷ 0,66).</li>
+          <li><Hourglass size={14} className="ic-guess" /> <strong>Presunto</strong> dalla cotta all'imbottigliamento: materie prime + corrente + acqua + bottiglie e tappi stimati (litri ÷ 0,66).</li>
           <li><CircleAlert size={14} className="ic-warn" /> <strong>Imbottigliata</strong>, costo reale ma con qualche dato stimato o mancante. <CheckCircle2 size={14} className="ic-ok" /> <strong>Completo</strong>: tutti i dati inseriti.</li>
           <li><strong>Materie prime</strong>: ingredienti della ricetta, contati una volta, × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
           <li><strong>Bottiglie e tappi</strong>: bottiglie × {data.cfg.b66 != null ? eur(data.cfg.b66) : "—"} (Impostazioni){cp != null ? ` + tappo ${eur(cp)}` : ""}.</li>
@@ -110,11 +110,11 @@ export function BeerCosts() {
   );
 }
 
-/** Icona della fonte del dato: ✎ inserito · calcolatrice stimato · ✕ manca. */
+/** Icona della fonte del dato: calcolatrice verde = preciso · clessidra = stimato · ✕ = manca. */
 export function SrcIcon({ source }: { source: Source }) {
-  if (source === "inserito") return <Pencil size={13} className="src src-in" aria-label="inserito" />;
-  if (source === "stimato") return <Calculator size={13} className="src src-est" aria-label="stimato" />;
-  return <X size={13} className="src src-miss" aria-label="manca" />;
+  if (source === "inserito") return <Calculator size={14} className="src src-in" aria-label="preciso" />;
+  if (source === "stimato") return <Hourglass size={14} className="src src-est" aria-label="stimato" />;
+  return <X size={14} className="src src-miss" aria-label="manca" />;
 }
 
 /** Stato del costo della birra, solo con un'icona. */
@@ -170,7 +170,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
     <div className="bc-detail">
       <div className="bc-lines">
         <Line label="Materie prime" value={eur(sum.ingredients)} source={sum.missing.length ? "manca" : sum.guessed ? "stimato" : "inserito"} />
-        <Line label={sum.bottlesGuessed ? "Bottiglie e tappi (teorici)" : "Bottiglie e tappi"} value={sum.packaging ? eur(sum.packaging) : "—"} source={sum.packaging ? (sum.bottlesGuessed ? "stimato" : "inserito") : "manca"} />
+        <Line label="Bottiglie e tappi" value={sum.packaging ? eur(sum.packaging) : "—"} source={sum.packaging ? (sum.bottlesGuessed ? "stimato" : "inserito") : "manca"} />
         <Line label="Corrente" value={eur(sum.energy)} source={factSrc(costs, "Corrente")} />
         <Line label="Acqua" value={eur(sum.water)} source={factSrc(costs, "Acqua")} />
         {sum.other > 0 && <Line label="Altri costi" value={eur(sum.other)} />}
@@ -197,7 +197,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
             </div>
           </div>
         ))}
-        <p className="bc-legend"><SrcIcon source="inserito" /> inserito <SrcIcon source="stimato" /> stimato <SrcIcon source="manca" /> manca</p>
+        <p className="bc-legend"><SrcIcon source="inserito" /> preciso <SrcIcon source="stimato" /> stimato <SrcIcon source="manca" /> manca</p>
       </div>
 
       <h3>Materie prime usate</h3>

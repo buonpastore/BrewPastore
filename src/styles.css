@@ -1196,8 +1196,9 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .ic-warn { color: var(--gold); flex: none; }
 .ic-guess { color: var(--magenta); flex: none; }
 .src { vertical-align: -1px; flex: none; }
-.src-in { color: var(--teal); }
+.src-in { color: var(--ok); }
 .src-est { color: var(--gold); }
+.bc-fact.src-inserito { border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
 .src-miss { color: var(--magenta); }
 .bc-facts { display: flex; flex-direction: column; gap: 10px; }
 .bc-fact-code { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; margin-bottom: 6px; }
