@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.058", date: "13/11/2026 03:05", text: "Materie prime in ordine malti, luppoli, lieviti e il resto; ordinamento per ogni colonna e menu «Ordina per»" },
   { version: "0.057", date: "13/11/2026 02:55", text: "Scheda ricetta divisa in tre parti: profilo (alcol, amaro, colore), densità e volume, processo" },
   { version: "0.056", date: "13/11/2026 02:45", text: "Nomi degli ingredienti colorati: malti giallino, luppoli verdino, lieviti rossino, il resto neutro (materie prime, ingredienti, cottura)" },
   { version: "0.055", date: "13/11/2026 02:35", text: "Nuovo batch anche dalla sezione Batch con scelta della ricetta; i pulsanti di stato aprono solo la fase interessante" },

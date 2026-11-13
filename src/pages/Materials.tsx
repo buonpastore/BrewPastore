@@ -3,6 +3,9 @@ import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, fmtUnitPrice, fm
 import { Link } from "react-router-dom";
 import { deleteMaterialsWithoutPurchases } from "../rebuild";
 import { catColor, nameColor } from "../categories";
+
+type SortKey = "name" | "category" | "qty" | "spent" | "avg" | "last" | "count";
+const CAT_ORDER = ["malto", "luppolo", "lievito", "sali_acqua", "additivo", "bottiglie", "tappi", "etichette", "detergenti", "altro"];
 import { useAuth } from "../auth";
 
 export function Materials({ embedded = false }: { embedded?: boolean }) {
@@ -90,8 +93,33 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   };
 
   const [showEmpty, setShowEmpty] = useState(false);
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "category", dir: "asc" });
   const empty = rows.filter((r) => Number(r.purchases_count) === 0);
-  const list = rows.filter((r) => (showEmpty || Number(r.purchases_count) > 0) && (!cat || r.category === cat) && r.name.toLowerCase().includes(q.toLowerCase()));
+  const filtered = rows.filter((r) => (showEmpty || Number(r.purchases_count) > 0) && (!cat || r.category === cat) && r.name.toLowerCase().includes(q.toLowerCase()));
+  const catRank = (c: string) => { const i = CAT_ORDER.indexOf(c); return i < 0 ? 99 : i; };
+  const val = (r: Row): number | string => {
+    switch (sort.key) {
+      case "name": return r.name.toLowerCase();
+      case "category": return catRank(r.category);
+      case "qty": return Number(r.qty_purchased);
+      case "spent": return Number(r.total_spent);
+      case "avg": return r.avg_unit_cost == null ? -1 : Number(r.avg_unit_cost);
+      case "last": return last[r.material_id]?.cost ?? -1;
+      case "count": return Number(r.purchases_count);
+    }
+  };
+  const list = [...filtered].sort((a, b) => {
+    const va = val(a), vb = val(b);
+    const c = typeof va === "string" ? va.localeCompare(vb as string, "it") : (va as number) - (vb as number);
+    // a parità (es. stessa categoria) ordine alfabetico
+    return (c !== 0 ? c : a.name.localeCompare(b.name, "it")) * (sort.dir === "asc" || c === 0 ? 1 : -1);
+  });
+  const sortBy = (key: SortKey) => setSort((s0) => (s0.key === key ? { key, dir: s0.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "name" || key === "category" ? "asc" : "desc" }));
+  const Th = ({ k, children }: { k: SortKey; children: string }) => (
+    <th className={"sortable" + (sort.key === k ? " on" : "")} onClick={() => sortBy(k)}>
+      {children}{sort.key === k ? (sort.dir === "asc" ? " ▲" : " ▼") : ""}
+    </th>
+  );
   const cleanEmpty = async () => {
     if (!confirm(`Eliminare le ${empty.length} materie prime senza nessun acquisto?\nSono quelle create importando le ricette o rimaste da import sbagliati. Nelle ricette gli ingredienti restano.`)) return;
     try { await deleteMaterialsWithoutPurchases(); setReload((x) => x + 1); } catch (e) { alert(errMsg(e)); }
@@ -110,6 +138,16 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
           <option value="">Tutte le categorie</option>
           {MATERIAL_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
         </select>
+        <select value={`${sort.key}:${sort.dir}`} onChange={(e) => { const [k, d] = e.target.value.split(":"); setSort({ key: k as SortKey, dir: d as "asc" | "desc" }); }} aria-label="Ordina per">
+          <option value="category:asc">Ordina: categoria (malti, luppoli, lieviti…)</option>
+          <option value="name:asc">Ordina: nome A→Z</option>
+          <option value="avg:desc">Ordina: costo medio (più caro)</option>
+          <option value="avg:asc">Ordina: costo medio (più economico)</option>
+          <option value="spent:desc">Ordina: speso (di più)</option>
+          <option value="qty:desc">Ordina: quantità acquistata</option>
+          <option value="last:desc">Ordina: ultimo prezzo</option>
+          <option value="count:desc">Ordina: numero di acquisti</option>
+        </select>
         <span className="muted">Speso in totale: <strong>{eur(totalSpent)}</strong></span>
       </div>
       {empty.length > 0 && (
@@ -121,7 +159,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       )}
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Materia prima</th><th>Categoria</th><th>Acquistato</th><th>Speso</th><th>Costo medio</th><th>Ultimo acquisto</th><th>Acquisti</th>{isAdmin && <th />}</tr></thead>
+          <thead><tr><Th k="name">Materia prima</Th><Th k="category">Categoria</Th><Th k="qty">Acquistato</Th><Th k="spent">Speso</Th><Th k="avg">Costo medio</Th><Th k="last">Ultimo acquisto</Th><Th k="count">Acquisti</Th>{isAdmin && <th />}</tr></thead>
           <tbody>
             {list.map((m) => (
               <Fragment key={m.material_id}>
