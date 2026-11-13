@@ -27,7 +27,7 @@ export const isKit = (name: string) => /\bkit\b/i.test(name ?? "");
 /** Categorie di ingredienti già comprese in un kit all grain. */
 export const KIT_COVERS = ["malto", "luppolo", "lievito"];
 
-/** Prezzi ipotizzati quando non c'è un acquisto (€ per kg, l o pezzo). */
+/** Prezzi fissi decisi da voi quando non c'è un acquisto (€ per kg, l o pezzo): contano come precisi. */
 const DEFAULT_PRICES: [RegExp, number, string][] = [[/zucchero|saccarosio/i, 1, "kg"]];
 export function defaultPrice(ing: Row): number | null {
   const d = DEFAULT_PRICES.find(([rx, , u]) => rx.test(ing.name ?? "") && unitFamily(ing.unit ?? "kg") === u);
@@ -164,7 +164,7 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
   let ingredients = 0, guessed = 0, priced = 0; const missing: string[] = [];
   for (const i of ings) {
     const r = ingredientCost(i, mats);
-    if (r.cost == null) missing.push(i.name); else { ingredients += r.cost; if (r.guessed != null) guessed++; else priced++; }
+    if (r.cost == null) missing.push(i.name); else { ingredients += r.cost; priced++; }   // anche il prezzo fisso (es. zucchero 1 €/kg) è un prezzo deciso da voi: preciso
   }
   const avg: Record<string, number> = Object.fromEntries(mats.map((m) => [m.material_id, Number(m.avg_unit_cost ?? 0)]));
   const rowCost = (r: Row) => Number(r.quantity ?? 0) * Number(r.unit_cost ?? (r.material_id ? avg[r.material_id] ?? 0 : 0));

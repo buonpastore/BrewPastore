@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.110", date: "13/11/2026 21:10", text: "Costi birre: lo zucchero a 1 €/kg è un prezzo fisso deciso da voi e conta come preciso, non stimato" },
   { version: "0.109", date: "13/11/2026 21:00", text: "Costi birre: nuove icone per i dati — calcolatrice verde = preciso, clessidra = stimato, ✕ = manca; tolta la scritta «teorici»" },
   { version: "0.108", date: "13/11/2026 20:45", text: "Costi birre: nel dettaglio del prezzo di un ingrediente c'è il collegamento a ogni ordine, la media senza spedizione e l'avviso sulle righe con un prezzo anomalo" },
   { version: "0.107", date: "13/11/2026 20:30", text: "Costi birre: «gusci di riso» riconosciuti come «lolla di riso» (e altri nomi equivalenti: scorza/buccia d'arancia, coriander/coriandolo)" },

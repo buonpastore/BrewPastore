@@ -215,7 +215,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
                     <td className="nowrap">{g.mat ? (!isCore(g.mat.category) && perPiece(Number(g.mat.avg_unit_cost), g.mat.base_unit, g.mat.piece_size) != null
                         ? `${eur(perPiece(Number(g.mat.avg_unit_cost), g.mat.base_unit, g.mat.piece_size)!)}/pz`
                         : fmtUnitPrice(g.mat.avg_unit_cost, g.mat.category, g.mat.base_unit))
-                      : g.guessed != null ? <>{eur(g.guessed)}/{g.unit === "g" || g.unit === "kg" ? "kg" : g.unit}<div className="muted small">ipotizzato</div></>
+                      : g.guessed != null ? <>{eur(g.guessed)}/{g.unit === "g" || g.unit === "kg" ? "kg" : g.unit}<div className="muted small">prezzo fisso</div></>
                       : isAdmin ? (
                         <select className="bc-link" value="" disabled={busy} onChange={(e) => link(g.name, e.target.value)}>
                           <option value="">⚠️ nessun prezzo: collega a…</option>
