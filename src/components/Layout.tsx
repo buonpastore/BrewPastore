@@ -11,7 +11,7 @@ import { QuotePopup } from "./QuoteOfTheDay";
 import { UpdateBanner } from "./UpdateBanner";
 import { VERSION_LABEL } from "../version";
 
-interface Tab { to: string; label: string; icon: LucideIcon; color: string; also?: string[] }
+interface Tab { to: string; label: string; short?: string; icon: LucideIcon; color: string; also?: string[] }
 interface Group { key: string; label: string; icon: LucideIcon; to: string; color: string; tabs?: Tab[] }
 
 export const GROUPS: Group[] = [
@@ -27,10 +27,10 @@ export const GROUPS: Group[] = [
   {
     key: "conti", label: "Conti", icon: Coins, to: "/costi", color: "var(--teal)",
     tabs: [
-      { to: "/costi", label: "Costi birre", icon: Calculator, color: "var(--gold)" },
-      { to: "/spese", label: "Spese condivise", icon: Wallet, color: "var(--teal)" },
-      { to: "/materie-prime", label: "Materie prime", icon: Wheat, color: "var(--magenta)", also: ["/acquisti"] },
-      { to: "/impianto", label: "Preventivi impianto", icon: Wrench, color: "var(--gold)" },
+      { to: "/costi", label: "Costi birre", short: "Costi", icon: Calculator, color: "var(--gold)" },
+      { to: "/spese", label: "Spese condivise", short: "Spese", icon: Wallet, color: "var(--teal)" },
+      { to: "/materie-prime", label: "Materie prime", short: "Materie", icon: Wheat, color: "var(--magenta)", also: ["/acquisti"] },
+      { to: "/impianto", label: "Preventivi impianto", short: "Preventivi", icon: Wrench, color: "var(--gold)" },
     ],
   },
   { key: "chat", label: "Chat", icon: MessageCircle, to: "/chat", color: "var(--magenta)" },
@@ -120,10 +120,10 @@ export function Layout() {
         {current.tabs && (
           <>
             <div className="section-title">{current.label}</div>
-            <nav className="section-tabs">
-              {current.tabs.map(({ to, label, icon: Icon, color }) => (
+            <nav className="section-tabs" style={{ ["--n" as string]: current.tabs.length }}>
+              {current.tabs.map(({ to, label, short, icon: Icon, color }) => (
                 <NavLink key={to} to={to} style={{ ["--c" as string]: color }} className={tabActive({ to, label, icon: Icon, color, also: current.tabs!.find((t) => t.to === to)?.also }, loc.pathname) ? "active" : ""}>
-                  <Icon size={16} /> {label}
+                  <Icon size={16} /> <span className="st-long">{label}</span><span className="st-short">{short ?? label}</span>
                 </NavLink>
               ))}
             </nav>

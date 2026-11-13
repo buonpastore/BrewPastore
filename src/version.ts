@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.090", date: "13/11/2026 15:45", text: "Telefono: le schede in alto di Produzione e Conti stanno tutte nello schermo, con l'icona sopra e un nome corto sotto (Costi, Spese, Materie, Preventivi)" },
   { version: "0.089", date: "13/11/2026 15:30", text: "Lieviti: prezzi e quantità sempre a bustina, anche se comprati a grammi" },
   { version: "0.088", date: "13/11/2026 15:20", text: "Costi birre: la corrente si prende solo dal batch della cottura" },
   { version: "0.087", date: "13/11/2026 15:10", text: "Costi birre: le materie prime si contano una volta sola, dalla ricetta (non più sommate per ogni batch)" },

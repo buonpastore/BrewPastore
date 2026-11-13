@@ -1209,3 +1209,13 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .bc-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; color: var(--muted); font-size: .82rem; }
 .bc-legend .src { margin-left: 6px; }
 .bc-help li svg { vertical-align: -2px; }
+
+/* schede di sezione: su telefono tutte visibili, icona sopra e nome corto sotto */
+.section-tabs .st-short { display: none; }
+@media (max-width: 860px) {
+  .section-tabs { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 6px; overflow: visible; margin: -2px 0 18px; padding: 0; }
+  .section-tabs a { flex-direction: column; justify-content: center; gap: 4px; padding: 8px 4px; min-height: 58px; font-size: .8rem; text-align: center; white-space: nowrap; border-radius: 14px; }
+  .section-tabs a svg { width: 20px; height: 20px; }
+  .section-tabs .st-long { display: none; }
+  .section-tabs .st-short { display: block; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+}
