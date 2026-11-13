@@ -1299,3 +1299,7 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .batch-list .bl-name a { display: inline; }
 .batch-list.compact td, .batch-list.compact th { padding: 9px 6px; }
 @media (max-width: 600px) { .batch-list td, .batch-list th { padding: 8px 5px; font-size: .88rem; } .batch-list th { font-size: .62rem; } .batch-list .badge { font-size: .7rem; padding: 2px 7px; white-space: nowrap; } }
+
+/* valori proposti dall'app nei dati del batch */
+.big-field.proposed .bf-input input { color: var(--muted); font-style: italic; }
+.bf-prop { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--gold); background: color-mix(in srgb, var(--gold) 14%, transparent); padding: 1px 7px; border-radius: 99px; }

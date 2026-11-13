@@ -5,6 +5,8 @@ import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus,
 import type { ReactNode } from "react";
 import { supabase, errMsg, num, type Row } from "../lib";
 import { BottleCalc } from "./BottleCalc";
+import { estimateBrew } from "../costs";
+import { primingGrams } from "../lib";
 
 type Kind = "ph" | "sg" | "l" | "int" | "kwh" | "g" | "co2";
 interface Field { key: string; label: string; kind: Kind; hint?: string }
@@ -28,6 +30,10 @@ const PHASES: Phase[] = [
     { key: "original_gravity", label: "OG (post-bollitura)", kind: "sg" },
     { key: "volume_fermenter_l", label: "Litri in fermentatore", kind: "l" },
   ] },
+  { title: "Consumi della cotta", color: "var(--teal)", icon: <Zap size={20} />, fields: [
+    { key: "energy_kwh", label: "Energia elettrica", kind: "kwh" },
+    { key: "water_used_l", label: "Acqua totale usata", kind: "l" },
+  ] },
   { title: "Fermentazione", color: "var(--gold)", icon: <FlaskConical size={20} />, fields: [
     { key: "final_gravity", label: "FG (post-fermentazione)", kind: "sg" },
   ] },
@@ -36,10 +42,6 @@ const PHASES: Phase[] = [
     { key: "bottles_count", label: "Numero di bottiglie", kind: "int" },
     { key: "priming_sugar_g", label: "Zucchero di priming", kind: "g" },
     { key: "target_co2_vol", label: "CO₂ obiettivo", kind: "co2" },
-  ] },
-  { title: "Consumi", color: "var(--teal)", icon: <Zap size={20} />, fields: [
-    { key: "energy_kwh", label: "Energia elettrica", kind: "kwh" },
-    { key: "water_used_l", label: "Acqua totale usata", kind: "l" },
   ] },
 ];
 
@@ -65,13 +67,15 @@ const show = (v: unknown, kind: Kind) => (v == null || v === "" ? "" : Number(v)
 /** Ogni casella registra qui il suo "salva subito", usato dal pulsante Salva. */
 const FlushCtx = createContext<Set<() => Promise<void>>>(new Set());
 
-function BigField({ f, batch, canEdit, onSaved }: { f: Field; batch: Row; canEdit: boolean; onSaved: (b: Row) => void }) {
+function BigField({ f, batch, canEdit, onSaved, suggest, accept }: { f: Field; batch: Row; canEdit: boolean; onSaved: (b: Row) => void; suggest?: number | null; accept?: boolean }) {
   const flushers = useContext(FlushCtx);
-  const [text, setText] = useState(show(batch[f.key], f.kind));
+  const empty = batch[f.key] == null || batch[f.key] === "";
+  const proposed = empty && suggest != null;   // valore proposto dall'app: vale se non lo tocchi
+  const [text, setText] = useState(show(empty ? suggest : batch[f.key], f.kind));
   const [state, setState] = useState<"" | "saving" | "ok" | "err">("");
   const [err, setErr] = useState("");
   const timer = useRef<number>();
-  useEffect(() => { setText(show(batch[f.key], f.kind)); }, [batch[f.key]]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setText(show(empty ? suggest : batch[f.key], f.kind)); }, [batch[f.key], suggest]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = async (v: number | null) => {
     pending.current = false;
@@ -100,6 +104,8 @@ function BigField({ f, batch, canEdit, onSaved }: { f: Field; batch: Row; canEdi
   const pending = useRef(false);
   useEffect(() => {
     const flush = async () => {
+      // «Salva e chiudi»: i valori proposti non toccati vengono salvati (solo per le fasi già fatte)
+      if (!pending.current && proposed && accept) { await save(suggest!); return; }
       if (!pending.current) return;
       window.clearTimeout(timer.current); pending.current = false;
       await save(parseValue(textRef.current, f.kind));
@@ -111,9 +117,10 @@ function BigField({ f, batch, canEdit, onSaved }: { f: Field; batch: Row; canEdi
   const warn = f.key === "mash_ph" && v != null && (v < 5.2 || v > 5.6);
 
   return (
-    <div className={"big-field" + (state === "ok" ? " saved" : "") + (warn ? " warn" : "")}>
+    <div className={"big-field" + (state === "ok" ? " saved" : "") + (warn ? " warn" : "") + (proposed && !pending.current ? " proposed" : "")}>
       <div className="bf-head">
         <span>{f.label}</span>
+        {proposed && state === "" && <span className="bf-prop" title="Valore proposto dall'app: se non lo cambi viene salvato con «Salva e chiudi»">proposto</span>}
         {state === "saving" && <span className="muted small">salvo…</span>}
         {state === "ok" && <span className="ok small"><Check size={14} /> salvato</span>}
         {state === "err" && <span className="error small" title={err}>errore</span>}
@@ -124,7 +131,7 @@ function BigField({ f, batch, canEdit, onSaved }: { f: Field; batch: Row; canEdi
           <div className="bf-input">
             <input inputMode="decimal" value={text} placeholder={f.kind === "sg" ? "1,050" : "—"}
               onChange={(e) => schedule(e.target.value)}
-              onBlur={() => { window.clearTimeout(timer.current); const p = parseValue(text, f.kind); if (p !== (batch[f.key] == null ? null : Number(batch[f.key]))) save(p); setText(show(p, f.kind)); }} />
+              onBlur={() => { if (!pending.current) return; window.clearTimeout(timer.current); const p = parseValue(text, f.kind); if (p !== (batch[f.key] == null ? null : Number(batch[f.key]))) save(p); setText(show(p, f.kind)); }} />
             {UNIT[f.kind] && <span className="bf-unit">{UNIT[f.kind]}</span>}
           </div>
           <button type="button" className="bf-btn" onClick={() => bump(1)} aria-label="Aumenta"><Plus size={22} /></button>
@@ -217,12 +224,14 @@ export function phasesFor(status?: string | null): string[] {
   switch (status) {
     case "fermentazione": case "maturazione": return ["Fermentazione"];
     case "imbottigliato": return ["Imbottigliamento"];
-    case "finito": return ["Consumi"];
-    default: return ["Acqua", "Mash", "Sparge", "Fine bollitura"];
+    case "finito": return ["Imbottigliamento"];
+    default: return ["Acqua", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"];
   }
 }
 
-export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, focusStatus, onAfterSave }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null; onAfterSave?: () => void }) {
+export function QuickEntry({ batch, recipe, canEdit, onSaved, onDelete, focusKey = 0, focusStatus, onAfterSave }: { batch: Row; recipe?: Row | null; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null; onAfterSave?: () => void }) {
+  const sug = suggestions(batch, recipe ?? undefined);
+  const reached = phasesReached(batch);
   const { profiles } = useAuth();
   const [open, setOpen] = useState<Set<string>>(() => new Set(phasesFor(batch.status)));
   const rootRef = useRef<HTMLDivElement>(null);
@@ -260,7 +269,7 @@ export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, fo
             {open.has(p.title) && (
               <>
                 <div className={"qe-fields" + (p.twoCols ? " two" : "")}>
-                  {p.fields.map((f) => <BigField key={f.key} f={f} batch={batch} canEdit={canEdit} onSaved={onSaved} />)}
+                  {p.fields.map((f) => <BigField key={f.key} f={f} batch={batch} canEdit={canEdit} onSaved={onSaved} suggest={sug[f.key]} accept={reached.has(p.title)} />)}
                 </div>
                 {p.title === "Fermentazione" && <QuickEvents batch={batch} canEdit={canEdit} />}
                 {p.title === "Imbottigliamento" && <BottleSplit bottles={batch.bottles_count} people={profiles} />}
@@ -281,4 +290,38 @@ export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, fo
     </div>
     </FlushCtx.Provider>
   );
+}
+
+/** Fasi già fatte in base allo stato: i valori proposti di queste fasi vengono salvati con «Salva e chiudi». */
+function phasesReached(b: Row): Set<string> {
+  const st = b.status ?? "pianificato";
+  const brewed = st !== "pianificato" || Boolean(b.brew_date);
+  const fermented = ["maturazione", "imbottigliato", "finito"].includes(st) || Boolean(b.bottling_date);   // FG: a fermentazione finita
+  const bottled = ["imbottigliato", "finito"].includes(st) || Boolean(b.bottling_date);
+  const out = new Set<string>();
+  if (brewed) ["Acqua", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"].forEach((x) => out.add(x));
+  if (fermented) out.add("Fermentazione");
+  if (bottled) out.add("Imbottigliamento");
+  return out;
+}
+
+/** Valori proposti per i campi vuoti del batch (dalla ricetta e da calcoli standard). */
+function suggestions(b: Row, r?: Row): Record<string, number | null> {
+  const n = (x: unknown) => (x == null || x === "" ? null : Number(x));
+  const fermL = n(b.volume_fermenter_l) ?? n(r?.batch_size_l);
+  const bottledL = n(b.volume_bottled_l) ?? (fermL != null ? Math.max(0, Math.round((fermL - 1) * 2) / 2) : null);   // ~1 L resta sul fondo
+  const style = String(r?.style ?? "").toLowerCase();
+  const co2 = n(b.target_co2_vol) ?? (/weiss|weizen|blanche|wit|saison|tripel/.test(style) ? 3 : /stout|porter|bitter|english|scotch|barley/.test(style) ? 2.2 : 2.5);
+  const est = estimateBrew(b, r);
+  return {
+    mash_water_l: n(r?.mash_water_l), sparge_water_l: n(r?.sparge_water_l),
+    water_ph_initial: 7.5, water_ph_adjusted: 5.5, mash_ph: n(b.water_ph_adjusted) ?? 5.5,
+    original_gravity: n(r?.target_og), volume_fermenter_l: n(r?.batch_size_l),
+    final_gravity: n(r?.target_fg),
+    volume_bottled_l: bottledL,
+    bottles_count: bottledL != null ? Math.floor(((n(b.volume_bottled_l) ?? bottledL) as number) / 0.66) : null,
+    target_co2_vol: co2,
+    priming_sugar_g: bottledL != null ? Math.round(primingGrams(n(b.volume_bottled_l) ?? bottledL, co2, 20, "saccarosio")) : null,
+    energy_kwh: est.kwh, water_used_l: est.waterL,
+  };
 }
