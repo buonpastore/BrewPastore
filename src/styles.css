@@ -1003,3 +1003,7 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .choose-btn > span:last-child { display: flex; flex-direction: column; gap: 2px; }
 .choose-btn strong { font-size: 1.05rem; }
 .choose-ico { font-size: 1.6rem; }
+
+/* totale per tipo sul titolo del gruppo */
+.ing-total { text-transform: none; letter-spacing: 0; margin-left: auto; font-size: .92rem; font-weight: 700; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); border: 1px solid color-mix(in srgb, var(--c) 35%, transparent); padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.ing-count { margin: 12px 0 0; text-align: right; }

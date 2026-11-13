@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.066", date: "13/11/2026 05:20", text: "Ingredienti della ricetta: il totale di ogni tipo (malti, luppoli, lieviti…) è sul titolo del gruppo, sopra il dettaglio" },
   { version: "0.065", date: "13/11/2026 05:05", text: "Spese: «Le mie quote da pagare» sempre visibile sotto i due pulsanti. Ricette: un solo pulsante «Nuova ricetta» che chiede se importarla o inserirla a mano" },
   { version: "0.064", date: "13/11/2026 04:45", text: "Materie prime: scegli la vista compatta (nome, categoria, costo medio, ultimo costo) o estesa; tolte le descrizioni inutili" },
   { version: "0.063", date: "13/11/2026 04:25", text: "Ricetta: i pulsanti Nuovo batch, Duplica ed Elimina sono in fondo, sotto i dati" },

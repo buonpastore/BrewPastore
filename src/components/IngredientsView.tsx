@@ -16,6 +16,22 @@ const qty = (i: Row) => (i.unit === "pz"
   ? (i.category === "lievito" ? `${num(Number(i.quantity), 2)} ${Number(i.quantity) === 1 ? "bustina" : "bustine"}` : `${num(Number(i.quantity), 2)} pz`)
   : `${num(Number(i.quantity), 3)} ${i.unit}`);
 
+/** Totale di un gruppo: peso, pezzi o numero di voci. */
+function groupTotal(list: Row[], volume?: number | null): string {
+  const units = new Set(list.map((i) => i.unit));
+  if ([...units].every((u) => u === "kg" || u === "g")) {
+    const g = list.reduce((t, i) => t + grams(i), 0);
+    const perL = list[0]?.category === "luppolo" && volume ? ` · ${num(g / Number(volume), 1)} g/L` : "";
+    return (g >= 1000 ? `${num(g / 1000, 2)} kg` : `${num(g, 0)} g`) + perL;
+  }
+  if (units.size === 1 && units.has("pz")) {
+    const n = list.reduce((t, i) => t + Number(i.quantity), 0);
+    return list[0].category === "lievito" ? `${num(n, 2)} ${n === 1 ? "bustina" : "bustine"}` : `${num(n, 2)} pz`;
+  }
+  if (units.size === 1) return `${num(list.reduce((t, i) => t + Number(i.quantity), 0), 3)} ${list[0].unit}`;
+  return `${list.length} voci`;
+}
+
 /** Lista ingredienti divisa per tipo, con i colori del piano di cotta. */
 export function IngredientsView({ table, parentKey, parentId, volume, reloadKey }: { table: string; parentKey: string; parentId: string; volume?: number | null; reloadKey?: unknown }) {
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -29,24 +45,18 @@ export function IngredientsView({ table, parentKey, parentId, volume, reloadKey 
   if (!rows.length) return <p className="muted">Nessun ingrediente. Aggiungili con l'importazione qui sotto o con "Modifica ingredienti".</p>;
 
   const maltKg = rows.filter((i) => i.category === "malto").reduce((s, i) => s + kg(i), 0);
-  const hopG = rows.filter((i) => i.category === "luppolo").reduce((s, i) => s + grams(i), 0);
   const known = new Set(GROUPS.flatMap((g) => g.cat));
   const groups = [...GROUPS.map((g) => (g.cat[0] === "altro" ? { ...g, cat: ["altro", ...rows.map((r) => r.category).filter((c) => !known.has(c))], icon: <Package size={18} /> } : g))];
 
   return (
     <div>
-      <div className="bd-summary">
-        {maltKg > 0 && <span>🌾 Malti {num(maltKg, 2)} kg</span>}
-        {hopG > 0 && <span>🌿 Luppoli {num(hopG, 0)} g{volume ? ` · ${num(hopG / Number(volume), 1)} g/L` : ""}</span>}
-        <span>{rows.length} ingredienti</span>
-      </div>
       <div className="ing-groups">
         {groups.map((g) => {
           const list = rows.filter((r) => g.cat.includes(r.category));
           if (!list.length) return null;
           return (
             <section key={g.title} className="ing-group" style={{ ["--c" as string]: g.color }}>
-              <h3 className="ing-title"><span className="ing-ico">{g.icon}</span>{g.title}</h3>
+              <h3 className="ing-title"><span className="ing-ico">{g.icon}</span>{g.title}<span className="ing-total">{groupTotal(list, volume)}</span></h3>
               <div className="ing-tiles">
                 {list.map((i) => {
                   const pct = i.category === "malto" && maltKg ? (kg(i) / maltKg) * 100 : null;
@@ -67,6 +77,7 @@ export function IngredientsView({ table, parentKey, parentId, volume, reloadKey 
           );
         })}
       </div>
+      <p className="ing-count muted small">{rows.length} ingredienti in tutto</p>
     </div>
   );
 }
