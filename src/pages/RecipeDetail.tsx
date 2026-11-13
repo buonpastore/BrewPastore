@@ -172,20 +172,24 @@ export function RecipeDetail() {
           </>
         )}
         {tab === "batch" && (
-          <table>
-            <thead><tr><th>Batch</th><th>Stato</th><th>Data</th><th>OG</th><th>FG</th><th>ABV</th></tr></thead>
-            <tbody>
-              {batches.map((b) => (
-                <tr key={b.id}>
-                  <td><Link to={`/batch/${b.id}`}>{b.code}</Link></td>
-                  <td><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span></td>
-                  <td className="nowrap">{date(stepDate(b))}</td><td>{sg(b.original_gravity)}</td><td>{sg(b.final_gravity)}</td>
-                  <td>{b.abv != null ? b.abv + "%" : "—"}</td>
-                </tr>
-              ))}
-              {!batches.length && <tr><td colSpan={6} className="muted">Nessun batch ancora.</td></tr>}
-            </tbody>
-          </table>
+          <div className="table-wrap">
+            <table className="batch-list compact">
+              <thead><tr><th>Batch</th><th>Stato</th><th>Dati</th></tr></thead>
+              <tbody>
+                {batches.map((b) => (
+                  <tr key={b.id}>
+                    <td className="bl-name"><Link to={`/batch/${b.id}`}><strong>{b.code}</strong></Link><div className="muted small">{date(stepDate(b))}</div></td>
+                    <td><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span></td>
+                    <td className="small">
+                      <div className="nowrap">OG {sg(b.original_gravity)}</div><div className="nowrap">FG {sg(b.final_gravity)}</div>
+                      {b.abv != null && <div className="muted nowrap">{b.abv}% alc.</div>}
+                    </td>
+                  </tr>
+                ))}
+                {!batches.length && <tr><td colSpan={3} className="muted">Nessun batch ancora.</td></tr>}
+              </tbody>
+            </table>
+          </div>
         )}
         {tab === "acqua" && <RecipeWater recipe={recipe} canEdit={isAdmin} onSaved={setRecipe} />}
         {tab === "cottura" && <RecipeBrewDay recipe={recipe} />}

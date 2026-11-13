@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.122", date: "13/11/2026 23:40", text: "Ricetta → Batch: la tabella non allarga più la pagina sul telefono (nome e data su due righe, OG/FG insieme)" },
   { version: "0.121", date: "13/11/2026 23:30", text: "Lista dei batch più leggibile da telefono: vista compatta (nome, stato, data) o estesa, con il nome del batch e della ricetta su due righe" },
   { version: "0.120", date: "13/11/2026 23:15", text: "Degustazioni: si possono fare solo sulle birre imbottigliate" },
   { version: "0.119", date: "13/11/2026 23:05", text: "Produzione: i pulsanti Nuova ricetta, Nuovo batch e Nuova degustazione sono uguali, larghi tutta la riga, con l'icona della loro sezione" },
