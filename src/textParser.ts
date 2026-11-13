@@ -362,7 +362,8 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   // descrizione della birra dal profilo organolettico (Colore, Corpo, Aroma, Finale…)
   const PROFILE = /^(colore|schiuma|corpo|aroma|gusto|luppolo|amaro|finale|aspetto|carbonazione percepita)\s*[:\t ]\s*(.+)$/i;
   const profile = lines.map((l) => l.match(PROFILE)).filter((m): m is RegExpMatchArray => !!m && !/\d/.test(m[2]) && m[2].length < 80 && !/quantit|momento|valore|descrizione|operazione/i.test(m[2]))
-    .map((m) => `${m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase()}: ${m[2].trim().replace(/\.$/, "")}`);
+    .map((m) => `${m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase()}: ${m[2].trim().replace(/\.$/, "")}`)
+    .filter((p, i, a) => a.findIndex((q) => q.split(":")[0] === p.split(":")[0]) === i);   // una sola voce per tipo
   const procedure = ingredients.length ? buildProcedure({
     mashTemp: mash ? num(mash[1]) : null, mashTime: mash ? num(mash[2]) : null, mashSteps,
     boil: g(boil), mashWater: g(mashW), spargeWater: g(spargeW), spargeTemp: spT ? num(spT[1]) : null,

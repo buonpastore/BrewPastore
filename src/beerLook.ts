@@ -30,3 +30,14 @@ export function ibuName(ibu: number): string {
 export function abvOf(og?: number | null, fg?: number | null): number | null {
   return og && fg ? (Number(og) - Number(fg)) * 131.25 : null;
 }
+
+/** Descrizione "Colore: … · Aroma: …" senza voci ripetute (es. "Colore" due volte). */
+export function cleanDescription(desc: string | null | undefined): string[] {
+  const parts = String(desc ?? "").split(/\s*·\s*|\n/).map((x) => x.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  return parts.filter((p) => {
+    const k = p.includes(":") ? p.split(":")[0].trim().toLowerCase() : p.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+}

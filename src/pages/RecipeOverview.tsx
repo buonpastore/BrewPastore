@@ -4,7 +4,7 @@ import {
   FlaskConical, Sparkles, Eye, Feather, Flower2, Smile, Waves, ListOrdered, StickyNote, BookOpen, BookMarked, MapPin,
 } from "lucide-react";
 import { num, sg, type Row } from "../lib";
-import { abvOf, ebcColor, ebcName, ibuName } from "../beerLook";
+import { abvOf, ebcColor, ebcName, ibuName, cleanDescription } from "../beerLook";
 import { findStyle } from "../styleGuide";
 
 function Tile({ icon, label, value, sub, color = "var(--gold)", swatch }: { icon: ReactNode; label: string; value: ReactNode; sub?: string; color?: string; swatch?: string }) {
@@ -46,7 +46,7 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
   const ebc = recipe.target_ebc != null ? Number(recipe.target_ebc) : null;
 
   // descrizione: "Colore: Dorato · Aroma: Speziato" → voci con icona
-  const descParts = String(recipe.description ?? "").split(/\s*·\s*|\n/).map((x) => x.trim()).filter(Boolean);
+  const descParts = cleanDescription(recipe.description);
   const structured = descParts.length > 1 && descParts.every((p) => /^[A-Za-zÀ-ú ]{3,20}:\s*\S/.test(p));
 
   // procedimento: righe "1. Mash: …" → passaggi

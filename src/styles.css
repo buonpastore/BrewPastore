@@ -1176,3 +1176,6 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
   .bc-head, .bc-batch { flex-direction: row; align-items: center; justify-content: space-between; }
   .bc-kpis { min-width: 380px; }
 }
+
+/* mentre si scrive sul telefono la barra in basso sparisce */
+@media (max-width: 900px) { body.typing .bottom-nav { display: none; } }

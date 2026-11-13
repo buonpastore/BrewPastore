@@ -4,7 +4,7 @@ import { supabase, errMsg, num, date, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ImportRecipe } from "./ImportRecipe";
 import { STYLE_OPTIONS } from "../styles-list";
-import { abvOf, ebcColor, ebcName, ibuName } from "../beerLook";
+import { abvOf, ebcColor, ebcName, ibuName, cleanDescription } from "../beerLook";
 
 export function Recipes() {
   const { isAdmin } = useAuth();
@@ -91,7 +91,7 @@ export function Recipes() {
                   </div>
                 )}
               </div>
-              {r.description && <p className="rc-desc">{String(r.description).replace(/ · /g, ", ").slice(0, 110)}{String(r.description).length > 110 ? "…" : ""}</p>}
+              {r.description && (() => { const d = cleanDescription(r.description).join(", "); return <p className="rc-desc">{d.slice(0, 110)}{d.length > 110 ? "…" : ""}</p>; })()}
               <div className="muted small">{(r.batches as Row[]).length ? `${(r.batches as Row[]).length} ${(r.batches as Row[]).length === 1 ? "cotta" : "cotte"} · ultima il ${date(last)}` : "nessuna cotta ancora"}</div>
             </Link>
           );

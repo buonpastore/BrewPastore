@@ -54,6 +54,24 @@ export function Layout() {
   const { profile, isAdmin } = useAuth();
   const loc = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [loc.pathname]);
+  // telefono: mentre scrivi nascondo la barra in basso (su iPhone con la tastiera "galleggia" a metà schermo)
+  useEffect(() => {
+    const isField = (t: EventTarget | null) => t instanceof HTMLElement && (t.tagName === "TEXTAREA" || t.tagName === "SELECT"
+      || (t.tagName === "INPUT" && !["checkbox", "radio", "button", "submit", "file", "range", "color"].includes((t as HTMLInputElement).type)));
+    let timer = 0;
+    const onIn = (e: FocusEvent) => { if (isField(e.target)) { window.clearTimeout(timer); document.body.classList.add("typing"); } };
+    const onOut = (e: FocusEvent) => {
+      if (!isField(e.target)) return;
+      timer = window.setTimeout(() => {
+        if (isField(document.activeElement)) return;
+        document.body.classList.remove("typing");
+        window.scrollTo(window.scrollX, window.scrollY);   // riporta la barra al suo posto
+      }, 150);
+    };
+    document.addEventListener("focusin", onIn);
+    document.addEventListener("focusout", onOut);
+    return () => { document.removeEventListener("focusin", onIn); document.removeEventListener("focusout", onOut); };
+  }, []);
   const current = groupOf(loc.pathname);
 
   return (
