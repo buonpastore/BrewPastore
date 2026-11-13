@@ -953,3 +953,22 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .bc-swap { align-self: flex-start; }
 .bc-result { background: color-mix(in srgb, var(--magenta) 12%, transparent); border-radius: 12px; padding: 10px 12px; font-size: 1.05rem; }
 .bc-result strong { font-size: 1.2rem; }
+/* fase Acqua: due valori per riga anche su telefono */
+.qe-fields.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 600px) {
+  .qe-fields.two { gap: 8px; }
+  .qe-fields.two .big-field { padding: 10px 8px; }
+  .qe-fields.two .bf-row { grid-template-columns: 38px 1fr 38px; gap: 4px; }
+  .qe-fields.two .bf-btn { height: 50px; border-radius: 11px; }
+  .qe-fields.two .bf-input input { height: 50px; font-size: 1.3rem; padding: 0 22px 0 4px; }
+  .qe-fields.two .bf-unit { right: 6px; font-size: .8rem; }
+  .qe-fields.two .bf-head { font-size: .85rem; }
+}
+@media (max-width: 600px) {
+  .qe-fields.two .bf-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .qe-fields.two .bf-input { grid-column: 1 / -1; order: -1; }
+  .qe-fields.two .bf-input input { height: 52px; font-size: 1.45rem; padding: 0 30px 0 8px; }
+  .qe-fields.two .bf-unit { right: 10px; }
+  .qe-fields.two .bf-btn { height: 42px; }
+  .qe-fields.two .bf-head { min-height: 2.4em; align-items: flex-start; }
+}

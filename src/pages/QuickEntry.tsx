@@ -6,17 +6,17 @@ import { BottleCalc } from "./BottleCalc";
 
 type Kind = "ph" | "sg" | "l" | "int" | "kwh" | "g" | "co2";
 interface Field { key: string; label: string; kind: Kind; hint?: string }
-interface Phase { title: string; color: string; icon: ReactNode; fields: Field[] }
+interface Phase { title: string; color: string; icon: ReactNode; fields: Field[]; twoCols?: boolean }
 
 const PHASES: Phase[] = [
   { title: "Acqua", color: "var(--teal)", icon: <Droplets size={20} />, fields: [
-    { key: "water_ph_initial", label: "pH acqua iniziale", kind: "ph" },
-    { key: "water_ph_adjusted", label: "pH dopo le correzioni", kind: "ph" },
     { key: "mash_water_l", label: "Acqua di mash", kind: "l" },
     { key: "sparge_water_l", label: "Acqua di sparge", kind: "l" },
-  ] },
+    { key: "water_ph_initial", label: "pH iniziale", kind: "ph" },
+    { key: "water_ph_adjusted", label: "pH corretto", kind: "ph", hint: "viene copiato nel pH del mash" },
+  ], twoCols: true },
   { title: "Mash", color: "var(--gold)", icon: <Wheat size={20} />, fields: [
-    { key: "mash_ph", label: "pH del mash", kind: "ph", hint: "ideale 5,2–5,6" },
+    { key: "mash_ph", label: "pH del mash", kind: "ph", hint: "ideale 5,2–5,6 · parte dal pH corretto" },
     { key: "pre_sparge_gravity", label: "Gravity pre-sparge", kind: "sg" },
   ] },
   { title: "Sparge", color: "var(--teal)", icon: <ShowerHead size={20} />, fields: [
@@ -74,7 +74,9 @@ function BigField({ f, batch, canEdit, onSaved }: { f: Field; batch: Row; canEdi
   const save = async (v: number | null) => {
     pending.current = false;
     setState("saving");
-    const { data, error } = await supabase.from("batches").update({ [f.key]: v }).eq("id", batch.id).select().single();
+    const patch: Row = { [f.key]: v };
+    if (f.key === "water_ph_adjusted" && v != null && (batch.mash_ph == null || batch.mash_ph === "")) patch.mash_ph = v;
+    const { data, error } = await supabase.from("batches").update(patch).eq("id", batch.id).select().single();
     if (error) { setState("err"); setErr(errMsg(error)); return; }
     setState("ok"); onSaved(data);
     window.setTimeout(() => setState((s) => (s === "ok" ? "" : s)), 1500);
@@ -253,7 +255,7 @@ export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, fo
             </button>
             {open.has(p.title) && (
               <>
-                <div className="qe-fields">
+                <div className={"qe-fields" + (p.twoCols ? " two" : "")}>
                   {p.fields.map((f) => <BigField key={f.key} f={f} batch={batch} canEdit={canEdit} onSaved={onSaved} />)}
                 </div>
                 {p.title === "Fermentazione" && <QuickEvents batch={batch} canEdit={canEdit} />}
