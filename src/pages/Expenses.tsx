@@ -12,7 +12,7 @@ export function Expenses() {
   const [settlements, setSettlements] = useState<Row[]>([]);
   const [balances, setBalances] = useState<Row[]>([]);
   const [showNew, setShowNew] = useState(false);
-  const [showPay, setShowPay] = useState<{ to?: string; amount?: number; expense_id?: string } | null>(null);
+  const [showPay, setShowPay] = useState<{ to?: string; amount?: number; expense_id?: string; mode?: "quote" | "libero" } | null>(null);
   const [reload, setReload] = useState(0);
   const [payShare, setPayShare] = useState<{ expense: Row; share: Row } | null>(null);
 
@@ -77,13 +77,18 @@ export function Expenses() {
     refresh();
   };
 
+  const myDue = dueShares(expenses, settlements, me);
+
   return (
     <div>
       <div className="page-head">
         <h1>Spese condivise</h1>
         <div className="exp-actions">
           <button className="btn primary" onClick={() => setShowNew(true)}>🧾 Ho fatto una spesa</button>
-          <button className="btn" onClick={() => setShowPay({})}>💸 Ho mandato soldi</button>
+          <button className="btn" onClick={() => setShowPay({ mode: "libero" })}>💸 Ho mandato soldi</button>
+          <button className="btn exp-due" onClick={() => setShowPay({ mode: "quote" })}>
+            📋 Le mie quote da pagare <span className={"due-count" + (myDue.length ? " on" : "")}>{myDue.length ? `${myDue.length} · ${eur(myDue.reduce((t, d) => t + d.amount, 0))}` : "nessuna"}</span>
+          </button>
         </div>
       </div>
 
@@ -312,16 +317,21 @@ function NewExpense({ profiles, me, onClose, onSaved }: { profiles: Row[]; me: s
   );
 }
 
-function NewSettlement({ profiles, me, initial, expenses, settlements, nameOf, onClose, onSaved }: {
-  profiles: Row[]; me: string; initial: { to?: string; amount?: number; expense_id?: string };
-  expenses: Row[]; settlements: Row[]; nameOf: (id: string) => string; onClose: () => void; onSaved: () => void;
-}) {
-  // le mie quote non ancora pagate (spese anticipate da altri)
-  const due = expenses.flatMap((e) => (e.expense_shares as Row[])
+/** Le mie quote non ancora pagate (spese anticipate da altri). */
+function dueShares(expenses: Row[], settlements: Row[], me: string) {
+  return expenses.flatMap((e) => ((e.expense_shares ?? []) as Row[])
     .filter((sh) => sh.user_id === me && e.paid_by !== me && Number(sh.amount) > 0
       && !settlements.some((x) => x.expense_id === e.id && x.from_user === me && x.to_user === e.paid_by))
     .map((sh) => ({ expense: e, amount: Number(sh.amount) })));
-  const [mode, setMode] = useState<"quote" | "libero">(due.some((d) => !initial.to || d.expense.paid_by === initial.to) ? "quote" : "libero");
+}
+
+function NewSettlement({ profiles, me, initial, expenses, settlements, nameOf, onClose, onSaved }: {
+  profiles: Row[]; me: string; initial: { to?: string; amount?: number; expense_id?: string; mode?: "quote" | "libero" };
+  expenses: Row[]; settlements: Row[]; nameOf: (id: string) => string; onClose: () => void; onSaved: () => void;
+}) {
+  // le mie quote non ancora pagate (spese anticipate da altri)
+  const due = dueShares(expenses, settlements, me);
+  const [mode, setMode] = useState<"quote" | "libero">(initial.mode ?? (due.some((d) => !initial.to || d.expense.paid_by === initial.to) ? "quote" : "libero"));
   const [sel, setSel] = useState<string[]>(due.filter((d) => !initial.to || d.expense.paid_by === initial.to).map((d) => d.expense.id));
   const others = profiles.filter((p) => p.id !== me);
   const [to, setTo] = useState(initial.to ?? others[0]?.id ?? "");
@@ -360,11 +370,11 @@ function NewSettlement({ profiles, me, initial, expenses, settlements, nameOf, o
   return (
     <div className="modal-backdrop">
       <div className="modal">
-        <h2>💸 Ho mandato soldi</h2>
-        <div className="tabs" style={{ margin: "0 0 14px" }}>
+        <h2>{initial.mode === "quote" ? "📋 Le mie quote da pagare" : "💸 Ho mandato soldi"}</h2>
+        {!initial.mode && <div className="tabs" style={{ margin: "0 0 14px" }}>
           <button className={mode === "quote" ? "active" : ""} onClick={() => setMode("quote")}>Le mie quote da pagare ({due.length})</button>
           <button className={mode === "libero" ? "active" : ""} onClick={() => setMode("libero")}>Importo libero</button>
-        </div>
+        </div>}
 
         {mode === "quote" && (
           due.length === 0 ? <p>🎉 Non hai quote da pagare: sei in pari con tutte le spese.</p> : (

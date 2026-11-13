@@ -14,6 +14,7 @@ export function Recipes() {
   const [q, setQ] = useState("");
   const [style, setStyle] = useState("");
   const [importing, setImporting] = useState(false);
+  const [choosing, setChoosing] = useState(false);
 
   useEffect(() => {
     supabase.from("recipes").select("*, batches(id, brew_date, status)").order("name")
@@ -38,8 +39,7 @@ export function Recipes() {
         <h1>Ricette</h1>
         {isAdmin && (
           <div className="row-actions">
-            <button className="btn" onClick={() => setImporting(true)}>📸 Importa da screenshot</button>
-            <button className="btn primary" onClick={create}>+ Nuova ricetta</button>
+            <button className="btn primary" onClick={() => setChoosing(true)}>+ Nuova ricetta</button>
           </div>
         )}
       </div>
@@ -54,6 +54,22 @@ export function Recipes() {
         <label className="check"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> mostra archiviate</label>
       </div>
       {importing && <ImportRecipe onClose={() => setImporting(false)} />}
+      {choosing && (
+        <div className="modal-backdrop" onClick={() => setChoosing(false)}>
+          <div className="modal choose-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Nuova ricetta</h2>
+            <button className="choose-btn" onClick={() => { setChoosing(false); setImporting(true); }}>
+              <span className="choose-ico">📸</span>
+              <span><strong>Importa</strong><span className="muted small">da screenshot, file o testo copiato</span></span>
+            </button>
+            <button className="choose-btn" onClick={() => { setChoosing(false); create(); }}>
+              <span className="choose-ico">✍️</span>
+              <span><strong>Inserisci a mano</strong><span className="muted small">parti da una ricetta vuota</span></span>
+            </button>
+            <button className="btn" onClick={() => setChoosing(false)}>Annulla</button>
+          </div>
+        </div>
+      )}
       <div className="cards">
         {list.map((r) => {
           const last = (r.batches as Row[]).map((b) => b.brew_date).filter(Boolean).sort().pop();

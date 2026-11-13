@@ -991,3 +991,15 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
   .mat-compact .badge.cat { font-size: .66rem; padding: 2px 6px; }
   .mat-compact .warn.small, .mat-compact .ok.small { display: block; }
 }
+
+/* spese: quote da pagare sempre visibili */
+.exp-actions .exp-due { grid-column: 1 / -1; justify-content: space-between; border-color: rgba(237, 165, 18, .45); }
+.due-count { font-size: .85rem; color: var(--muted); font-weight: 600; }
+.due-count.on { color: var(--gold); }
+/* ricette: scelta tra import e inserimento a mano */
+.choose-modal { display: flex; flex-direction: column; gap: 12px; max-width: 420px; }
+.choose-btn { display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px; min-height: 72px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface-2); color: inherit; font: inherit; cursor: pointer; }
+.choose-btn:hover { border-color: var(--gold); }
+.choose-btn > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.choose-btn strong { font-size: 1.05rem; }
+.choose-ico { font-size: 1.6rem; }
