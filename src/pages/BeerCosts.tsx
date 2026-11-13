@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Pencil, Calculator, X } from "lucide-react";
 import { supabase, eur, num, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { sizeFromName, isBrewed, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
+import { sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
 /** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
 export function BeerCosts() {
@@ -41,9 +41,17 @@ export function BeerCosts() {
   const ingsOf = (b: Row) => { const own = bIngs.filter((i) => i.batch_id === b.id); return own.length ? own : rIngs.filter((i) => i.recipe_id === b.recipe_id); };
 
   const beers = recipes.map((r) => {
-    const list = batches.filter((b) => b.recipe_id === r.id && isBrewed(b));   // i batch creati e mai fatti non contano
-    const costs = list.map((b) => computeBatchCost(b, r, ingsOf(b), extras.filter((x) => x.batch_id === b.id), mats, data.energy, data.water, data.cfg));
-    return { recipe: r, list, costs, sum: sumCosts(costs) };
+    // una birra = una ricetta: gli ingredienti si contano UNA volta, dalla ricetta.
+    // litri, bottiglie e kWh vengono dal batch di riferimento (l'ultimo imbottigliato, altrimenti l'ultimo fatto)
+    const all = batches.filter((b) => b.recipe_id === r.id && isBrewed(b));   // i batch creati e mai fatti non contano
+    const key = (b: Row) => String(b.brew_date ?? "") + String(b.created_at ?? "");
+    const sorted = [...all].sort((a, b) => key(b).localeCompare(key(a)));
+    const ref = sorted.find(isBottled) ?? sorted[0];
+    const recipeIngs = rIngs.filter((i) => i.recipe_id === r.id);
+    const ings = recipeIngs.length ? recipeIngs : ref ? ingsOf(ref) : [];
+    const list = ref ? [ref] : [];
+    const costs = ref ? [computeBatchCost(ref, r, ings, extras.filter((x) => x.batch_id === ref.id), mats, data.energy, data.water, data.cfg)] : [];
+    return { recipe: r, list, all, ings, costs, sum: sumCosts(costs) };
   }).filter((x) => x.list.length || !x.recipe.archived)
     .sort((a, b) => Number(b.list.length > 0) - Number(a.list.length > 0) || a.recipe.name.localeCompare(b.recipe.name, "it"));
 
@@ -55,7 +63,7 @@ export function BeerCosts() {
       {!beers.length && <p className="muted">Nessuna ricetta. Crea una ricetta e un batch per vedere i costi.</p>}
 
       <div className="bc-list">
-        {beers.map(({ recipe, list, costs, sum }) => {
+        {beers.map(({ recipe, list, all, ings, costs, sum }) => {
           const isOpen = open === recipe.id;
           return (
             <section key={recipe.id} className={"bc-recipe" + (isOpen ? " open" : "")}>
@@ -65,7 +73,7 @@ export function BeerCosts() {
                   <strong>{recipe.name}</strong>
                   {list.length > 0 && <StateIcon sum={sum} />}
                   <span className="muted small bc-sub">
-                    {list.length ? `${list.length} batch · ${sum.liters ? `${num(sum.liters, 1)} L` : "litri ?"}${sum.bottles ? ` · ${sum.bottles} bottiglie` : ""}` : "nessun batch ancora"}
+                    {list.length ? `${sum.liters ? `${num(sum.liters, 1)} L` : "litri ?"}${sum.bottles ? ` · ${sum.bottles} bottiglie` : ""}` : "non ancora cotta"}
                   </span>
                 </span>
                 {list.length > 0 && (
@@ -76,7 +84,7 @@ export function BeerCosts() {
                   </span>
                 )}
               </button>
-              {isOpen && list.length > 0 && <BeerDetail recipe={recipe} batches={list} extras={extras} sum={sum} costs={costs} ings={list.flatMap(ingsOf)} mats={mats} onChange={() => setReload((x) => x + 1)} />}
+              {isOpen && list.length > 0 && <BeerDetail recipe={recipe} batches={all} extras={extras} sum={sum} costs={costs} ings={ings} mats={mats} onChange={() => setReload((x) => x + 1)} />}
             </section>
           );
         })}
@@ -87,7 +95,7 @@ export function BeerCosts() {
         <ul>
           <li><Hourglass size={14} className="ic-guess" /> <strong>Presunto</strong> dalla cotta all'imbottigliamento: materie prime + corrente + acqua.</li>
           <li><CircleAlert size={14} className="ic-warn" /> <strong>Imbottigliata</strong>, costo reale ma con qualche dato stimato o mancante. <CheckCircle2 size={14} className="ic-ok" /> <strong>Completo</strong>: tutti i dati inseriti.</li>
-          <li><strong>Materie prime</strong>: ingredienti di tutti i batch × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
+          <li><strong>Materie prime</strong>: ingredienti della ricetta, contati una volta, × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
           <li><strong>Bottiglie e tappi</strong>: bottiglie × {data.cfg.b66 != null ? eur(data.cfg.b66) : "—"} (Impostazioni){cp != null ? ` + tappo ${eur(cp)}` : ""}.</li>
           <li><strong>Corrente</strong>: kWh inseriti nei batch × {eur(data.energy)}/kWh.</li>
         </ul>
