@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.088", date: "13/11/2026 15:20", text: "Costi birre: la corrente si prende solo dal batch della cottura" },
   { version: "0.087", date: "13/11/2026 15:10", text: "Costi birre: le materie prime si contano una volta sola, dalla ricetta (non più sommate per ogni batch)" },
   { version: "0.086", date: "13/11/2026 14:55", text: "Costi birre: dall'imbottigliamento il costo è reale; icone per lo stato (⏳ presunto, ⚠ dati stimati, ✓ completo) e per ogni dato (inserito, stimato, mancante); i batch creati e mai fatti non contano più" },
   { version: "0.085", date: "13/11/2026 14:30", text: "Costi birre: l'ingrediente si abbina al prodotto acquistato qualunque sia l'unità di misura, poi la quantità viene convertita (g, kg, ml, l, bustine, pezzi)" },

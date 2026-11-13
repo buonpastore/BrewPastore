@@ -50,7 +50,10 @@ export function BeerCosts() {
     const recipeIngs = rIngs.filter((i) => i.recipe_id === r.id);
     const ings = recipeIngs.length ? recipeIngs : ref ? ingsOf(ref) : [];
     const list = ref ? [ref] : [];
-    const costs = ref ? [computeBatchCost(ref, r, ings, extras.filter((x) => x.batch_id === ref.id), mats, data.energy, data.water, data.cfg)] : [];
+    // corrente: solo quella del batch della cottura (dove avete inserito i kWh), non degli altri batch
+    const brewBatch = sorted.find((b) => b.energy_kwh != null && b.brew_date) ?? sorted.find((b) => b.energy_kwh != null);
+    const refE: Row | null = ref ? { ...ref, energy_kwh: brewBatch?.energy_kwh ?? null } : null;
+    const costs = refE ? [computeBatchCost(refE, r, ings, extras.filter((x) => x.batch_id === refE.id), mats, data.energy, data.water, data.cfg)] : [];
     return { recipe: r, list, all, ings, costs, sum: sumCosts(costs) };
   }).filter((x) => x.list.length || !x.recipe.archived)
     .sort((a, b) => Number(b.list.length > 0) - Number(a.list.length > 0) || a.recipe.name.localeCompare(b.recipe.name, "it"));
