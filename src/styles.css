@@ -1303,3 +1303,7 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 /* valori proposti dall'app nei dati del batch */
 .big-field.proposed .bf-input input { color: var(--muted); font-style: italic; }
 .bf-prop { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--gold); background: color-mix(in srgb, var(--gold) 14%, transparent); padding: 1px 7px; border-radius: 99px; }
+/* scelta della ricetta per il nuovo batch: le schede non si comprimono (Safari) */
+.recipe-pick > * { flex-shrink: 0; }
+.recipe-pick-btn { height: auto; }
+.recipe-pick-btn .prev-batches { margin-top: 8px; }
