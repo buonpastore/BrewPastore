@@ -1,3 +1,4 @@
+import { Beer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase, errMsg, date, sg, STATUS_LABELS, MATERIAL_CATEGORIES, UNITS, loadMaterials, type Row } from "../lib";
@@ -192,7 +193,7 @@ export function RecipeDetail() {
       </div>
       {isAdmin && (
         <div className="row-actions recipe-actions">
-          <button className="btn primary" onClick={newBatch}>🍺 Nuovo batch da questa ricetta</button>
+          <button className="btn primary" onClick={newBatch}><Beer size={18} /> Nuovo batch da questa ricetta</button>
           <button className="btn" onClick={duplicate}>⧉ Duplica</button>
           <button className="btn danger" onClick={() => setDeleting(true)}>🗑️ Elimina</button>
         </div>

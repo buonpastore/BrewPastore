@@ -1,3 +1,4 @@
+import { Beer } from "lucide-react";
 import { CapDot } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -45,7 +46,7 @@ export function Batches() {
       <div className="page-head">
         <h1>Batch</h1>
       </div>
-      {isAdmin && <button className="btn primary btn-wide" disabled={busy} onClick={startNew}>{busy ? "Creo…" : "🍺 Nuovo batch"}</button>}
+      {isAdmin && <button className="btn primary btn-wide" disabled={busy} onClick={startNew}>{busy ? "Creo…" : <><Beer size={20} /> Nuovo batch</>}</button>}
       <div className="toolbar">
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tutti gli stati</option>

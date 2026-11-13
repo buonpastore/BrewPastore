@@ -59,6 +59,9 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
 
   return (
     <div>
+      <button className="btn primary btn-wide" onClick={() => setEditing({ batch_id: filter || batches[0]?.id || "", rating: 0, tasted_on: new Date().toISOString().slice(0, 10) })}>
+        <Star size={20} /> Nuova degustazione
+      </button>
       <div className="toolbar">
         {!batchId && (
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
@@ -66,9 +69,6 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
             {batches.map((b) => <option key={b.id} value={b.id}>{b.code} — {b.recipes?.name}</option>)}
           </select>
         )}
-        <button className="btn primary" onClick={() => setEditing({ batch_id: filter || batches[0]?.id || "", rating: 0, tasted_on: new Date().toISOString().slice(0, 10) })}>
-          🍺 Nuova degustazione
-        </button>
         {sum && sum.tastings_count > 0 && (
           <span className="tasting-avg"><Stars value={Math.round(sum.avg_rating)} size={18} /> <strong>{Number(sum.avg_rating).toLocaleString("it-IT")}</strong> <span className="muted">media di {sum.tastings_count}</span></span>
         )}

@@ -1,3 +1,4 @@
+import { BookOpen } from "lucide-react";
 import { CapDot, useCapColors } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -42,12 +43,8 @@ export function Recipes() {
     <div>
       <div className="page-head">
         <h1>Ricette</h1>
-        {isAdmin && (
-          <div className="row-actions">
-            <button className="btn primary" onClick={() => setChoosing(true)}>+ Nuova ricetta</button>
-          </div>
-        )}
       </div>
+      {isAdmin && <button className="btn primary btn-wide" onClick={() => setChoosing(true)}><BookOpen size={20} /> Nuova ricetta</button>}
       <div className="toolbar">
         <input placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} />
         {styleChoices.length > 0 && (

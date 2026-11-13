@@ -1289,3 +1289,5 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .basis { flex: none; }
 .basis-last { color: var(--teal); }
 .basis-avg { color: var(--gold); }
+
+.btn.btn-wide { gap: 10px; align-items: center; }
