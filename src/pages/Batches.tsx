@@ -6,7 +6,7 @@ import { supabase, date, sg, eur, errMsg, STATUS_LABELS, type Row } from "../lib
 import { useAuth } from "../auth";
 import { deleteBatches } from "../deleteHelpers";
 import { createBatchFromRecipe } from "../newBatch";
-import { BatchStatusList } from "../components/PreviousBatches";
+import { lastStep } from "../components/PreviousBatches";
 
 export function Batches() {
   const { isAdmin } = useAuth();
@@ -98,11 +98,19 @@ export function Batches() {
             <h2>🍺 Nuovo batch: quale ricetta?</h2>
             <div className="recipe-pick">
               {choose.map((r) => (
-                <button key={r.id} className="recipe-pick-btn" disabled={busy} onClick={() => create(r)}>
-                  <strong>{r.name}</strong>
-                  <span className="muted small">{[r.style, r.batch_size_l && `${String(r.batch_size_l).replace(".", ",")} L`].filter(Boolean).join(" · ")}</span>
-                  <BatchStatusList batches={r.batches ?? []} linkable={false} />
-                </button>
+                <div key={r.id} role="button" tabIndex={0} className={"recipe-pick-btn" + (busy ? " busy" : "")}
+                  onClick={() => !busy && create(r)} onKeyDown={(e) => { if (e.key === "Enter" && !busy) create(r); }}>
+                  <div className="rp-name">{r.name}</div>
+                  <div className="muted small">{[r.style, r.batch_size_l && `${String(r.batch_size_l).replace(".", ",")} L`].filter(Boolean).join(" · ")}</div>
+                  {/* solo i batch ancora in corso: quelli finiti non servono */}
+                  {((r.batches ?? []) as Row[]).filter((b) => b.status !== "finito").map((b) => (
+                    <div key={b.id} className="rp-batch">
+                      <span className={"badge st-" + b.status}>{STATUS_LABELS[b.status] ?? b.status}</span>
+                      <span className="small">{b.code}</span>
+                      <span className="muted small">{lastStep(b)}</span>
+                    </div>
+                  ))}
+                </div>
               ))}
             </div>
             <button className="btn" style={{ width: "100%", marginTop: 10 }} onClick={() => setChoose(null)}>Annulla</button>

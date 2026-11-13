@@ -1307,3 +1307,8 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .recipe-pick > * { flex-shrink: 0; }
 .recipe-pick-btn { height: auto; }
 .recipe-pick-btn .prev-batches { margin-top: 8px; }
+
+.recipe-pick-btn { display: block; }
+.recipe-pick-btn.busy { opacity: .6; pointer-events: none; }
+.rp-name { font-size: 1.05rem; font-weight: 700; color: var(--gold); line-height: 1.3; }
+.rp-batch { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 8px; padding: 6px 10px; border-radius: 10px; background: var(--surface); }
