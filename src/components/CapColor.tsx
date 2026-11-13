@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase, errMsg, date, type Row } from "../lib";
 
@@ -45,12 +45,44 @@ export function useCapColors(): CapColor[] {
 }
 export const capInfo = (k?: string | null) => (cache ?? []).find((c) => c.key === k) ?? CAP_COLORS.find((c) => c.key === k) ?? DEFAULT_CAPS.find((c) => c.key === k) ?? null;
 
+/** Tappo a corona disegnato: bordo dentellato, faccia bombata con riflesso. */
+export function CapIcon({ hex, size = 24, unknown = false, title }: { hex: string; size?: number; unknown?: boolean; title?: string }) {
+  const id = useId().replace(/:/g, "");
+  const teeth = 21, pts: string[] = [];
+  for (let i = 0; i < teeth * 2; i++) {
+    const a = (Math.PI * i) / teeth - Math.PI / 2, rr = i % 2 ? 44 : 49;
+    pts.push(`${(50 + rr * Math.cos(a)).toFixed(2)},${(50 + rr * Math.sin(a)).toFixed(2)}`);
+  }
+  return (
+    <svg className="cap-icon" width={size} height={size} viewBox="0 0 100 100" role="img" aria-label={title}>
+      {title && <title>{title}</title>}
+      <defs>
+        <radialGradient id={`f${id}`} cx="38%" cy="32%" r="70%">
+          <stop offset="0" stopColor="#fff" stopOpacity=".55" />
+          <stop offset=".45" stopColor="#fff" stopOpacity=".08" />
+          <stop offset="1" stopColor="#000" stopOpacity=".28" />
+        </radialGradient>
+        <linearGradient id={`e${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity=".25" />
+          <stop offset="1" stopColor="#000" stopOpacity=".45" />
+        </linearGradient>
+      </defs>
+      <polygon points={pts.join(" ")} fill={hex} />
+      <polygon points={pts.join(" ")} fill={`url(#e${id})`} />
+      <circle cx="50" cy="50" r="37" fill={hex} stroke="rgba(0,0,0,.25)" strokeWidth="1.5" />
+      <circle cx="50" cy="50" r="37" fill={`url(#f${id})`} />
+      <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="1.5" />
+      {unknown && <text x="50" y="62" textAnchor="middle" fontSize="34" fontWeight="700" fill="rgba(255,255,255,.85)">?</text>}
+    </svg>
+  );
+}
+
 /** Pallino con il colore del tappo. */
 export function CapDot({ color, size = 18 }: { color?: string | null; size?: number }) {
   useCapColors();
   const c = capInfo(color);
   if (!c) return null;
-  return <span className="cap-dot" title={`Tappo ${c.label.toLowerCase()}`} style={{ width: size, height: size, background: c.hex }} />;
+  return <CapIcon hex={c.hex} size={size} title={`Tappo ${c.label.toLowerCase()}`} />;
 }
 
 /** Scelta del colore del tappo, nella fase di imbottigliamento. */
@@ -71,7 +103,7 @@ export function CapPicker({ batch, canEdit, onSaved }: { batch: Row; canEdit: bo
         {colors.map((c) => (
           <button key={c.key} type="button" disabled={!canEdit} className={"cap-btn" + (batch.cap_color === c.key ? " on" : "")}
             onClick={() => pick(batch.cap_color === c.key ? null : c.key)} title={c.label}>
-            <span className="cap-dot" style={{ background: c.hex, width: 30, height: 30 }} />
+            <CapIcon hex={c.hex} size={36} />
             <small>{c.label}</small>
           </button>
         ))}
@@ -81,15 +113,19 @@ export function CapPicker({ batch, canEdit, onSaved }: { batch: Row; canEdit: bo
   );
 }
 
-/** Le ultime birre imbottigliate con il colore del tappo, per riconoscerle. */
+/** Le ultime birre prodotte con il colore del tappo, per riconoscerle (anche quelle col tappo ancora da scegliere). */
 export function CapGallery({ limit = 6 }: { limit?: number }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   useCapColors();
   useEffect(() => {
     supabase.from("batches").select("*, recipes(name, style)").then(({ data }) => {
-      const list = (data ?? []).filter((b) => b.cap_color)
-        .sort((a, b) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "").localeCompare(String(a.bottling_date ?? a.brew_date ?? a.created_at ?? "")));
-      setRows(list.slice(0, limit));
+      const when = (b: Row) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "");
+      const made = (data ?? []).filter((b) => b.cap_color || b.bottling_date || b.brew_date || b.bottles_count)
+        .sort((a, b) => Number(Boolean(b.cap_color)) - Number(Boolean(a.cap_color)) || when(b).localeCompare(when(a)));
+      // una per ricetta: l'ultima (prima quelle col tappo)
+      const seen = new Set<string>(), out: Row[] = [];
+      for (const b of made) { const k = b.recipe_id ?? b.id; if (seen.has(k)) continue; seen.add(k); out.push(b); }
+      setRows(out.sort((a, b) => when(b).localeCompare(when(a))).slice(0, limit));
     });
   }, [limit]);
   if (rows === null) return null;
@@ -101,18 +137,18 @@ export function CapGallery({ limit = 6 }: { limit?: number }) {
           {rows.map((b) => {
             const c = capInfo(b.cap_color);
             return (
-              <Link key={b.id} to={`/batch/${b.id}`} className="cap-card">
-                <span className="cap-dot big" style={{ background: c?.hex }} />
+              <Link key={b.id} to={`/batch/${b.id}`} className={"cap-card" + (c ? "" : " no-cap")}>
+                {c ? <CapIcon hex={c.hex} size={52} title={`Tappo ${c.label.toLowerCase()}`} /> : <CapIcon hex="#7d766c" size={52} unknown title="Tappo da scegliere" />}
                 <span className="cap-text">
                   <strong>{b.recipes?.name ?? b.code}</strong>
-                  <span className="muted small">{[b.recipes?.style, c?.label && `tappo ${c.label.toLowerCase()}`].filter(Boolean).join(" · ")}</span>
+                  <span className="muted small">{[b.recipes?.style, c ? `tappo ${c.label.toLowerCase()}` : "tappo da scegliere"].filter(Boolean).join(" · ")}</span>
                   {b.bottling_date && <span className="muted small">imbottigliata il {date(b.bottling_date)}</span>}
                 </span>
               </Link>
             );
           })}
         </div>
-      ) : <p className="muted">Nessuna birra con il colore del tappo: sceglilo nel batch, nella fase «Imbottigliamento».</p>}
+      ) : <p className="muted">Ancora nessuna birra prodotta: quando imbottigli, scegli il colore del tappo nel batch.</p>}
     </>
   );
 }
@@ -144,7 +180,7 @@ export function CapColorsSettings({ canEdit }: { canEdit: boolean }) {
       <div className="cap-list">
         {colors.map((c) => (
           <span key={c.key} className="cap-chip">
-            <span className="cap-dot" style={{ background: c.hex, width: 22, height: 22 }} /> {c.label}
+            <CapIcon hex={c.hex} size={24} /> {c.label}
             {canEdit && <button className="icon" title="Togli" onClick={() => remove(c)}>✕</button>}
           </span>
         ))}

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.102", date: "13/11/2026 19:30", text: "Tappi disegnati come veri tappi a corona; in Home «Riconosci le birre dal tappo» mostra sempre le ultime birre, anche quelle col tappo ancora da scegliere" },
   { version: "0.101", date: "13/11/2026 19:15", text: "Costi birre: corrente e acqua stimate dal processo se non le inserisci (poi diventano reali); stesso prodotto comprato con nomi diversi messo in media insieme; toccando un ingrediente vedi acquisto per acquisto prezzo e spedizione" },
   { version: "0.100", date: "13/11/2026 18:45", text: "Import di ricette e acquisti da screenshot e file di testo senza AI: il testo dello screenshot viene letto direttamente sul telefono. Se non trovo ingredienti si apre comunque la revisione per inserirli a mano" },
   { version: "0.099", date: "13/11/2026 18:15", text: "Imbottigliamento: bottiglie divise tra i tre soci (es. 33 → 11 a testa); ricette con la barra del colore del tappo; colori dei tappi (rosso, arancione, giallo, verde, bianco) aggiungibili in Impostazioni. Da eseguire: 0011_colori_tappi.sql" },
