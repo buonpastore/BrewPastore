@@ -17,6 +17,7 @@ import { BrewDay } from "./BrewDay";
 import { QuickEntry } from "./QuickEntry";
 import { CleanNamesButton } from "../components/CleanNames";
 import { DeleteDialog } from "../components/DeleteDialog";
+import { PreviousBatches } from "../components/PreviousBatches";
 import { deleteBatches, deletionSummary } from "../deleteHelpers";
 
 const sgField = (key: string, label: string): FieldDef => ({ key, label, type: "number", step: "0.001", render: (v) => sg(v as number) });
@@ -208,6 +209,7 @@ function NewBatchCard({ batch, onSaved, onDone }: { batch: Row; onSaved: (b: Row
           ))}
         </div>
       </div>
+      {batch.recipe_id && <PreviousBatches recipeId={batch.recipe_id} excludeId={batch.id} />}
       <p className="muted small">Ingredienti e acqua sono stati copiati dalla ricetta. Ora inserisci i valori della cotta qui sotto: si salvano da soli.</p>
       <button className="btn small" onClick={onDone}>Fatto, nascondi questo riquadro</button>
     </div>

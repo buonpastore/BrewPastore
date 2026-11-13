@@ -1124,3 +1124,13 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .tabs.tabs-wide { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); width: 100%; }
 .tabs.tabs-wide button { width: 100%; text-align: center; min-height: 42px; }
 @media (max-width: 700px) { .tabs.tabs-wide { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* batch precedenti di una ricetta, con lo stato */
+.prev-batches { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.prev-batches li > a, .prev-batches li > div { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--surface-3); color: var(--text); text-align: left; }
+.prev-batches li > a:hover { outline: 1px solid var(--gold); }
+.prev-when { text-align: right; }
+.prev-none { margin: 4px 0 0; }
+.recipe-pick-btn .prev-batches li > div { background: var(--surface); }
+@media (max-width: 420px) { .prev-batches li > a, .prev-batches li > div { grid-template-columns: auto 1fr; } .prev-when { grid-column: 1 / -1; text-align: left; } }
+.prev-batches .badge { justify-self: start; }

@@ -4,6 +4,7 @@ import { supabase, date, sg, eur, errMsg, STATUS_LABELS, type Row } from "../lib
 import { useAuth } from "../auth";
 import { deleteBatches } from "../deleteHelpers";
 import { createBatchFromRecipe } from "../newBatch";
+import { BatchStatusList } from "../components/PreviousBatches";
 
 export function Batches() {
   const { isAdmin } = useAuth();
@@ -11,7 +12,7 @@ export function Batches() {
   const [choose, setChoose] = useState<Row[] | null>(null);
   const [busy, setBusy] = useState(false);
   const startNew = async () => {
-    const { data } = await supabase.from("recipes").select("*").eq("archived", false).order("name");
+    const { data } = await supabase.from("recipes").select("*, batches(id, code, status, brew_date, fermentation_start, bottling_date, first_tasting_date, created_at)").eq("archived", false).order("name");
     const recipes = data ?? [];
     if (!recipes.length) return alert("Prima crea o importa una ricetta: il batch nasce da una ricetta.");
     if (recipes.length === 1) return create(recipes[0]);   // una sola ricetta: la prendo da solo
@@ -85,6 +86,7 @@ export function Batches() {
                 <button key={r.id} className="recipe-pick-btn" disabled={busy} onClick={() => create(r)}>
                   <strong>{r.name}</strong>
                   <span className="muted small">{[r.style, r.batch_size_l && `${String(r.batch_size_l).replace(".", ",")} L`].filter(Boolean).join(" · ")}</span>
+                  <BatchStatusList batches={r.batches ?? []} linkable={false} />
                 </button>
               ))}
             </div>
