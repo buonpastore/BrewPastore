@@ -1119,3 +1119,8 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .style-desc svg { flex: none; margin-top: 3px; color: var(--gold); }
 .style-desc strong { margin-right: 4px; }
 .style-src { margin: 12px 0 0; }
+
+/* schede del batch: griglia (6 per riga su computer, 3 su telefono) */
+.tabs.tabs-wide { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); width: 100%; }
+.tabs.tabs-wide button { width: 100%; text-align: center; min-height: 42px; }
+@media (max-width: 700px) { .tabs.tabs-wide { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

@@ -344,10 +344,11 @@ export function BatchDetail() {
         <div className={batch.first_tasting_date ? "done" : ""}><span>Bevuta</span>{date(batch.first_tasting_date)}</div>
       </div>
 
-      <Tabs active={tab} onChange={setTab} tabs={[
-        ["dati", "✍️ Inserisci dati"], ["log", "Log cotta"], ["cottura", "Cottura"], ["chimici", "Valori chimici"], ["ingredienti", "Ingredienti usati"],
-        ["diario", "Diario fermentazione"], ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"], ["costi", "Costi"],
-        ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico versioni"],
+      <Tabs grid wide active={tab} onChange={setTab} tabs={[
+        ["dati", "✍️ Inserisci"], ["log", "Log cotta"], ["cottura", "Cottura"],
+        ["chimici", "Valori chimici"], ["ingredienti", "Ingredienti"], ["diario", "Diario"],
+        ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"], ["costi", "Costi"],
+        ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico"],
       ]} />
 
       <div className="panel">
