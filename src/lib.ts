@@ -258,8 +258,9 @@ export async function prepareMascot(file: File, crop?: [number, number, number, 
 // malti €/kg · luppoli €/g · lieviti €/unità (bustina) · resto nell'unità base
 export function priceUnit(category: string, baseUnit: string): { factor: number; label: string } {
   if (category === "luppolo" && baseUnit === "kg") return { factor: 1 / 1000, label: "g" };
-  if (category === "lievito" && baseUnit === "pz") return { factor: 1, label: "unità" };
-  if (category === "lievito" && baseUnit === "kg") return { factor: 1 / 1000, label: "g" };
+  // lieviti sempre a bustina (1 bustina = 11,5 g), anche se comprati a grammi
+  if (category === "lievito" && baseUnit === "pz") return { factor: 1, label: "bustina" };
+  if (category === "lievito" && baseUnit === "kg") return { factor: 0.0115, label: "bustina" };
   return { factor: 1, label: baseUnit };
 }
 export function fmtUnitPrice(cost: number | null | undefined, category: string, baseUnit: string) {
@@ -274,7 +275,7 @@ export function fmtBaseQty(qtyBase: number | null | undefined, category: string,
   if (qtyBase == null) return "—";
   const { factor, label } = priceUnit(category, baseUnit);
   const q = factor === 1 ? Number(qtyBase) : Number(qtyBase) / factor;
-  return `${num(q, 3)} ${label === "unità" ? (q === 1 ? "unità" : "unità") : label}`;
+  return `${num(q, label === "bustina" ? 1 : 3)} ${label === "bustina" ? (q === 1 ? "bustina" : "bustine") : label}`;
 }
 /** quantità nell'unità base (kg, l, pz) */
 export function toBase(qty: number, unit: string) {

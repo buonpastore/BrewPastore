@@ -204,7 +204,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
             {[...groups.values()].map((g) => (
               <tr key={g.name + g.unit}>
                 <td>{g.name}{g.mat && g.mat.name.toLowerCase() !== String(g.name).toLowerCase() && <div className="muted small">da «{g.mat.name}»</div>}</td>
-                <td className="nowrap">{num(g.qty, 3)} {g.unit}</td>
+                <td className="nowrap">{g.category === "lievito" ? yeastQty(g.qty, g.unit) : `${num(g.qty, 3)} ${g.unit}`}</td>
                 {(
                   <>
                     <td className="nowrap">{g.mat ? fmtUnitPrice(g.mat.avg_unit_cost, g.mat.category, g.mat.base_unit)
@@ -228,4 +228,10 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
       {sum.missing.length > 0 && <p className="muted small">Per gli ingredienti senza prezzo scegli a quale materia prima acquistata corrispondono, oppure carica il loro acquisto in Materie prime.</p>}
     </div>
   );
+}
+
+/** Lievito sempre in bustine (1 bustina = 11,5 g). */
+function yeastQty(q: number, unit: string) {
+  const n = ["g", "kg", "mg"].includes(unit) ? Math.max(1, Math.round((unit === "kg" ? q * 1000 : unit === "mg" ? q / 1000 : q) / 11.5)) : q;
+  return `${num(n, 1)} ${n === 1 ? "bustina" : "bustine"}`;
 }
