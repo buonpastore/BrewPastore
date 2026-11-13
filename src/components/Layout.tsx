@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
+  Calculator,
 } from "lucide-react";
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
@@ -24,11 +25,12 @@ export const GROUPS: Group[] = [
     ],
   },
   {
-    key: "conti", label: "Conti", icon: Coins, to: "/spese", color: "var(--teal)",
+    key: "conti", label: "Conti", icon: Coins, to: "/costi", color: "var(--teal)",
     tabs: [
-      { to: "/spese", label: "Spese condivise", icon: Wallet, color: "var(--gold)" },
-      { to: "/materie-prime", label: "Materie prime", icon: Wheat, color: "var(--teal)", also: ["/acquisti"] },
-      { to: "/impianto", label: "Preventivi impianto", icon: Wrench, color: "var(--magenta)" },
+      { to: "/costi", label: "Costi birre", icon: Calculator, color: "var(--gold)" },
+      { to: "/spese", label: "Spese condivise", icon: Wallet, color: "var(--teal)" },
+      { to: "/materie-prime", label: "Materie prime", icon: Wheat, color: "var(--magenta)", also: ["/acquisti"] },
+      { to: "/impianto", label: "Preventivi impianto", icon: Wrench, color: "var(--gold)" },
     ],
   },
   { key: "chat", label: "Chat", icon: MessageCircle, to: "/chat", color: "var(--magenta)" },

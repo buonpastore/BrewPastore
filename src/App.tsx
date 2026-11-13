@@ -1,3 +1,4 @@
+import { BeerCosts } from "./pages/BeerCosts";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
 import { Layout } from "./components/Layout";
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="acquisti/:id" element={<PurchaseDetail />} />
           <Route path="materie-prime" element={<MaterialsHub />} />
           <Route path="spese" element={<Expenses />} />
+          <Route path="costi" element={<BeerCosts />} />
           <Route path="impianto" element={<EquipmentProjects />} />
           <Route path="impianto/:id" element={<EquipmentProject />} />
           <Route path="impianto/preventivo/:id" element={<EquipmentQuote />} />

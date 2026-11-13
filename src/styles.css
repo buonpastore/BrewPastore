@@ -1134,3 +1134,45 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .recipe-pick-btn .prev-batches li > div { background: var(--surface); }
 @media (max-width: 420px) { .prev-batches li > a, .prev-batches li > div { grid-template-columns: auto 1fr; } .prev-when { grid-column: 1 / -1; text-align: left; } }
 .prev-batches .badge { justify-self: start; }
+
+/* ---------------- Conti → Costi birre ---------------- */
+.bc-list { display: flex; flex-direction: column; gap: 12px; }
+.bc-recipe { border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+.bc-recipe.open { border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.bc-head, .bc-batch { width: 100%; display: flex; flex-direction: column; gap: 10px; padding: 14px; background: none; border: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.bc-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bc-title svg { color: var(--gold); }
+.bc-title strong { font-size: 1.08rem; }
+.bc-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.bc-kpis > span { display: flex; flex-direction: column; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.bc-kpis small { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+.bc-kpis strong { font-size: 1.12rem; font-variant-numeric: tabular-nums; }
+.bc-kpis > span:first-child strong { color: var(--gold); }
+.bc-kpis > span:nth-child(2) strong { color: var(--teal); }
+.bc-batches { border-top: 1px solid var(--line); padding: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--surface-2); }
+.bc-batch { border-radius: 12px; background: var(--surface); border: 1px solid var(--line); padding: 12px; }
+.bc-batch.on { border-color: var(--teal); }
+.bc-b-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.small-kpis > span { background: var(--surface-2); padding: 6px 8px; }
+.small-kpis strong { font-size: 1rem; }
+.bc-detail { padding: 4px 4px 12px; }
+.bc-lines { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.bc-line { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.bc-line small { color: var(--muted); }
+.bc-line.warn small { color: var(--warn); }
+.bc-line strong { font-variant-numeric: tabular-nums; }
+.bc-line.total { border-top: 1px solid var(--line-strong); padding-top: 8px; margin-top: 4px; font-size: 1.1rem; }
+.bc-line.total strong { color: var(--gold); }
+.bc-per { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.bc-per > div { display: flex; flex-direction: column; align-items: center; padding: 10px; border-radius: 10px; background: var(--surface-2); }
+.bc-per small { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+.bc-per strong { font-size: 1.3rem; color: var(--teal); }
+.bc-lines .btn { align-self: center; }
+.bc-help { margin-top: 22px; padding: 14px; border-radius: var(--r); border: 1px dashed var(--line-strong); color: var(--muted); font-size: .9rem; }
+.bc-help h3 { margin-top: 0; }
+.bc-help ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.bc-help strong { color: var(--text); }
+@media (min-width: 760px) {
+  .bc-head, .bc-batch { flex-direction: row; align-items: center; justify-content: space-between; }
+  .bc-kpis { min-width: 380px; }
+}

@@ -102,79 +102,6 @@ function PrimingCalc({ batch }: { batch: Row }) {
   );
 }
 
-function CostsTab({ batch, canEdit, materials }: { batch: Row; canEdit: boolean; materials: Row[] }) {
-  const [summary, setSummary] = useState<Row | null>(null);
-  const [ings, setIngs] = useState<Row[]>([]);
-  const [avg, setAvg] = useState<Record<string, Row>>({});
-  const [reload, setReload] = useState(0);
-
-  useEffect(() => {
-    supabase.from("batch_cost_summary").select("*").eq("batch_id", batch.id).single().then(({ data }) => setSummary(data));
-    supabase.from("batch_ingredients").select("*").eq("batch_id", batch.id).then(({ data }) => setIngs(data ?? []));
-    supabase.from("material_costs").select("*").then(({ data }) => setAvg(Object.fromEntries((data ?? []).map((m) => [m.material_id, m]))));
-  }, [batch.id, reload]);
-
-  const toBase = (q: number, u: string) => (["g", "ml"].includes(u) ? q / 1000 : q);
-  const total = summary ? summary.ingredients_cost + summary.extra_cost + summary.energy_cost + summary.water_cost : 0;
-  const liters = batch.volume_bottled_l ?? (batch.bottles_count && batch.bottle_size_l ? batch.bottles_count * batch.bottle_size_l : null);
-  const matOptions = materials.map((m) => ({ value: m.id, label: m.name }));
-
-  return (
-    <div>
-      {summary && (
-        <div className="kpis">
-          <div className="kpi"><span>Materie prime</span><strong>{eur(summary.ingredients_cost)}</strong></div>
-          <div className="kpi"><span>Bottiglie, tappi, extra</span><strong>{eur(summary.extra_cost)}</strong></div>
-          <div className="kpi"><span>Energia + acqua</span><strong>{eur(summary.energy_cost + summary.water_cost)}</strong></div>
-          <div className="kpi main"><span>Totale batch</span><strong>{eur(total)}</strong></div>
-          <div className="kpi main"><span>Per bottiglia</span><strong>{batch.bottles_count ? eur(total / batch.bottles_count) : "—"}</strong></div>
-          <div className="kpi"><span>Per litro</span><strong>{liters ? eur(total / liters) : "—"}</strong></div>
-        </div>
-      )}
-      {summary?.missing_prices && <p className="warn">⚠️ Alcuni ingredienti non hanno un prezzo: collega la materia prima o carica la fattura d'acquisto.</p>}
-
-      <h3>Dettaglio materie prime (costo medio ponderato degli acquisti)</h3>
-      <div className="table-wrap">
-        <table>
-          <thead><tr><th>Ingrediente</th><th>Q.tà</th><th>Costo medio</th><th>Costo</th></tr></thead>
-          <tbody>
-            {ings.map((i) => {
-              const a = i.material_id ? avg[i.material_id] : null;
-              const unit = i.unit_cost_override ?? a?.avg_unit_cost;
-              return (
-                <tr key={i.id}>
-                  <td>{i.name}</td>
-                  <td>{num(i.quantity, 3)} {i.unit}</td>
-                  <td>{unit != null ? fmtUnitPrice(unit, a?.category ?? i.category, a?.base_unit ?? (["l", "ml"].includes(i.unit) ? "l" : i.unit === "pz" ? "pz" : "kg")) : <span className="warn">nessun prezzo</span>}</td>
-                  <td>{unit != null ? eur(toBase(i.quantity, i.unit) * unit) : "—"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Altri costi (bottiglie, tappi, etichette, CO₂…)</h3>
-      <p className="muted small">Se scegli una materia prima e lasci vuoto il costo unitario, viene usato il costo medio degli acquisti.</p>
-      <RowsEditor table="batch_costs" parentKey="batch_id" parentId={batch.id} canEdit={canEdit}
-        onChange={() => setReload((x) => x + 1)}
-        defaults={{ category: "bottiglie", quantity: batch.bottles_count ?? 1 }}
-        fields={[
-          { key: "category", label: "Categoria", type: "select", options: ["bottiglie", "tappi", "etichette", "co2", "detergenti", "attrezzatura", "altro"], required: true },
-          { key: "description", label: "Descrizione", required: true },
-          { key: "material_id", label: "Da magazzino", type: "select", options: matOptions },
-          { key: "quantity", label: "Q.tà", type: "number", required: true },
-          { key: "unit_cost", label: "Costo unitario €", type: "number", step: "0.0001" },
-        ]}
-        extraColumns={[{ label: "Totale", render: (r) => {
-          const u = r.unit_cost ?? (r.material_id ? avg[r.material_id]?.avg_unit_cost : null);
-          return u != null ? eur(u * r.quantity) : "—";
-        } }]}
-      />
-      <p className="muted small">Energia e acqua sono calcolate dai consumi del log × prezzi in Impostazioni.</p>
-    </div>
-  );
-}
 
 /** Primo riquadro di un batch appena creato: nome, data di cotta e stato, subito modificabili. */
 function NewBatchCard({ batch, onSaved, onDone }: { batch: Row; onSaved: (b: Row) => void; onDone: () => void }) {
@@ -349,7 +276,7 @@ export function BatchDetail() {
       <Tabs grid wide active={tab} onChange={setTab} tabs={[
         ["dati", "✍️ Inserisci"], ["log", "Log cotta"], ["cottura", "Cottura"],
         ["chimici", "Valori chimici"], ["ingredienti", "Ingredienti"], ["diario", "Diario"],
-        ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"], ["costi", "Costi"],
+        ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"],
         ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico"],
       ]} />
 
@@ -408,7 +335,6 @@ export function BatchDetail() {
             <PrimingCalc batch={batch} />
           </>
         )}
-        {tab === "costi" && <CostsTab batch={batch} canEdit={isAdmin} materials={materials} />}
         {tab === "valutazioni" && <BatchEvaluation batch={batch} recipe={recipe} />}
         {tab === "documenti" && <DocumentsPanel batchId={batch.id} />}
         {tab === "chat" && <ChatPanel batchId={batch.id} />}
