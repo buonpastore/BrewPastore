@@ -1,3 +1,4 @@
+import { CapDot } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase, date, sg, eur, errMsg, STATUS_LABELS, type Row } from "../lib";
@@ -60,7 +61,7 @@ export function Batches() {
               const total = c ? c.ingredients_cost + c.extra_cost + c.energy_cost + c.water_cost : null;
               return (
                 <tr key={b.id}>
-                  <td><Link to={`/batch/${b.id}`}>{b.code}</Link></td>
+                  <td className="nowrap"><Link to={`/batch/${b.id}`}>{b.code}</Link> <CapDot color={b.cap_color} size={14} /></td>
                   <td>{b.recipes?.name}</td>
                   <td><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span></td>
                   <td>{date(b.brew_date)}</td>

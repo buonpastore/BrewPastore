@@ -1,3 +1,4 @@
+import { CapPicker } from "../components/CapColor";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus, Plus, Check, Save, Trash2, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
@@ -260,6 +261,7 @@ export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, fo
                   {p.fields.map((f) => <BigField key={f.key} f={f} batch={batch} canEdit={canEdit} onSaved={onSaved} />)}
                 </div>
                 {p.title === "Fermentazione" && <QuickEvents batch={batch} canEdit={canEdit} />}
+                {p.title === "Imbottigliamento" && <CapPicker batch={batch} canEdit={canEdit} onSaved={onSaved} />}
                 {p.title === "Imbottigliamento" && <BottleCalc batch={batch} canEdit={canEdit} onSaved={onSaved} />}
               </>
             )}

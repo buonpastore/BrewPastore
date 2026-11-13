@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.098", date: "13/11/2026 17:50", text: "Imbottigliamento: scegli il colore del tappo; in Home «Riconosci le birre dal tappo» con le ultime 6 birre (nome, stile, colore). Da eseguire: 0010_colore_tappo.sql" },
   { version: "0.097", date: "13/11/2026 17:30", text: "Ingredienti ovunque in ordine malti, luppoli, lieviti e poi il resto, con i nomi colorati (malti giallini, luppoli verdini, lieviti rossini, altro marrone-grigio)" },
   { version: "0.096", date: "13/11/2026 17:10", text: "Costi e materie prime: tutto ciò che non è malto, luppolo o lievito ha il prezzo a unità (pezzo o confezione), non al kg" },
   { version: "0.095", date: "13/11/2026 16:55", text: "Costo medio: la spedizione resta proporzionale al prezzo degli articoli anche se hai cancellato righe dell'ordine (si usa il totale dell'ordine). Da eseguire: 0009_spedizione_proporzionale.sql" },
