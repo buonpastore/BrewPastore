@@ -1,3 +1,4 @@
+import { capInfo, useCapColors } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase, errMsg, num, date, type Row } from "../lib";
@@ -15,9 +16,13 @@ export function Recipes() {
   const [style, setStyle] = useState("");
   const [importing, setImporting] = useState(false);
   const [choosing, setChoosing] = useState(false);
+  useCapColors();
+  // colore del tappo dell'ultimo batch imbottigliato della ricetta
+  const capOf = (r: Row) => [...((r.batches ?? []) as Row[])].filter((b) => b.cap_color)
+    .sort((a, b) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "").localeCompare(String(a.bottling_date ?? a.brew_date ?? a.created_at ?? "")))[0]?.cap_color as string | undefined;
 
   useEffect(() => {
-    supabase.from("recipes").select("*, batches(id, brew_date, status)").order("name")
+    supabase.from("recipes").select("*, batches(id, brew_date, bottling_date, created_at, status, cap_color)").order("name")
       .then(({ data }) => setRows(data ?? []));
   }, []);
 
@@ -74,7 +79,7 @@ export function Recipes() {
         {list.map((r) => {
           const last = (r.batches as Row[]).map((b) => b.brew_date).filter(Boolean).sort().pop();
           return (
-            <Link key={r.id} to={`/ricette/${r.id}`} className="card">
+            <Link key={r.id} to={`/ricette/${r.id}`} className={"card" + (capOf(r) ? " has-cap" : "")} style={capOf(r) ? { ["--cap" as string]: capInfo(capOf(r))?.hex } : undefined}>
               <h3>{r.name} {r.archived && <span className="badge">archiviata</span>}</h3>
               <div className="rc-style">{r.style ?? "stile non indicato"}</div>
               <div className="rc-traits">

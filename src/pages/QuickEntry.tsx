@@ -1,4 +1,5 @@
-import { CapPicker } from "../components/CapColor";
+import { CapPicker, BottleSplit } from "../components/CapColor";
+import { useAuth } from "../auth";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus, Plus, Check, Save, Trash2, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
@@ -222,6 +223,7 @@ export function phasesFor(status?: string | null): string[] {
 }
 
 export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, focusStatus, onAfterSave }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null; onAfterSave?: () => void }) {
+  const { profiles } = useAuth();
   const [open, setOpen] = useState<Set<string>>(() => new Set(phasesFor(batch.status)));
   const rootRef = useRef<HTMLDivElement>(null);
   // dopo un pulsante di stato: apri solo le fasi interessanti e portale in vista
@@ -261,6 +263,7 @@ export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, fo
                   {p.fields.map((f) => <BigField key={f.key} f={f} batch={batch} canEdit={canEdit} onSaved={onSaved} />)}
                 </div>
                 {p.title === "Fermentazione" && <QuickEvents batch={batch} canEdit={canEdit} />}
+                {p.title === "Imbottigliamento" && <BottleSplit bottles={batch.bottles_count} people={profiles} />}
                 {p.title === "Imbottigliamento" && <CapPicker batch={batch} canEdit={canEdit} onSaved={onSaved} />}
                 {p.title === "Imbottigliamento" && <BottleCalc batch={batch} canEdit={canEdit} onSaved={onSaved} />}
               </>

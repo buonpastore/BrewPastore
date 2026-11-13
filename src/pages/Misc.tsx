@@ -1,3 +1,4 @@
+import { CapColorsSettings } from "../components/CapColor";
 import { CapGallery, CapDot } from "../components/CapColor";
 import { lastStep } from "../components/PreviousBatches";
 import { getThemePref, setThemePref, sunTimes, type ThemePref } from "../theme";
@@ -242,6 +243,7 @@ export function Settings() {
       </div>
       {msg && <p className="ok">{msg}</p>}
       <ThemePicker />
+      <CapColorsSettings canEdit={isAdmin} />
       <div className="panel">
         <h2>Il mio profilo</h2>
         <div className="inline-form">
