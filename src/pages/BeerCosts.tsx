@@ -1,42 +1,42 @@
 import { sortByCat, nameColor } from "../categories";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Pencil, Calculator, X } from "lucide-react";
-import { supabase, eur, num, fmtUnitPrice, errMsg, type Row } from "../lib";
+import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
+import { piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
 /** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
 export function BeerCosts() {
   const [sp] = useSearchParams();
-  const [data, setData] = useState<{ recipes: Row[]; batches: Row[]; bIngs: Row[]; rIngs: Row[]; extras: Row[]; mats: Row[]; energy: number; water: number; cfg: BottlePrices } | null>(null);
+  const [data, setData] = useState<{ recipes: Row[]; batches: Row[]; bIngs: Row[]; rIngs: Row[]; extras: Row[]; mats: Row[]; lines: Row[]; energy: number; water: number; cfg: BottlePrices } | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
     Promise.all([
-      supabase.from("recipes").select("id, name, style, archived, batch_size_l").order("name"),
+      supabase.from("recipes").select("id, name, style, archived, batch_size_l, mash_water_l, sparge_water_l, mash_temp_c, mash_time_min, boil_time_min").order("name"),
       supabase.from("batches").select("*"),
       supabase.from("batch_ingredients").select("*"),
       supabase.from("recipe_ingredients").select("*"),
       supabase.from("batch_costs").select("*"),
       supabase.from("material_costs").select("*"),
       supabase.from("settings").select("*"),
-      supabase.from("purchase_items").select("material_id, description, quantity, unit"),
+      supabase.from("purchase_items").select("material_id, description, quantity, unit, total_price, purchase_id, purchases(supplier, purchase_date, shipping_cost, total_amount)"),
     ]).then(([r, b, bi, ri, e, m, st, pi]) => {
       // peso di un pezzo letto dalle righe d'acquisto (es. "Coriandolo in semi - 100 g")
       const piece: Record<string, number> = { ...pieceSizes(pi.data ?? []) };
       for (const x of pi.data ?? []) { const z = sizeFromName(x.description ?? ""); if (x.material_id && z && !piece[x.material_id]) piece[x.material_id] = z; }
       const matsRows = (m.data ?? []).map((x) => ({ ...x, piece_size: piece[x.material_id] ?? null }));
       const val = (k: string) => Number((st.data ?? []).find((x) => x.key === k)?.value ?? 0);
-      setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: matsRows, energy: val("energy_price_kwh"), water: val("water_price_l"), cfg: bottlePricesFrom(st.data ?? []) });
+      setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: matsRows, lines: withShipping(pi.data ?? []), energy: val("energy_price_kwh"), water: val("water_price_l"), cfg: bottlePricesFrom(st.data ?? []) });
       const want = (b.data ?? []).find((x) => x.id === sp.get("batch"));
       if (want) setOpen(want.recipe_id);
     });
   }, [sp, reload]);
 
   if (!data) return <div><h1>Costi delle birre</h1><p className="muted">Caricamento…</p></div>;
-  const { recipes, batches, bIngs, rIngs, extras, mats } = data;
+  const { recipes, batches, bIngs, rIngs, extras, mats, lines } = data;
 
   // ingredienti di un batch; se il batch non li ha, uso quelli della ricetta
   const ingsOf = (b: Row) => { const own = bIngs.filter((i) => i.batch_id === b.id); return own.length ? own : rIngs.filter((i) => i.recipe_id === b.recipe_id); };
@@ -88,7 +88,7 @@ export function BeerCosts() {
                   </span>
                 )}
               </button>
-              {isOpen && list.length > 0 && <BeerDetail recipe={recipe} batches={all} extras={extras} sum={sum} costs={costs} ings={ings} mats={mats} onChange={() => setReload((x) => x + 1)} />}
+              {isOpen && list.length > 0 && <BeerDetail recipe={recipe} batches={all} extras={extras} sum={sum} costs={costs} ings={ings} mats={mats} lines={lines} onChange={() => setReload((x) => x + 1)} />}
             </section>
           );
         })}
@@ -132,9 +132,10 @@ function Line({ label, value, source }: { label: string; value: string; source?:
 }
 
 /** Dettaglio della birra: voci di costo sommate su tutti i batch e materie prime raggruppate. */
-function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange }: {
-  recipe: Row; batches: Row[]; extras: Row[]; sum: ReturnType<typeof sumCosts>; costs: BatchCost[]; ings: Row[]; mats: Row[]; onChange: () => void;
+function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, onChange }: {
+  recipe: Row; batches: Row[]; extras: Row[]; sum: ReturnType<typeof sumCosts>; costs: BatchCost[]; ings: Row[]; mats: Row[]; lines: Row[]; onChange: () => void;
 }) {
+  const [openIng, setOpenIng] = useState<string | null>(null);
   const { isAdmin } = useAuth();
   const [busy, setBusy] = useState(false);
   const priced = mats.filter((m) => Number(m.avg_unit_cost) > 0 && !isKit(m.name));
@@ -168,8 +169,8 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
       <div className="bc-lines">
         <Line label="Materie prime" value={eur(sum.ingredients)} source={sum.missing.length ? "manca" : sum.guessed ? "stimato" : "inserito"} />
         <Line label="Bottiglie e tappi" value={sum.someBottled ? eur(sum.packaging) : "—"} source={sum.someBottled ? (sum.bottlesGuessed ? "stimato" : "inserito") : undefined} />
-        <Line label="Corrente" value={eur(sum.energy)} source={sum.energyMissing ? "manca" : "inserito"} />
-        {sum.water > 0 && <Line label="Acqua" value={eur(sum.water)} />}
+        <Line label="Corrente" value={eur(sum.energy)} source={factSrc(costs, "Corrente")} />
+        <Line label="Acqua" value={eur(sum.water)} source={factSrc(costs, "Acqua")} />
         {sum.other > 0 && <Line label="Altri costi" value={eur(sum.other)} />}
         <div className="bc-line total"><span>Totale</span><strong>{eur(sum.total)}</strong></div>
         <div className="bc-per">
@@ -203,8 +204,9 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
           <thead><tr><th>Ingrediente</th><th>Q.tà</th><th>Prezzo</th><th>Costo</th></tr></thead>
           <tbody>
             {sortByCat([...groups.values()]).map((g) => (
-              <tr key={g.name + g.unit}>
-                <td><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.name}</span>{g.mat && g.mat.name.toLowerCase() !== String(g.name).toLowerCase() && <div className="muted small">da «{g.mat.name}»</div>}</td>
+              <Fragment key={g.name + g.unit}>
+              <tr className={g.mat ? "bc-ing-row" : ""} onClick={() => g.mat && setOpenIng(openIng === g.name + g.unit ? null : g.name + g.unit)}>
+                <td><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.mat ? (openIng === g.name + g.unit ? "▾ " : "▸ ") : ""}{g.name}</span>{g.mat && g.mat.name.toLowerCase() !== String(g.name).toLowerCase() && <div className="muted small">da «{g.mat.name}»</div>}</td>
                 <td className="nowrap">{g.category === "lievito" ? yeastQty(g.qty, g.unit) : `${num(g.qty, 3)} ${g.unit}`}</td>
                 {(
                   <>
@@ -223,6 +225,10 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
                   </>
                 )}
               </tr>
+              {openIng === g.name + g.unit && g.mat && (
+                <tr className="sub"><td colSpan={4}><PriceBreakdown mat={g.mat} lines={lines} /></td></tr>
+              )}
+              </Fragment>
             ))}
             {!groups.size && <tr><td colSpan={4} className="muted">Nessun ingrediente.</td></tr>}
           </tbody>
@@ -237,4 +243,43 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
 function yeastQty(q: number, unit: string) {
   const n = ["g", "kg", "mg"].includes(unit) ? Math.max(1, Math.round((unit === "kg" ? q * 1000 : unit === "mg" ? q / 1000 : q) / 11.5)) : q;
   return `${num(n, 1)} ${n === 1 ? "bustina" : "bustine"}`;
+}
+
+/** Fonte di un dato (il peggiore tra i batch): manca > stimato > inserito. */
+function factSrc(costs: BatchCost[], label: string): Source {
+  const all = costs.map((c) => c.facts.find((f) => f.label === label)?.source ?? "manca");
+  return all.includes("manca") ? "manca" : all.includes("stimato") ? "stimato" : "inserito";
+}
+
+/** Righe d'acquisto con la quota di spedizione (come nel database: in proporzione al prezzo sul valore della merce dell'ordine). */
+function withShipping(items: Row[]): Row[] {
+  const sum: Record<string, number> = {};
+  for (const i of items) sum[i.purchase_id] = (sum[i.purchase_id] ?? 0) + Number(i.total_price ?? 0);
+  return items.map((i) => {
+    const p = i.purchases ?? {}, ship = Number(p.shipping_cost ?? 0);
+    const t = p.total_amount != null ? Number(p.total_amount) - ship : 0;
+    const goods = t > (sum[i.purchase_id] ?? 0) + 0.01 ? t : sum[i.purchase_id] ?? 0;
+    return { ...i, goods, order_ship: ship, ship_share: goods > 0 ? ship * Number(i.total_price ?? 0) / goods : 0 };
+  });
+}
+
+/** Come è stato calcolato il prezzo di un ingrediente: acquisto per acquisto, con la spedizione. */
+function PriceBreakdown({ mat, lines }: { mat: Row; lines: Row[] }) {
+  const ids: string[] = mat.material_ids ?? [mat.material_id];
+  const rows = lines.filter((l) => ids.includes(l.material_id))
+    .sort((a, b) => String(b.purchases?.purchase_date ?? "").localeCompare(String(a.purchases?.purchase_date ?? "")));
+  const q = (l: Row) => toBase(Number(l.quantity ?? 0), l.unit ?? "kg");
+  const per = (v: number, l: Row) => (isCore(mat.category) ? (q(l) ? fmtUnitPrice(v / q(l), mat.category, mat.base_unit) : "—") : `${eur(v / piecesOfLine(l))}/pz`);
+  return (
+    <div className="bc-break">
+      {rows.map((l, i) => (
+        <div key={i} className="bc-break-row">
+          <span><strong>{date(l.purchases?.purchase_date)}</strong> · {l.purchases?.supplier}{ids.length > 1 ? ` · ${l.description ?? ""}` : ""}</span>
+          <span>{num(Number(l.quantity), 3)} {l.unit} · {eur(l.total_price)}{l.ship_share ? <> + <b>{eur(l.ship_share)}</b> sped.</> : ""} → <strong>{per(Number(l.total_price) + l.ship_share, l)}</strong></span>
+          {l.order_ship > 0 && <span className="muted small">spedizione dell'ordine {eur(l.order_ship)} su {eur(l.goods)} di merce: {num(l.order_ship / l.goods * 100, 0)}% del prezzo</span>}
+        </div>
+      ))}
+      <div className="bc-break-row tot"><span>Media pesata</span><strong>{isCore(mat.category) ? fmtUnitPrice(mat.avg_unit_cost, mat.category, mat.base_unit) : perPiece(Number(mat.avg_unit_cost), mat.base_unit, mat.piece_size) != null ? `${eur(perPiece(Number(mat.avg_unit_cost), mat.base_unit, mat.piece_size)!)}/pz` : fmtUnitPrice(mat.avg_unit_cost, mat.category, mat.base_unit)}</strong></div>
+    </div>
+  );
 }

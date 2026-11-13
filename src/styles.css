@@ -1257,3 +1257,10 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .split-item strong { font-size: 1.6rem; color: var(--magenta); line-height: 1.1; }
 .split-item small { color: var(--muted); }
 .split-empty { margin: 12px 0 4px; }
+
+/* costi: dettaglio del prezzo di un ingrediente */
+.bc-ing-row { cursor: pointer; }
+.bc-break { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+.bc-break-row { display: flex; flex-direction: column; gap: 2px; font-size: .88rem; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
+.bc-break-row b { color: var(--magenta); }
+.bc-break-row.tot { flex-direction: row; justify-content: space-between; border: 0; padding: 0; }

@@ -38,14 +38,25 @@ export function matchMaterial(ing: Row, mats: Row[]): Row | null {
   const it = tokens(ing.name ?? "");
   if (!it.length) return null;
   let best: Row | null = null, bestScore = 0;
+  const full: Row[] = [];   // prodotti che contengono tutte le parole dell'ingrediente
   for (const m of priced) {
     if (ing.category && m.category && ing.category !== m.category && ing.category !== "altro" && m.category !== "altro") continue;
     const mt = new Set(tokens(m.name));
     const shared = it.filter((t) => mt.has(t) || [...mt].some((x) => x.length >= 4 && t.length >= 4 && (x.startsWith(t) || t.startsWith(x))));
     const score = shared.length / it.length - (mt.size - shared.length) * 0.01;
+    if (shared.length === it.length) full.push(m);
     if (shared.length && score > bestScore) { best = m; bestScore = score; }
   }
-  return bestScore >= 0.5 ? best : null;
+  if (!best || bestScore < 0.5) return null;
+  // lo stesso prodotto comprato con nomi diversi (es. "Malto Pilsner Weyermann" e "Malto Dingemans Pilsner"):
+  // uso la media pesata di tutti gli acquisti
+  const group = full.filter((m) => m.base_unit === best!.base_unit && m.category === best!.category);
+  if (group.length > 1 && group.includes(best)) {
+    const qty = group.reduce((t, m) => t + Number(m.qty_purchased ?? 0), 0);
+    const spent = group.reduce((t, m) => t + Number(m.total_spent ?? 0), 0);
+    if (qty > 0) return { ...best, name: group.map((m) => m.name).join(" + "), avg_unit_cost: spent / qty, qty_purchased: qty, total_spent: spent, material_ids: group.map((m) => m.material_id) };
+  }
+  return best;
 }
 
 /* ---------- conversione delle unità di misura ----------
@@ -182,15 +193,20 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
     }
   }
 
-  // corrente
-  const energyMissing = b.energy_kwh == null;
-  const energy = Number(b.energy_kwh ?? 0) * energyPrice;
-  facts.push({ label: "Corrente", value: energyMissing ? "—" : `${fmt(Number(b.energy_kwh))} kWh`, source: energyMissing ? "manca" : "inserito" });
+  // corrente: quella inserita nel batch, altrimenti stimata dal processo (acqua da scaldare, mash, bollitura)
+  const est = estimateBrew(b, recipe);
+  const kwh = b.energy_kwh != null ? Number(b.energy_kwh) : est.kwh;
+  const energyMissing = kwh == null;
+  const energy = Number(kwh ?? 0) * energyPrice;
+  facts.push({ label: "Corrente", value: kwh == null ? "—" : `${fmt(kwh)} kWh`, source: b.energy_kwh != null ? "inserito" : kwh != null ? "stimato" : "manca" });
 
   // ingredienti
   facts.push({ label: "Prezzi ingredienti", value: `${priced + guessed}/${ings.length}`, source: missing.length ? "manca" : guessed ? "stimato" : "inserito" });
 
-  const water = Number(b.water_used_l ?? 0) * waterPrice;
+  // acqua: quella inserita, altrimenti mash + sparge (+ lavaggi e raffreddamento stimati)
+  const wl = b.water_used_l != null ? Number(b.water_used_l) : est.waterL;
+  const water = Number(wl ?? 0) * waterPrice;
+  facts.push({ label: "Acqua", value: wl == null ? "—" : `${fmt(wl, 0)} L`, source: b.water_used_l != null ? "inserito" : wl != null ? "stimato" : "manca" });
   return {
     code: b.code ?? "", bottled, ingredients, missing, guessed, kit, packaging, packagingEstimated, energy, energyMissing, water, other,
     total: ingredients + packaging + energy + water + other, liters, bottles, bottlesGuessed, facts,
@@ -244,4 +260,25 @@ export function pieceSizes(lines: Row[]): Record<string, number> {
 export function perPiece(costPerBase: number, baseUnit: string, pieceSize: number | null | undefined): number | null {
   if (baseUnit === "pz") return costPerBase;
   return pieceSize ? costPerBase * pieceSize : null;
+}
+
+/* ---------- stima di corrente e acqua quando non sono inserite ----------
+   Corrente = scaldare l'acqua di mash e di sparge (da 15 °C) + mantenere il mash + portare il mosto a ebollizione + bollitura.
+   Valori indicativi per un impianto elettrico da homebrewing (resistenza ~2,5 kW in bollitura). */
+const TAP_C = 15, EFF = 0.85, BOIL_KW = 2.5, MASH_HOLD_KW = 0.5;
+const heatKwh = (litri: number, da: number, a: number) => (litri * 4.186 * Math.max(0, a - da)) / 3600 / EFF;
+export function estimateBrew(b: Row, recipe?: Row): { kwh: number | null; waterL: number | null } {
+  const mashL = Number(b.mash_water_l ?? recipe?.mash_water_l ?? 0);
+  const spargeL = Number(b.sparge_water_l ?? recipe?.sparge_water_l ?? 0);
+  const vol = Number(b.volume_fermenter_l ?? recipe?.batch_size_l ?? 0);
+  const waterIn = mashL + spargeL || (vol ? vol * 1.5 : 0);   // senza dati sull'acqua: circa 1,5 L per litro di birra
+  if (!waterIn) return { kwh: null, waterL: null };
+  const mashT = Number(recipe?.mash_temp_c ?? 66) + 2;      // acqua d'ammostamento un po' più calda del mash
+  const mashMin = Number(recipe?.mash_time_min ?? 60), boilMin = Number(recipe?.boil_time_min ?? 60);
+  const preBoil = vol ? vol + 2 + 3 * boilMin / 60 : waterIn * 0.8;
+  const kwh = (mashL || spargeL ? heatKwh(mashL, TAP_C, mashT) + heatKwh(spargeL, TAP_C, 77) : heatKwh(waterIn, TAP_C, 70))
+    + MASH_HOLD_KW * mashMin / 60 + heatKwh(preBoil, 70, 100) + BOIL_KW * boilMin / 60;
+  // acqua usata: quella della birra + raffreddamento e pulizie (stima: altri 2 litri per litro di birra)
+  const waterL = waterIn + (vol ? vol * 2 : waterIn);
+  return { kwh: Math.round(kwh * 10) / 10, waterL: Math.round(waterL) };
 }
