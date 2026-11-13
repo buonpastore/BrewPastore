@@ -206,10 +206,12 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
   // ingredienti
   facts.push({ label: "Prezzi ingredienti", value: `${priced + guessed}/${ings.length}`, source: missing.length ? "manca" : guessed ? "stimato" : "inserito" });
 
-  // acqua: quella inserita, altrimenti mash + sparge (+ lavaggi e raffreddamento stimati)
-  const wl = b.water_used_l != null ? Number(b.water_used_l) : est.waterL;
+  // acqua: «acqua totale usata» del batch; altrimenti acqua di mash + sparge inserite nel batch (dato preciso);
+  // solo se nel batch non c'è niente, stima dalla ricetta
+  const batchWater = b.mash_water_l != null || b.sparge_water_l != null ? Number(b.mash_water_l ?? 0) + Number(b.sparge_water_l ?? 0) : null;
+  const wl = b.water_used_l != null ? Number(b.water_used_l) : batchWater ?? est.waterL;
   const water = Number(wl ?? 0) * waterPrice;
-  facts.push({ label: "Acqua", value: wl == null ? "—" : `${fmt(wl, 0)} L`, source: b.water_used_l != null ? "inserito" : wl != null ? "stimato" : "manca" });
+  facts.push({ label: "Acqua", value: wl == null ? "—" : `${fmt(wl, 0)} L`, source: b.water_used_l != null || batchWater != null ? "inserito" : wl != null ? "stimato" : "manca" });
   return {
     code: b.code ?? "", bottled, ingredients, missing, guessed, kit, packaging, packagingEstimated, energy, energyMissing, water, other,
     total: ingredients + packaging + energy + water + other, liters, bottles, bottlesGuessed, facts,

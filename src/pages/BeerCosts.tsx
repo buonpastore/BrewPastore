@@ -53,8 +53,14 @@ export function BeerCosts() {
     const ings = recipeIngs.length ? recipeIngs : ref ? ingsOf(ref) : [];
     const list = ref ? [ref] : [];
     // corrente: solo quella del batch della cottura (dove avete inserito i kWh), non degli altri batch
+    // corrente e acqua dal batch della cottura (dove avete inserito i dati), non dagli altri batch
     const brewBatch = sorted.find((b) => b.energy_kwh != null && b.brew_date) ?? sorted.find((b) => b.energy_kwh != null);
-    const refE: Row | null = ref ? { ...ref, energy_kwh: brewBatch?.energy_kwh ?? null } : null;
+    const waterBatch = sorted.find((b) => b.brew_date && (b.water_used_l != null || b.mash_water_l != null || b.sparge_water_l != null))
+      ?? sorted.find((b) => b.water_used_l != null || b.mash_water_l != null || b.sparge_water_l != null);
+    const refE: Row | null = ref ? {
+      ...ref, energy_kwh: brewBatch?.energy_kwh ?? null,
+      water_used_l: waterBatch?.water_used_l ?? null, mash_water_l: waterBatch?.mash_water_l ?? null, sparge_water_l: waterBatch?.sparge_water_l ?? null,
+    } : null;
     const costs = refE ? [computeBatchCost(refE, r, ings, extras.filter((x) => x.batch_id === refE.id), mats, data.energy, data.water, data.cfg)] : [];
     return { recipe: r, list, all, ings, costs, sum: sumCosts(costs) };
   }).filter((x) => x.list.length || !x.recipe.archived)

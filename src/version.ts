@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.114", date: "13/11/2026 22:00", text: "Costi birre: l'acqua inserita nel batch (mash + sparge o acqua totale) conta come precisa; corrente e acqua si prendono dal batch della cottura" },
   { version: "0.113", date: "13/11/2026 21:45", text: "Lieviti: unità «pz» al posto di «bustina», più stretta (prezzi in €/pz)" },
   { version: "0.112", date: "13/11/2026 21:35", text: "Costi birre: nella lista delle materie prime non c'è più la riga «da …»; il prodotto da cui prendo il prezzo si vede toccando l'ingrediente" },
   { version: "0.111", date: "13/11/2026 21:25", text: "Costi birre: icone di stato più chiare — clessidra presunto, bottiglia imbottigliata, coccarda con spunta completo" },
