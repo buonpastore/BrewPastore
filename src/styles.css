@@ -1283,3 +1283,9 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 
 .bc-title svg.src-in { color: #3fb950; } .bc-title svg.src-est { color: #e8b100; } .bc-title svg.src-miss { color: #e5483d; }
 :root[data-theme="light"] .bc-title svg.src-in { color: #1f8a3a; } :root[data-theme="light"] .bc-title svg.src-est { color: #b07d00; } :root[data-theme="light"] .bc-title svg.src-miss { color: #c62828; }
+
+/* prezzo usato: ultimo acquisto o media ponderata */
+.bc-price { display: inline-flex; align-items: center; gap: 5px; }
+.basis { flex: none; }
+.basis-last { color: var(--teal); }
+.basis-avg { color: var(--gold); }

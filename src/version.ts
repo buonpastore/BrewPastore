@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.117", date: "13/11/2026 22:40", text: "Costi birre: se la quantità della ricetta sta nell'ultimo acquisto uso il prezzo dell'ultimo acquisto (icona orologio), altrimenti il costo medio ponderato (icona bilancia)" },
   { version: "0.116", date: "13/11/2026 22:20", text: "Costi birre: indicatori uguali dappertutto — ✕ rossa manca qualcosa, clessidra gialla teorico, bollino verde confermato" },
   { version: "0.115", date: "13/11/2026 22:10", text: "Costi birre: la corrente calcolata dai dati confermati nel batch (acqua di mash e sparge, tempi) conta come precisa" },
   { version: "0.114", date: "13/11/2026 22:00", text: "Costi birre: l'acqua inserita nel batch (mash + sparge o acqua totale) conta come precisa; corrente e acqua si prendono dal batch della cottura" },

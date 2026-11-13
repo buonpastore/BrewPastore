@@ -59,7 +59,10 @@ export function matchMaterial(ing: Row, mats: Row[]): Row | null {
   if (group.length > 1 && group.includes(best)) {
     const qty = group.reduce((t, m) => t + Number(m.qty_purchased ?? 0), 0);
     const spent = group.reduce((t, m) => t + Number(m.total_spent ?? 0), 0);
-    if (qty > 0) return { ...best, name: group.map((m) => m.name).join(" + "), avg_unit_cost: spent / qty, qty_purchased: qty, total_spent: spent, material_ids: group.map((m) => m.material_id) };
+    // ultimo acquisto del gruppo: quello con la data più recente
+    const last = [...group].filter((m) => m.last_date).sort((a, b) => String(b.last_date).localeCompare(String(a.last_date)))[0];
+    if (qty > 0) return { ...best, ...(last ? { last_unit_cost: last.last_unit_cost, last_qty: last.last_qty, last_date: last.last_date } : {}),
+      name: group.map((m) => m.name).join(" + "), avg_unit_cost: spent / qty, qty_purchased: qty, total_spent: spent, material_ids: group.map((m) => m.material_id) };
   }
   return best;
 }
@@ -99,7 +102,21 @@ export function convertQty(q: number, unit: string, mat: Row, ing: Row): number 
 }
 
 /** Costo di un ingrediente (null se non ho un prezzo). guessed = prezzo ipotizzato. */
-export function ingredientCost(ing: Row, mats: Row[]): { cost: number | null; mat: Row | null; guessed?: number } {
+export type PriceBasis = "ultimo" | "medio";
+const matKey = (m: Row) => (m.material_ids ?? [m.material_id]).join("+");
+/** Quantità totale di ogni prodotto nella ricetta (es. Saaz a 60' + Saaz a 15'), nell'unità del prodotto. */
+export function neededTotals(ings: Row[], mats: Row[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const i of ings) {
+    const m = matchMaterial(i, mats); if (!m) continue;
+    const q = convertQty(Number(i.quantity ?? 0), i.unit ?? "kg", m, i); if (q == null) continue;
+    out[matKey(m)] = (out[matKey(m)] ?? 0) + q;
+  }
+  return out;
+}
+/** Prezzo usato: se la quantità della ricetta sta nell'ultimo acquisto uso il prezzo dell'ultimo acquisto,
+ *  altrimenti (serve più di quanto comprato l'ultima volta) il costo medio ponderato. */
+export function ingredientCost(ing: Row, mats: Row[], needed?: Record<string, number>): { cost: number | null; mat: Row | null; guessed?: number; basis?: PriceBasis; unitCost?: number } {
   if (ing.unit_cost_override != null) return { cost: toBase(Number(ing.quantity), ing.unit) * Number(ing.unit_cost_override), mat: null };
   const mat = matchMaterial(ing, mats);
   if (!mat) {
@@ -108,7 +125,11 @@ export function ingredientCost(ing: Row, mats: Row[]): { cost: number | null; ma
   }
   const qty = convertQty(Number(ing.quantity ?? 0), ing.unit ?? "kg", mat, ing);
   if (qty == null) return { cost: null, mat };
-  return { cost: qty * Number(mat.avg_unit_cost), mat };
+  const need = needed?.[matKey(mat)] ?? qty;   // quantità totale di quel prodotto nella ricetta
+  if (mat.last_unit_cost != null && mat.last_qty != null && need <= Number(mat.last_qty) + 1e-9) {
+    return { cost: qty * Number(mat.last_unit_cost), mat, basis: "ultimo", unitCost: Number(mat.last_unit_cost) };
+  }
+  return { cost: qty * Number(mat.avg_unit_cost), mat, basis: "medio", unitCost: Number(mat.avg_unit_cost) };
 }
 
 const avgOf = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -162,8 +183,9 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
   const bottled = isBottled(b);
   const kitRows = extras.filter((r) => isKit(r.description ?? "") || (r.material_id && isKit(mats.find((m) => m.material_id === r.material_id)?.name ?? "")));
   let ingredients = 0, guessed = 0, priced = 0; const missing: string[] = [];
+  const needed = neededTotals(ings, mats);
   for (const i of ings) {
-    const r = ingredientCost(i, mats);
+    const r = ingredientCost(i, mats, needed);
     if (r.cost == null) missing.push(i.name); else { ingredients += r.cost; priced++; }   // anche il prezzo fisso (es. zucchero 1 €/kg) è un prezzo deciso da voi: preciso
   }
   const avg: Record<string, number> = Object.fromEntries(mats.map((m) => [m.material_id, Number(m.avg_unit_cost ?? 0)]));

@@ -2,10 +2,10 @@ import { CapDot } from "../components/CapColor";
 import { sortByCat, nameColor } from "../categories";
 import { Fragment, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, X } from "lucide-react";
+import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, X, Clock, Scale } from "lucide-react";
 import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
+import { type PriceBasis, neededTotals, piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
 /** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
 export function BeerCosts() {
@@ -28,9 +28,18 @@ export function BeerCosts() {
       // peso di un pezzo letto dalle righe d'acquisto (es. "Coriandolo in semi - 100 g")
       const piece: Record<string, number> = { ...pieceSizes(pi.data ?? []) };
       for (const x of pi.data ?? []) { const z = sizeFromName(x.description ?? ""); if (x.material_id && z && !piece[x.material_id]) piece[x.material_id] = z; }
-      const matsRows = (m.data ?? []).map((x) => ({ ...x, piece_size: piece[x.material_id] ?? null }));
+      // ultimo acquisto di ogni materia prima: prezzo unitario (spedizione compresa) e quantità comprata
+      const lines = withShipping(pi.data ?? []);
+      const last: Record<string, { unit: number; qty: number; date: string }> = {};
+      for (const l of lines) {
+        const q = toBase(Number(l.quantity ?? 0), l.unit ?? "kg"), d = String(l.purchases?.purchase_date ?? "");
+        if (!l.material_id || !q) continue;
+        if (!last[l.material_id] || d > last[l.material_id].date) last[l.material_id] = { unit: (Number(l.total_price) + l.ship_share) / q, qty: q, date: d };
+      }
+      const matsRows = (m.data ?? []).map((x) => ({ ...x, piece_size: piece[x.material_id] ?? null,
+        last_unit_cost: last[x.material_id]?.unit ?? null, last_qty: last[x.material_id]?.qty ?? null, last_date: last[x.material_id]?.date ?? null }));
       const val = (k: string) => Number((st.data ?? []).find((x) => x.key === k)?.value ?? 0);
-      setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: matsRows, lines: withShipping(pi.data ?? []), energy: val("energy_price_kwh"), water: val("water_price_l"), cfg: bottlePricesFrom(st.data ?? []) });
+      setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: matsRows, lines, energy: val("energy_price_kwh"), water: val("water_price_l"), cfg: bottlePricesFrom(st.data ?? []) });
       const want = (b.data ?? []).find((x) => x.id === sp.get("batch"));
       if (want) setOpen(want.recipe_id);
     });
@@ -165,11 +174,12 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
   };
 
   // materie prime raggruppate per nome e unità
-  const groups = new Map<string, { name: string; unit: string; qty: number; cost: number | null; mat: Row | null; category: string; guessed?: number }>();
+  const needed = neededTotals(ings, mats);
+  const groups = new Map<string, { name: string; unit: string; qty: number; cost: number | null; mat: Row | null; category: string; guessed?: number; basis?: PriceBasis }>();
   for (const i of ings) {
-    const { cost, mat, guessed } = ingredientCost(i, mats);
+    const { cost, mat, guessed, basis, unitCost } = ingredientCost(i, mats, needed);
     const k = `${String(i.name).toLowerCase()}|${i.unit}`;
-    const g = groups.get(k) ?? { name: i.name, unit: i.unit, qty: 0, cost: 0, mat, category: i.category, guessed };
+    const g = groups.get(k) ?? { name: i.name, unit: i.unit, qty: 0, cost: 0, mat: mat ? { ...mat, used_unit_cost: unitCost ?? mat.avg_unit_cost } : null, category: i.category, guessed, basis };
     g.qty += Number(i.quantity ?? 0);
     g.cost = cost == null || g.cost == null ? null : g.cost + cost;
     groups.set(k, g);
@@ -220,9 +230,12 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
                 <td className="nowrap">{g.category === "lievito" ? yeastQty(g.qty, g.unit) : `${num(g.qty, 3)} ${g.unit}`}</td>
                 {(
                   <>
-                    <td className="nowrap">{g.mat ? (!isCore(g.mat.category) && perPiece(Number(g.mat.avg_unit_cost), g.mat.base_unit, g.mat.piece_size) != null
-                        ? `${eur(perPiece(Number(g.mat.avg_unit_cost), g.mat.base_unit, g.mat.piece_size)!)}/pz`
-                        : fmtUnitPrice(g.mat.avg_unit_cost, g.mat.category, g.mat.base_unit))
+                    <td className="nowrap">{g.mat ? <span className="bc-price">{g.basis === "ultimo"
+                        ? <span title="Prezzo dell'ultimo acquisto (la quantità della ricetta ci sta)"><Clock size={13} className="basis basis-last" /></span>
+                        : <span title="Costo medio ponderato (serve più di quanto comprato l'ultima volta)"><Scale size={13} className="basis basis-avg" /></span>}
+                        {!isCore(g.mat.category) && perPiece(Number(g.mat.used_unit_cost), g.mat.base_unit, g.mat.piece_size) != null
+                        ? `${eur(perPiece(Number(g.mat.used_unit_cost), g.mat.base_unit, g.mat.piece_size)!)}/pz`
+                        : fmtUnitPrice(g.mat.used_unit_cost, g.mat.category, g.mat.base_unit)}</span>
                       : g.guessed != null ? <>{eur(g.guessed)}/{g.unit === "g" || g.unit === "kg" ? "kg" : g.unit}<div className="muted small">prezzo fisso</div></>
                       : isAdmin ? (
                         <select className="bc-link" value="" disabled={busy} onChange={(e) => link(g.name, e.target.value)}>
@@ -236,7 +249,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
                 )}
               </tr>
               {openIng === g.name + g.unit && g.mat && (
-                <tr className="sub"><td colSpan={4}><PriceBreakdown mat={g.mat} lines={lines} /></td></tr>
+                <tr className="sub"><td colSpan={4}><PriceBreakdown mat={g.mat} lines={lines} basis={g.basis} /></td></tr>
               )}
               </Fragment>
             ))}
@@ -274,7 +287,7 @@ function withShipping(items: Row[]): Row[] {
 }
 
 /** Come è stato calcolato il prezzo di un ingrediente: acquisto per acquisto, con la spedizione. */
-function PriceBreakdown({ mat, lines }: { mat: Row; lines: Row[] }) {
+function PriceBreakdown({ mat, lines, basis }: { mat: Row; lines: Row[]; basis?: PriceBasis }) {
   const ids: string[] = mat.material_ids ?? [mat.material_id];
   const rows = lines.filter((l) => ids.includes(l.material_id))
     .sort((a, b) => String(b.purchases?.purchase_date ?? "").localeCompare(String(a.purchases?.purchase_date ?? "")));
@@ -288,6 +301,9 @@ function PriceBreakdown({ mat, lines }: { mat: Row; lines: Row[] }) {
   return (
     <div className="bc-break">
       <div className="bc-break-from">Prezzo preso da: <strong>{mat.name}</strong></div>
+      <div className="bc-break-from">{basis === "ultimo"
+        ? <><Clock size={13} className="basis basis-last" /> Uso il prezzo dell'<strong>ultimo acquisto</strong>: la quantità della ricetta ci sta.</>
+        : <><Scale size={13} className="basis basis-avg" /> Uso il <strong>costo medio ponderato</strong>: la ricetta ne usa più di quanto comprato l'ultima volta.</>}</div>
       {rows.map((l, i) => (
         <div key={i} className="bc-break-row">
           <span><strong>{date(l.purchases?.purchase_date)}</strong> · {l.purchases?.supplier}{ids.length > 1 || rows.length > 0 ? ` · ${l.description ?? ""}` : ""} · <Link to={`/acquisti/${l.purchase_id}`}>apri l'ordine</Link></span>
