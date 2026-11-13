@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase, eur, num, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { computeBatchCost, sumCosts, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, KIT_COVERS, type BatchCost, type BottlePrices } from "../costs";
+import { computeBatchCost, sumCosts, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
 /** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
 export function BeerCosts() {
@@ -108,26 +108,8 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
 }) {
   const { isAdmin } = useAuth();
   const [busy, setBusy] = useState(false);
-  const kits = mats.filter((m) => isKit(m.name) && Number(m.avg_unit_cost) > 0);
-  const kitRowsOf = (bid: string) => extras.filter((x) => x.batch_id === bid && (isKit(x.description ?? "") || isKit(mats.find((m) => m.material_id === x.material_id)?.name ?? "")));
-  const currentKit = batches.map((b) => kitRowsOf(b.id)[0]?.material_id).find(Boolean) ?? "";
-  const allKit = sum.kitBatches === costs.length && costs.length > 0;
   const priced = mats.filter((m) => Number(m.avg_unit_cost) > 0 && !isKit(m.name));
 
-  const setKit = async (mid: string) => {
-    setBusy(true);
-    try {
-      const old = batches.flatMap((b) => kitRowsOf(b.id)).map((x) => x.id);
-      if (old.length) { const { error } = await supabase.from("batch_costs").delete().in("id", old); if (error) throw error; }
-      const kit = kits.find((k) => k.material_id === mid);
-      if (kit) {
-        const { error } = await supabase.from("batch_costs").insert(batches.map((b) => ({ batch_id: b.id, category: "altro", description: `Kit: ${kit.name}`, material_id: kit.material_id, quantity: 1 })));
-        if (error) throw error;
-      }
-      onChange();
-    } catch (e) { alert(errMsg(e)); }
-    setBusy(false);
-  };
   const link = async (name: string, mid: string) => {
     if (!mid) return;
     setBusy(true);
@@ -157,7 +139,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
     <div className="bc-detail">
       <div className="bc-lines">
         <Line label="Materie prime" value={eur(sum.ingredients)} warn={sum.missing.length > 0}
-          note={sum.missing.length ? `(senza prezzo: ${sum.missing.slice(0, 3).join(", ")}${sum.missing.length > 3 ? "…" : ""})` : sum.kitBatches ? `(di cui kit ${eur(sum.kit)})` : undefined} />
+          note={sum.missing.length ? `(senza prezzo: ${sum.missing.slice(0, 3).join(", ")}${sum.missing.length > 3 ? "…" : ""})` : undefined} />
         <Line label="Bottiglie e tappi" value={sum.someBottled ? eur(sum.packaging) : "—"}
           note={!sum.someBottled ? "(dopo l'imbottigliamento)" : sum.packagingEstimated ? "(bottiglia da 66 cl dalle Impostazioni)" : undefined} />
         <Line label="Corrente" value={eur(sum.energy)} warn={sum.energyMissing} note={sum.energyMissing ? "(mancano i kWh in qualche batch)" : undefined} />
@@ -172,17 +154,6 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
         {notBottled > 0 && <p className="muted small bc-note">{notBottled === costs.length ? "Non ancora imbottigliata: è un costo presunto, diventa reale quando inserisci le bottiglie." : `${notBottled} batch su ${costs.length} non ancora imbottigliati: per quelli il costo è presunto.`}</p>}
       </div>
 
-      <h3>Kit all grain</h3>
-      {kits.length ? (
-        <div className="bc-kit">
-          <select value={currentKit} disabled={!isAdmin || busy} onChange={(e) => setKit(e.target.value)}>
-            <option value="">Nessun kit: conto i singoli ingredienti</option>
-            {kits.map((k) => <option key={k.material_id} value={k.material_id}>{k.name} ({eur(k.avg_unit_cost)})</option>)}
-          </select>
-          <p className="muted small">Se la birra è fatta con un kit, malti, luppoli e lievito sono già pagati nel kit (1 kit per batch); zucchero, sali e il resto si contano a parte.</p>
-        </div>
-      ) : <p className="muted small">Nessun kit tra gli acquisti.</p>}
-
       <h3>Materie prime usate</h3>
       <div className="table-wrap">
         <table className="bc-ing">
@@ -192,9 +163,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
               <tr key={g.name + g.unit}>
                 <td>{g.name}{g.mat && g.mat.name.toLowerCase() !== String(g.name).toLowerCase() && <div className="muted small">da «{g.mat.name}»</div>}</td>
                 <td className="nowrap">{num(g.qty, 3)} {g.unit}</td>
-                {allKit && KIT_COVERS.includes(g.category) ? (
-                  <td colSpan={2} className="muted small">compreso nel kit</td>
-                ) : (
+                {(
                   <>
                     <td className="nowrap">{g.mat ? fmtUnitPrice(g.mat.avg_unit_cost, g.mat.category, g.mat.base_unit)
                       : g.guessed != null ? <>{eur(g.guessed)}/{g.unit === "g" || g.unit === "kg" ? "kg" : g.unit}<div className="muted small">ipotizzato</div></>
@@ -214,7 +183,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
           </tbody>
         </table>
       </div>
-      {sum.missing.length > 0 && <p className="muted small">Per gli ingredienti senza prezzo scegli a quale materia prima acquistata corrispondono, oppure, se la birra è fatta con un kit, sceglilo qui sopra.</p>}
+      {sum.missing.length > 0 && <p className="muted small">Per gli ingredienti senza prezzo scegli a quale materia prima acquistata corrispondono, oppure carica il loro acquisto in Materie prime.</p>}
     </div>
   );
 }

@@ -104,14 +104,12 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
   const kitRows = extras.filter((r) => isKit(r.description ?? "") || (r.material_id && isKit(mats.find((m) => m.material_id === r.material_id)?.name ?? "")));
   let ingredients = 0; const missing: string[] = [];
   for (const i of ings) {
-    if (kitRows.length && KIT_COVERS.includes(i.category)) continue;   // già pagato nel kit
     const { cost } = ingredientCost(i, mats);
     if (cost == null) missing.push(i.name); else ingredients += cost;
   }
   const avg: Record<string, number> = Object.fromEntries(mats.map((m) => [m.material_id, Number(m.avg_unit_cost ?? 0)]));
   const rowCost = (r: Row) => Number(r.quantity ?? 0) * Number(r.unit_cost ?? (r.material_id ? avg[r.material_id] ?? 0 : 0));
-  const kit = kitRows.reduce((t, r) => t + rowCost(r), 0);
-  ingredients += kit;
+  const kit = 0;   // i costi si fanno sempre senza kit: eventuali righe "Kit" vengono ignorate
   const pack = extras.filter((r) => r.category === "bottiglie" || r.category === "tappi");
   const other = extras.filter((r) => !(r.category === "bottiglie" || r.category === "tappi") && !kitRows.includes(r)).reduce((t, r) => t + rowCost(r), 0);
   const bottles = b.bottles_count ? Number(b.bottles_count) : null;
