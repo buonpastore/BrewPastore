@@ -15,10 +15,14 @@ const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u
   .replace(/[^a-z0-9]+/g, " ").trim();
 // sinonimi tra come si scrive nelle ricette e come si chiama nei listini
 const SYN: Record<string, string> = { weizen: "frumento", wheat: "frumento", weiss: "frumento", grano: "frumento", pils: "pilsner", pilsen: "pilsner",
-  munich: "monaco", oat: "avena", oats: "avena", vienna: "vienna", crystal: "caramel", cara: "caramel", carapils: "carapils", sugar: "zucchero" };
+  munich: "monaco", oat: "avena", oats: "avena", vienna: "vienna", crystal: "caramel", cara: "caramel", carapils: "carapils", sugar: "zucchero",
+  // gusci di riso = lolla di riso (rice hulls)
+  gusci: "lolla", guscio: "lolla", hulls: "lolla", hull: "lolla", pula: "lolla", rice: "riso",
+  coriander: "coriandolo", orange: "arancia", arance: "arancia", scorza: "buccia", scorze: "buccia", bucce: "buccia", peel: "buccia" };
 const tokens = (s: string) => norm(s).split(" ").filter((t) => t && !STOP.has(t)).map((t) => SYN[t] ?? t);
 const unitFamily = (u: string) => (["g", "kg", "mg"].includes(u.toLowerCase()) ? "kg" : ["l", "ml", "cl"].includes(u.toLowerCase()) ? "l" : "pz");
 
+const isCoreCat = (c: string) => ["malto", "luppolo", "lievito"].includes(c);
 export const isKit = (name: string) => /\bkit\b/i.test(name ?? "");
 /** Categorie di ingredienti già comprese in un kit all grain. */
 export const KIT_COVERS = ["malto", "luppolo", "lievito"];
@@ -40,7 +44,8 @@ export function matchMaterial(ing: Row, mats: Row[]): Row | null {
   let best: Row | null = null, bestScore = 0;
   const full: Row[] = [];   // prodotti che contengono tutte le parole dell'ingrediente
   for (const m of priced) {
-    if (ing.category && m.category && ing.category !== m.category && ing.category !== "altro" && m.category !== "altro") continue;
+    // categorie diverse ammesse solo fuori da malti/luppoli/lieviti (es. lolla di riso segnata come "malto" o "altro")
+    if (ing.category && m.category && ing.category !== m.category && isCoreCat(ing.category) && isCoreCat(m.category)) continue;
     const mt = new Set(tokens(m.name));
     const shared = it.filter((t) => mt.has(t) || [...mt].some((x) => x.length >= 4 && t.length >= 4 && (x.startsWith(t) || t.startsWith(x))));
     const score = shared.length / it.length - (mt.size - shared.length) * 0.01;
