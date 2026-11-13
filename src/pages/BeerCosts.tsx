@@ -1,7 +1,7 @@
 import { CapDot } from "../components/CapColor";
 import { sortByCat, nameColor } from "../categories";
 import { Fragment, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Pencil, Calculator, X } from "lucide-react";
 import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -272,16 +272,23 @@ function PriceBreakdown({ mat, lines }: { mat: Row; lines: Row[] }) {
     .sort((a, b) => String(b.purchases?.purchase_date ?? "").localeCompare(String(a.purchases?.purchase_date ?? "")));
   const q = (l: Row) => toBase(Number(l.quantity ?? 0), l.unit ?? "kg");
   const per = (v: number, l: Row) => (isCore(mat.category) ? (q(l) ? fmtUnitPrice(v / q(l), mat.category, mat.base_unit) : "—") : `${eur(v / piecesOfLine(l))}/pz`);
+  // prezzo unitario senza spedizione, per segnalare righe strane (es. 2 bustine registrate come 1)
+  const unit = (l: Row) => (q(l) ? Number(l.total_price) / q(l) : 0);
+  const sorted = rows.map(unit).filter((x) => x > 0).sort((a, b) => a - b);
+  const median = sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)] : 0;   // mediana "bassa": con 2 acquisti è il più economico
+  const noShip = rows.reduce((t, l) => t + Number(l.total_price), 0), qq = rows.reduce((t, l) => t + q(l), 0);
   return (
     <div className="bc-break">
       {rows.map((l, i) => (
         <div key={i} className="bc-break-row">
-          <span><strong>{date(l.purchases?.purchase_date)}</strong> · {l.purchases?.supplier}{ids.length > 1 ? ` · ${l.description ?? ""}` : ""}</span>
+          <span><strong>{date(l.purchases?.purchase_date)}</strong> · {l.purchases?.supplier}{ids.length > 1 || rows.length > 0 ? ` · ${l.description ?? ""}` : ""} · <Link to={`/acquisti/${l.purchase_id}`}>apri l'ordine</Link></span>
+          {rows.length > 1 && median > 0 && unit(l) > median * 1.4 && <span className="warn small">⚠️ prezzo molto più alto degli altri acquisti: controlla quantità e prezzo di questa riga nell'ordine</span>}
           <span>{num(Number(l.quantity), 3)} {l.unit} · {eur(l.total_price)}{l.ship_share ? <> + <b>{eur(l.ship_share)}</b> sped.</> : ""} → <strong>{per(Number(l.total_price) + l.ship_share, l)}</strong></span>
           {l.order_ship > 0 && <span className="muted small">spedizione dell'ordine {eur(l.order_ship)} su {eur(l.goods)} di merce: {num(l.order_ship / l.goods * 100, 0)}% del prezzo</span>}
         </div>
       ))}
-      <div className="bc-break-row tot"><span>Media pesata</span><strong>{isCore(mat.category) ? fmtUnitPrice(mat.avg_unit_cost, mat.category, mat.base_unit) : perPiece(Number(mat.avg_unit_cost), mat.base_unit, mat.piece_size) != null ? `${eur(perPiece(Number(mat.avg_unit_cost), mat.base_unit, mat.piece_size)!)}/pz` : fmtUnitPrice(mat.avg_unit_cost, mat.category, mat.base_unit)}</strong></div>
+      {isCore(mat.category) && qq > 0 && <div className="bc-break-row tot muted"><span>Media senza spedizione</span><span>{fmtUnitPrice(noShip / qq, mat.category, mat.base_unit)}</span></div>}
+      <div className="bc-break-row tot"><span>Media pesata (con spedizione)</span><strong>{isCore(mat.category) ? fmtUnitPrice(mat.avg_unit_cost, mat.category, mat.base_unit) : perPiece(Number(mat.avg_unit_cost), mat.base_unit, mat.piece_size) != null ? `${eur(perPiece(Number(mat.avg_unit_cost), mat.base_unit, mat.piece_size)!)}/pz` : fmtUnitPrice(mat.avg_unit_cost, mat.category, mat.base_unit)}</strong></div>
     </div>
   );
 }
