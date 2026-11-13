@@ -982,7 +982,10 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 @media (max-width: 600px) { .recipe-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .recipe-actions .primary { grid-column: 1 / -1; } }
 
 /* materie prime: scelta della visualizzazione */
-.view-switch { display: flex; gap: 8px; margin: 0 0 12px; }
+.view-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 12px; max-width: 420px; }
+.view-switch .mini-btn { justify-content: center; width: 100%; min-height: 44px; }
+.mat-total { text-align: right; margin: 4px 0 0; color: var(--muted); }
+.mat-total strong { color: var(--text); }
 .mat-compact td, .mat-compact th { padding: 9px 6px; }
 .mat-compact th { white-space: normal; letter-spacing: .03em; }
 @media (max-width: 600px) {

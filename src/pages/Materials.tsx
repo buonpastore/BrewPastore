@@ -153,7 +153,6 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
           <option value="last:desc">Ordina: ultimo prezzo</option>
           <option value="count:desc">Ordina: numero di acquisti</option>
         </select>
-        <span className="muted">Speso in totale: <strong>{eur(totalSpent)}</strong></span>
       </div>
       {empty.length > 0 && (
         <div className="row-actions" style={{ marginTop: -4, marginBottom: 12 }}>
@@ -209,6 +208,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
           </tbody>
         </table>
       </div>
+      <p className="mat-total">Speso in totale: <strong>{eur(totalSpent)}</strong></p>
     </div>
   );
 }
