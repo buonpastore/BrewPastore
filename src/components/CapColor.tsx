@@ -45,11 +45,11 @@ export function useCapColors(): CapColor[] {
 }
 export const capInfo = (k?: string | null) => (cache ?? []).find((c) => c.key === k) ?? CAP_COLORS.find((c) => c.key === k) ?? DEFAULT_CAPS.find((c) => c.key === k) ?? null;
 
-/** Tappo a corona stilizzato: solo il bordo dentellato e il cerchio interno, nel colore del tappo. */
+/** Tappo a corona stilizzato: solo il bordo esterno, appena dentellato, nel colore del tappo. */
 export function CapIcon({ hex, size = 24, unknown = false, title }: { hex: string; size?: number; unknown?: boolean; title?: string }) {
   const teeth = 21, pts: string[] = [];
   for (let i = 0; i < teeth * 2; i++) {
-    const a = (Math.PI * i) / teeth - Math.PI / 2, rr = i % 2 ? 41 : 47;
+    const a = (Math.PI * i) / teeth - Math.PI / 2, rr = i % 2 ? 43.5 : 46.5;   // dentatura leggera
     pts.push(`${(50 + rr * Math.cos(a)).toFixed(1)},${(50 + rr * Math.sin(a)).toFixed(1)}`);
   }
   const light = isLight(hex);
@@ -58,7 +58,6 @@ export function CapIcon({ hex, size = 24, unknown = false, title }: { hex: strin
       {title && <title>{title}</title>}
       {light && <polygon points={pts.join(" ")} fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="11" strokeLinejoin="round" />}
       <polygon points={pts.join(" ")} fill={hex} fillOpacity=".14" stroke={hex} strokeWidth="7" strokeLinejoin="round" />
-      <circle cx="50" cy="50" r="24" fill="none" stroke={hex} strokeWidth="6" />
       {unknown && <text x="50" y="61" textAnchor="middle" fontSize="30" fontWeight="700" fill={hex}>?</text>}
     </svg>
   );
