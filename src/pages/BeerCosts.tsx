@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Pencil, Calculator, X } from "lucide-react";
 import { supabase, eur, num, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
+import { pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
 /** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
 export function BeerCosts() {
@@ -21,10 +21,10 @@ export function BeerCosts() {
       supabase.from("batch_costs").select("*"),
       supabase.from("material_costs").select("*"),
       supabase.from("settings").select("*"),
-      supabase.from("purchase_items").select("material_id, description"),
+      supabase.from("purchase_items").select("material_id, description, quantity, unit"),
     ]).then(([r, b, bi, ri, e, m, st, pi]) => {
       // peso di un pezzo letto dalle righe d'acquisto (es. "Coriandolo in semi - 100 g")
-      const piece: Record<string, number> = {};
+      const piece: Record<string, number> = { ...pieceSizes(pi.data ?? []) };
       for (const x of pi.data ?? []) { const z = sizeFromName(x.description ?? ""); if (x.material_id && z && !piece[x.material_id]) piece[x.material_id] = z; }
       const matsRows = (m.data ?? []).map((x) => ({ ...x, piece_size: piece[x.material_id] ?? null }));
       const val = (k: string) => Number((st.data ?? []).find((x) => x.key === k)?.value ?? 0);
@@ -207,7 +207,9 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
                 <td className="nowrap">{g.category === "lievito" ? yeastQty(g.qty, g.unit) : `${num(g.qty, 3)} ${g.unit}`}</td>
                 {(
                   <>
-                    <td className="nowrap">{g.mat ? fmtUnitPrice(g.mat.avg_unit_cost, g.mat.category, g.mat.base_unit)
+                    <td className="nowrap">{g.mat ? (!isCore(g.mat.category) && perPiece(Number(g.mat.avg_unit_cost), g.mat.base_unit, g.mat.piece_size) != null
+                        ? `${eur(perPiece(Number(g.mat.avg_unit_cost), g.mat.base_unit, g.mat.piece_size)!)}/pz`
+                        : fmtUnitPrice(g.mat.avg_unit_cost, g.mat.category, g.mat.base_unit))
                       : g.guessed != null ? <>{eur(g.guessed)}/{g.unit === "g" || g.unit === "kg" ? "kg" : g.unit}<div className="muted small">ipotizzato</div></>
                       : isAdmin ? (
                         <select className="bc-link" value="" disabled={busy} onChange={(e) => link(g.name, e.target.value)}>

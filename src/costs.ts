@@ -216,3 +216,32 @@ export function sumCosts(list: BatchCost[]) {
     missing: [...new Set(list.flatMap((c) => c.missing))],
   };
 }
+
+/* ---------- prezzi "a unità" per tutto ciò che non è malto, luppolo o lievito ---------- */
+export const CORE_CATEGORIES = ["malto", "luppolo", "lievito"];
+export const isCore = (category: string) => CORE_CATEGORIES.includes(category);
+
+/** Quanti pezzi (confezioni) ci sono in una riga d'acquisto. */
+export function piecesOfLine(l: Row): number {
+  const q = Number(l.quantity ?? 0);
+  if (unitFamily(l.unit ?? "pz") === "pz") return q || 1;
+  const size = sizeFromName(l.description ?? "");
+  return size ? Math.max(1, Math.round(toBase(q, l.unit) / size)) : 1;   // senza misura nel nome: 1 confezione per riga
+}
+
+/** Peso/volume medio di un pezzo per materia prima (in kg o l), dalle righe d'acquisto. */
+export function pieceSizes(lines: Row[]): Record<string, number> {
+  const qty: Record<string, number> = {}, pcs: Record<string, number> = {};
+  for (const l of lines) {
+    if (!l.material_id || unitFamily(l.unit ?? "pz") === "pz") continue;
+    qty[l.material_id] = (qty[l.material_id] ?? 0) + toBase(Number(l.quantity ?? 0), l.unit);
+    pcs[l.material_id] = (pcs[l.material_id] ?? 0) + piecesOfLine(l);
+  }
+  return Object.fromEntries(Object.keys(qty).filter((k) => pcs[k] > 0 && qty[k] > 0).map((k) => [k, qty[k] / pcs[k]]));
+}
+
+/** Prezzo a pezzo partendo dal costo per unità base (kg/l/pz). */
+export function perPiece(costPerBase: number, baseUnit: string, pieceSize: number | null | undefined): number | null {
+  if (baseUnit === "pz") return costPerBase;
+  return pieceSize ? costPerBase * pieceSize : null;
+}

@@ -6,6 +6,7 @@ import { catColor, nameColor } from "../categories";
 type SortKey = "name" | "category" | "qty" | "spent" | "avg" | "last" | "count";
 const CAT_ORDER = ["malto", "luppolo", "lievito", "sali_acqua", "additivo", "bottiglie", "tappi", "etichette", "detergenti", "altro"];
 import { useAuth } from "../auth";
+import { isCore, pieceSizes, perPiece, piecesOfLine } from "../costs";
 
 export function Materials({ embedded = false }: { embedded?: boolean }) {
   const { isAdmin } = useAuth();
@@ -15,14 +16,16 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
   const [history, setHistory] = useState<Row[]>([]);
   const [reload, setReload] = useState(0);
+  const [piece, setPiece] = useState<Record<string, number>>({});
   const [last, setLast] = useState<Record<string, { cost: number; date: string; supplier: string }>>({});
 
   useEffect(() => {
     supabase.from("material_costs").select("*").order("category").order("name").then(({ data }) => setRows(data ?? []));
     // prezzo dell'ultimo acquisto (spedizione ripartita come per il costo medio)
-    supabase.from("purchase_items").select("material_id, quantity, unit, total_price, purchase_id, purchases(purchase_date, created_at, shipping_cost, total_amount, supplier)")
+    supabase.from("purchase_items").select("material_id, description, quantity, unit, total_price, purchase_id, purchases(purchase_date, created_at, shipping_cost, total_amount, supplier)")
       .then(({ data }) => {
         const items = (data ?? []) as Row[];
+        setPiece(pieceSizes(items));
         const goods: Record<string, number> = {};
         for (const i of items) goods[i.purchase_id] = (goods[i.purchase_id] ?? 0) + Number(i.total_price);
         const out: Record<string, { cost: number; date: string; supplier: string; key: string }> = {};
@@ -138,6 +141,18 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
     try { await deleteMaterialsWithoutPurchases(); setReload((x) => x + 1); } catch (e) { alert(errMsg(e)); }
   };
   const totalSpent = list.reduce((s, r) => s + Number(r.total_spent), 0);
+  // malti, luppoli e lieviti nella loro unità; tutto il resto a unità (pezzo/confezione)
+  const price = (v: number | null | undefined, m: Row) => {
+    if (v == null) return "—";
+    if (isCore(m.category)) return fmtUnitPrice(v, m.category, m.base_unit);
+    const pp = perPiece(Number(v), m.base_unit, piece[m.material_id]);
+    return pp != null ? `${eur(pp)}/pz` : fmtUnitPrice(v, m.category, m.base_unit);
+  };
+  const qtyOf = (q: number | null | undefined, m: Row) => {
+    if (q == null) return "—";
+    if (isCore(m.category) || m.base_unit === "pz" || !piece[m.material_id]) return fmtBaseQty(q, m.category, m.base_unit);
+    return `${num(Number(q) / piece[m.material_id], 1)} pz`;
+  };
 
   return (
     <div>
@@ -174,16 +189,16 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                 <tr>
                   <td><button className="link mat-name" style={{ color: nameColor(m.category) }} onClick={() => toggle(m.material_id)}>{open === m.material_id ? "▾" : "▸"} {m.name}</button></td>
                   <td><span className="badge cat" style={{ ["--c" as string]: catColor(m.category) }}>{m.category.replace("_", " ")}</span></td>
-                  {full && <td className="nowrap">{fmtBaseQty(m.qty_purchased, m.category, m.base_unit)}</td>}
+                  {full && <td className="nowrap">{qtyOf(m.qty_purchased, m)}</td>}
                   {full && <td>{eur(m.total_spent)}</td>}
-                  <td className="nowrap"><strong>{fmtUnitPrice(m.avg_unit_cost, m.category, m.base_unit)}</strong></td>
+                  <td className="nowrap"><strong>{price(m.avg_unit_cost, m)}</strong></td>
                   <td className="nowrap">
                     {last[m.material_id] ? (() => {
                       const l = last[m.material_id];
                       const diff = m.avg_unit_cost ? (l.cost / Number(m.avg_unit_cost) - 1) * 100 : 0;
                       return (
                         <>
-                          <strong>{fmtUnitPrice(l.cost, m.category, m.base_unit)}</strong>
+                          <strong>{price(l.cost, m)}</strong>
                           {Math.abs(diff) >= 1 && <span className={diff > 0 ? "warn small" : "ok small"}> {diff > 0 ? "▲" : "▼"}{num(Math.abs(diff), 0)}%</span>}
                           {full && <div className="muted small">{date(l.date)} · {l.supplier}</div>}
                         </>
@@ -197,7 +212,11 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                   <tr className="sub"><td colSpan={10}>
                     {history.length ? (() => {
                       const q = (h: Row) => toBase(Number(h.quantity), h.unit);
-                      const up = (v: number) => fmtUnitPrice(v, m.category, m.base_unit);
+                      const up = (v: number) => price(v, m);
+                      // prezzo della singola riga: a pezzo per tutto ciò che non è malto, luppolo o lievito
+                      const lineUp = (h: Row, extra: number) => !isCore(m.category)
+                        ? `${eur((Number(h.total_price) + extra) / piecesOfLine(h))}/pz`
+                        : q(h) ? up((Number(h.total_price) + extra) / q(h)) : "—";
                       const tq = history.reduce((t, h) => t + q(h), 0), tp = history.reduce((t, h) => t + Number(h.total_price), 0), ts = history.reduce((t, h) => t + h.ship_share, 0);
                       return (
                         <>
@@ -206,17 +225,17 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                             <tbody>{history.map((h) => (
                               <tr key={h.id}>
                                 <td>{date(h.purchases?.purchase_date)}<div className="muted small">{h.purchases?.supplier}{h.order_ship ? ` · sped. ordine ${eur(h.order_ship)}` : ""}</div></td>
-                                <td className="nowrap">{num(h.quantity, 3)} {h.unit}</td>
+                                <td className="nowrap">{isCore(m.category) ? `${num(h.quantity, 3)} ${h.unit}` : `${num(piecesOfLine(h), 1)} pz`}</td>
                                 <td className="nowrap">{eur(h.total_price)}</td>
                                 <td className="nowrap">{h.ship_share ? `+ ${eur(h.ship_share)}` : "—"}</td>
-                                <td className="nowrap">{q(h) ? up(Number(h.total_price) / q(h)) : "—"}</td>
-                                <td className="nowrap"><strong>{q(h) ? up((Number(h.total_price) + h.ship_share) / q(h)) : "—"}</strong></td>
+                                <td className="nowrap">{lineUp(h, 0)}</td>
+                                <td className="nowrap"><strong>{lineUp(h, h.ship_share)}</strong></td>
                                 {isAdmin && <td><button className="icon" title="Elimina questa riga d'acquisto" onClick={() => removeLine(h, m)}>🗑️</button></td>}
                               </tr>
                             ))}</tbody>
                             <tfoot><tr>
                               <td><strong>Media</strong></td>
-                              <td className="nowrap">{fmtBaseQty(tq, m.category, m.base_unit)}</td>
+                              <td className="nowrap">{qtyOf(tq, m)}</td>
                               <td className="nowrap">{eur(tp)}</td>
                               <td className="nowrap">{ts ? `+ ${eur(ts)}` : "—"}</td>
                               <td className="nowrap">{tq ? up(tp / tq) : "—"}</td>
