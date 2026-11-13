@@ -105,13 +105,6 @@ export function RecipeDetail() {
           <h1>{recipe.name}</h1>
           <div className="muted">{recipe.style}</div>
         </div>
-        {isAdmin && (
-          <div className="row-actions">
-            <button className="btn" onClick={duplicate}>⧉ Duplica</button>
-            <button className="btn danger" onClick={() => setDeleting(true)}>🗑️ Elimina</button>
-            <button className="btn primary" onClick={newBatch}>🍺 Nuovo batch da questa ricetta</button>
-          </div>
-        )}
       </div>
 
       {deleting && (
@@ -197,6 +190,13 @@ export function RecipeDetail() {
         {tab === "cottura" && <RecipeBrewDay recipe={recipe} />}
         {tab === "documenti" && <DocumentsPanel recipeId={recipe.id} />}
       </div>
+      {isAdmin && (
+        <div className="row-actions recipe-actions">
+          <button className="btn primary" onClick={newBatch}>🍺 Nuovo batch da questa ricetta</button>
+          <button className="btn" onClick={duplicate}>⧉ Duplica</button>
+          <button className="btn danger" onClick={() => setDeleting(true)}>🗑️ Elimina</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -976,3 +976,7 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
   .qe-fields.two .bf-btn { height: 42px; }
   .qe-fields.two .bf-head { min-height: 2.4em; align-items: flex-start; }
 }
+
+/* azioni della ricetta, in fondo dopo i dati */
+.recipe-actions { margin-top: 16px; }
+@media (max-width: 600px) { .recipe-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .recipe-actions .primary { grid-column: 1 / -1; } }
