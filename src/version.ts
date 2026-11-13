@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.073", date: "13/11/2026 06:50", text: "Impostazioni: scegli il tema del sito — Scuro, Chiaro o Automatico (chiaro di giorno, scuro dal tramonto all'alba)" },
   { version: "0.072", date: "13/11/2026 06:30", text: "Acquisti e fatture: pulsanti in fondo ordinati, a tutta larghezza e centrati" },
   { version: "0.071", date: "13/11/2026 06:15", text: "Materie prime: riquadro in fondo per le materie prime senza acquisti, con i pulsanti Mostra ed Elimina allineati" },
   { version: "0.070", date: "13/11/2026 06:05", text: "Materie prime: l'avviso delle materie prime senza acquisti (Mostra / Elimina) è in fondo alla lista" },

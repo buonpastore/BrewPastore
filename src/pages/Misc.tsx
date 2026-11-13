@@ -1,3 +1,4 @@
+import { getThemePref, setThemePref, sunTimes, type ThemePref } from "../theme";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, type Row } from "../lib";
@@ -178,6 +179,29 @@ export function HistoryPage({ embedded = false }: { embedded?: boolean }) {
   );
 }
 
+function ThemePicker() {
+  const [pref, setPref] = useState<ThemePref>(getThemePref());
+  const { rise, set } = sunTimes();
+  const hm = (d: Date) => d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  const choose = (p: ThemePref) => { setPref(p); setThemePref(p); };
+  const opts: [ThemePref, string, string][] = [["scuro", "🌙", "Scuro"], ["chiaro", "☀️", "Chiaro"], ["auto", "🌅", "Automatico"]];
+  return (
+    <div className="panel">
+      <h2>Tema</h2>
+      <div className="theme-opts">
+        {opts.map(([k, ico, label]) => (
+          <button key={k} className={"theme-opt" + (pref === k ? " on" : "")} onClick={() => choose(k)}>
+            <span className="theme-ico">{ico}</span>{label}
+          </button>
+        ))}
+      </div>
+      <p className="muted small theme-note">
+        {pref === "auto" ? `Chiaro di giorno, scuro dal tramonto: oggi chiaro dalle ${hm(rise)} alle ${hm(set)}.` : "La scelta vale per questo telefono o computer."}
+      </p>
+    </div>
+  );
+}
+
 export function Settings() {
   const { isAdmin, profiles, profile } = useAuth();
   const [settings, setSettings] = useState<Row[]>([]);
@@ -202,6 +226,7 @@ export function Settings() {
         <a className="btn small" href="#/impostazioni" onClick={(e) => { e.preventDefault(); document.getElementById("storico")?.scrollIntoView({ behavior: "smooth" }); }}>🕓 Vai allo storico versioni</a>
       </div>
       {msg && <p className="ok">{msg}</p>}
+      <ThemePicker />
       <div className="panel">
         <h2>Il mio profilo</h2>
         <div className="inline-form">
