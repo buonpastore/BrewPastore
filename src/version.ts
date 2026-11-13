@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.129", date: "14/11/2026 01:10", text: "Nuovo batch: le birre già finite non vengono proposte (si possono mostrare con un pulsante se vuoi rifarne una)" },
   { version: "0.128", date: "14/11/2026 01:00", text: "Nuovo batch: nella scelta della ricetta non compaiono più i batch finiti e le schede sono semplici, senza sovrapposizioni" },
   { version: "0.127", date: "14/11/2026 00:50", text: "Nuovo batch: nella scelta della ricetta le schede non si sovrappongono più su iPhone" },
   { version: "0.126", date: "14/11/2026 00:40", text: "Import ricette: gli ingredienti scritti due volte nel testo vengono presi una sola volta; nuovo pulsante «Togli doppioni» negli ingredienti di ricette e batch" },

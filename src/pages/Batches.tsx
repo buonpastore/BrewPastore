@@ -12,12 +12,17 @@ export function Batches() {
   const { isAdmin } = useAuth();
   const nav = useNavigate();
   const [choose, setChoose] = useState<Row[] | null>(null);
+  const [showDone, setShowDone] = useState(false);
+  // birra finita = ricetta che ha batch e sono tutti finiti (bevuti): non la propongo, salvo richiesta
+  const isDone = (r: Row) => ((r.batches ?? []) as Row[]).length > 0 && ((r.batches ?? []) as Row[]).every((b) => b.status === "finito");
   const [busy, setBusy] = useState(false);
   const startNew = async () => {
     const { data } = await supabase.from("recipes").select("*, batches(id, code, status, brew_date, fermentation_start, bottling_date, first_tasting_date, created_at)").eq("archived", false).order("name");
     const recipes = data ?? [];
     if (!recipes.length) return alert("Prima crea o importa una ricetta: il batch nasce da una ricetta.");
-    if (recipes.length === 1) return create(recipes[0]);   // una sola ricetta: la prendo da solo
+    const open = recipes.filter((x) => !isDone(x));
+    if (open.length === 1 && recipes.length === 1) return create(open[0]);   // una sola ricetta: la prendo da solo
+    setShowDone(false);
     setChoose(recipes);
   };
   const create = async (r: Row) => {
@@ -97,7 +102,8 @@ export function Batches() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>🍺 Nuovo batch: quale ricetta?</h2>
             <div className="recipe-pick">
-              {choose.map((r) => (
+              {choose.filter((x) => showDone || !isDone(x)).length === 0 && <p className="muted">Tutte le birre sono finite: tocca «Mostra anche le birre finite» per rifarne una.</p>}
+              {choose.filter((x) => showDone || !isDone(x)).map((r) => (
                 <div key={r.id} role="button" tabIndex={0} className={"recipe-pick-btn" + (busy ? " busy" : "")}
                   onClick={() => !busy && create(r)} onKeyDown={(e) => { if (e.key === "Enter" && !busy) create(r); }}>
                   <div className="rp-name">{r.name}</div>
@@ -113,6 +119,11 @@ export function Batches() {
                 </div>
               ))}
             </div>
+            {choose.some(isDone) && (
+              <button className="btn" style={{ width: "100%", marginTop: 10 }} onClick={() => setShowDone(!showDone)}>
+                {showDone ? "Nascondi le birre finite" : `Mostra anche le birre finite (${choose.filter(isDone).length})`}
+              </button>
+            )}
             <button className="btn" style={{ width: "100%", marginTop: 10 }} onClick={() => setChoose(null)}>Annulla</button>
           </div>
         </div>
