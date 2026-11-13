@@ -43,8 +43,8 @@ export function Batches() {
     <div>
       <div className="page-head">
         <h1>Batch</h1>
-        {isAdmin && <button className="btn primary" disabled={busy} onClick={startNew}>{busy ? "Creo…" : "🍺 Nuovo batch"}</button>}
       </div>
+      {isAdmin && <button className="btn primary btn-wide" disabled={busy} onClick={startNew}>{busy ? "Creo…" : "🍺 Nuovo batch"}</button>}
       <div className="toolbar">
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tutti gli stati</option>

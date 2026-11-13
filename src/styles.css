@@ -1222,3 +1222,6 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 
 .mat-hist tfoot td { border-top: 1px solid var(--line-strong); }
 .mat-formula { margin: 8px 0 0; }
+
+/* pulsante principale a tutta riga */
+.btn.btn-wide { display: flex; width: 100%; justify-content: center; min-height: 54px; font-size: 1.05rem; margin: 0 0 16px; }
