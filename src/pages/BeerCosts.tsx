@@ -2,7 +2,7 @@ import { CapDot } from "../components/CapColor";
 import { sortByCat, nameColor } from "../categories";
 import { Fragment, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, Calculator, X } from "lucide-react";
+import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, X } from "lucide-react";
 import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
@@ -83,7 +83,7 @@ export function BeerCosts() {
                   {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   <strong>{recipe.name}</strong>
                   <CapDot color={[...all].filter((b) => b.cap_color).sort((x, y) => String(y.bottling_date ?? y.brew_date ?? "").localeCompare(String(x.bottling_date ?? x.brew_date ?? "")))[0]?.cap_color} size={20} />
-                  {list.length > 0 && <StateIcon sum={sum} />}
+                  {list.length > 0 && <StateIcon sum={sum} costs={costs} />}
                   <span className="muted small bc-sub">
                     {list.length ? `${sum.liters ? `${num(sum.liters, 1)} L` : "litri ?"}${sum.bottles ? ` · ${sum.bottles} bottiglie` : ""}` : "non ancora cotta"}
                   </span>
@@ -105,11 +105,10 @@ export function BeerCosts() {
       <div className="bc-help">
         <h3>Come li calcolo</h3>
         <ul>
-          <li><Hourglass size={14} className="ic-guess" /> <strong>Presunto</strong> dalla cotta all'imbottigliamento: materie prime + corrente + acqua + bottiglie e tappi stimati (litri ÷ 0,66).</li>
-          <li><BottleIcon size={14} className="ic-warn" /> <strong>Imbottigliata</strong>, costo reale ma con qualche dato stimato o mancante. <BadgeCheck size={14} className="ic-ok" /> <strong>Completo</strong>: tutti i dati inseriti.</li>
+          <li><SrcIcon source="manca" /> <strong>Manca</strong> qualche dato · <SrcIcon source="stimato" /> <strong>teorico</strong>: dati stimati o birra non ancora imbottigliata · <SrcIcon source="inserito" /> <strong>confermato</strong>: tutti i dati inseriti.</li>
           <li><strong>Materie prime</strong>: ingredienti della ricetta, contati una volta, × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
           <li><strong>Bottiglie e tappi</strong>: bottiglie × {data.cfg.b66 != null ? eur(data.cfg.b66) : "—"} (Impostazioni){cp != null ? ` + tappo ${eur(cp)}` : ""}.</li>
-          <li><strong>Corrente</strong>: kWh inseriti nei batch × {eur(data.energy)}/kWh.</li>
+          <li><strong>Corrente</strong>: kWh inseriti nel batch, oppure calcolati da litri d'acqua e tempi di mash e bollitura, × {eur(data.energy)}/kWh.</li>
         </ul>
       </div>
     </div>
@@ -117,28 +116,20 @@ export function BeerCosts() {
 }
 
 /** Icona della fonte del dato: calcolatrice verde = preciso · clessidra = stimato · ✕ = manca. */
-export function SrcIcon({ source }: { source: Source }) {
-  if (source === "inserito") return <Calculator size={14} className="src src-in" aria-label="preciso" />;
-  if (source === "stimato") return <Hourglass size={14} className="src src-est" aria-label="stimato" />;
-  return <X size={14} className="src src-miss" aria-label="manca" />;
+export function SrcIcon({ source, size = 14 }: { source: Source; size?: number }) {
+  if (source === "inserito") return <BadgeCheck size={size} className="src src-in" aria-label="confermato" />;
+  if (source === "stimato") return <Hourglass size={size} className="src src-est" aria-label="stimato" />;
+  return <X size={size} className="src src-miss" aria-label="manca" />;
 }
 
 /** Stato del costo della birra, solo con un'icona. */
-/** Bottiglia di birra stilizzata (linea), stesso stile delle altre icone. */
-function BottleIcon({ size = 18, className }: { size?: number; className?: string }) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M10 2h4" />
-      <path d="M10.5 2v4.5c0 1-.6 1.6-1.4 2.4C8.4 9.6 8 10.6 8 11.8V20a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-8.2c0-1.2-.4-2.2-1.1-2.9-.8-.8-1.4-1.4-1.4-2.4V2" />
-      <path d="M8 14h8" />
-    </svg>
-  );
-}
 
-function StateIcon({ sum }: { sum: ReturnType<typeof sumCosts> }) {
-  if (sum.complete) return <span title="Costo reale, dati completi"><BadgeCheck size={19} className="ic-ok" /></span>;
-  if (sum.allBottled) return <span title="Imbottigliata: costo reale, qualche dato stimato"><BottleIcon size={19} className="ic-warn" /></span>;
-  return <span title="Costo presunto, non ancora imbottigliata"><Hourglass size={18} className="ic-guess" /></span>;
+function StateIcon({ sum, costs }: { sum: ReturnType<typeof sumCosts>; costs: BatchCost[] }) {
+  // ✕ rossa = manca qualcosa · clessidra gialla = teorico (stime o non ancora imbottigliata) · bollino verde = confermato
+  const all = costs.flatMap((c) => c.facts.map((f) => f.source));
+  if (all.includes("manca") || sum.missing.length) return <span title="Manca qualche dato"><SrcIcon source="manca" size={19} /></span>;
+  if (!sum.complete) return <span title="Costo teorico: qualche dato stimato o birra non ancora imbottigliata"><SrcIcon source="stimato" size={19} /></span>;
+  return <span title="Costo confermato: tutti i dati inseriti"><SrcIcon source="inserito" size={19} /></span>;
 }
 
 function Line({ label, value, source }: { label: string; value: string; source?: Source }) {
@@ -214,7 +205,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
             </div>
           </div>
         ))}
-        <p className="bc-legend"><SrcIcon source="inserito" /> preciso <SrcIcon source="stimato" /> stimato <SrcIcon source="manca" /> manca</p>
+        <p className="bc-legend"><SrcIcon source="inserito" /> confermato <SrcIcon source="stimato" /> stimato <SrcIcon source="manca" /> manca</p>
       </div>
 
       <h3>Materie prime usate</h3>
