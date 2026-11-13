@@ -201,7 +201,9 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
   const kwh = b.energy_kwh != null ? Number(b.energy_kwh) : est.kwh;
   const energyMissing = kwh == null;
   const energy = Number(kwh ?? 0) * energyPrice;
-  facts.push({ label: "Corrente", value: kwh == null ? "—" : `${fmt(kwh)} kWh`, source: b.energy_kwh != null ? "inserito" : kwh != null ? "stimato" : "manca" });
+  // calcolata dai dati confermati nel batch (litri di mash e sparge della cottura + tempi della ricetta) = precisa
+  const fromBatch = b.mash_water_l != null || b.sparge_water_l != null;
+  facts.push({ label: "Corrente", value: kwh == null ? "—" : `${fmt(kwh)} kWh`, source: b.energy_kwh != null || (kwh != null && fromBatch) ? "inserito" : kwh != null ? "stimato" : "manca" });
 
   // ingredienti
   facts.push({ label: "Prezzi ingredienti", value: `${priced + guessed}/${ings.length}`, source: missing.length ? "manca" : guessed ? "stimato" : "inserito" });
