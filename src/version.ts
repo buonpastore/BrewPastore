@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.095", date: "13/11/2026 16:55", text: "Costo medio: la spedizione resta proporzionale al prezzo degli articoli anche se hai cancellato righe dell'ordine (si usa il totale dell'ordine). Da eseguire: 0009_spedizione_proporzionale.sql" },
   { version: "0.094", date: "13/11/2026 16:40", text: "Conti: ordine delle schede Costi, Materie, Spese, Preventivi" },
   { version: "0.093", date: "13/11/2026 16:30", text: "Batch: il pulsante «Nuovo batch» è largo tutta la riga" },
   { version: "0.092", date: "13/11/2026 16:20", text: "Ricetta → Batch: i batch sono in ordine di lavorazione (cotta, fermentazione, maturazione, imbottigliamento, bevuta) con la data del passaggio" },

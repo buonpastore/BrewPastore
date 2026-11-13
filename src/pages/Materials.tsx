@@ -20,7 +20,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   useEffect(() => {
     supabase.from("material_costs").select("*").order("category").order("name").then(({ data }) => setRows(data ?? []));
     // prezzo dell'ultimo acquisto (spedizione ripartita come per il costo medio)
-    supabase.from("purchase_items").select("material_id, quantity, unit, total_price, purchase_id, purchases(purchase_date, created_at, shipping_cost, supplier)")
+    supabase.from("purchase_items").select("material_id, quantity, unit, total_price, purchase_id, purchases(purchase_date, created_at, shipping_cost, total_amount, supplier)")
       .then(({ data }) => {
         const items = (data ?? []) as Row[];
         const goods: Record<string, number> = {};
@@ -28,7 +28,8 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
         const out: Record<string, { cost: number; date: string; supplier: string; key: string }> = {};
         for (const i of items) {
           const p = i.purchases ?? {};
-          const share = goods[i.purchase_id] > 0 ? Number(p.shipping_cost ?? 0) * Number(i.total_price) / goods[i.purchase_id] : 0;
+          const g = goodsBase(goods[i.purchase_id] ?? 0, p.total_amount, p.shipping_cost);
+          const share = g > 0 ? Number(p.shipping_cost ?? 0) * Number(i.total_price) / g : 0;
           const q = toBase(Number(i.quantity), i.unit);
           if (!q) continue;
           const key = `${p.purchase_date ?? ""}|${p.created_at ?? ""}`;
@@ -43,7 +44,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   const toggle = async (id: string) => {
     if (open === id) return setOpen(null);
     setOpen(id);
-    const { data } = await supabase.from("purchase_items").select("*, purchases(supplier, purchase_date, shipping_cost)").eq("material_id", id);
+    const { data } = await supabase.from("purchase_items").select("*, purchases(supplier, purchase_date, shipping_cost, total_amount)").eq("material_id", id);
     const rows = data ?? [];
     // quota di spedizione di ogni riga: spedizione dell'ordine divisa in proporzione al prezzo delle righe
     const pids = [...new Set(rows.map((x) => x.purchase_id))];
@@ -51,7 +52,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
     const goods: Record<string, number> = {};
     for (const x of all ?? []) goods[x.purchase_id] = (goods[x.purchase_id] ?? 0) + Number(x.total_price);
     const withShip = rows.map((x) => {
-      const ship = Number(x.purchases?.shipping_cost ?? 0), g = goods[x.purchase_id] ?? 0;
+      const ship = Number(x.purchases?.shipping_cost ?? 0), g = goodsBase(goods[x.purchase_id] ?? 0, x.purchases?.total_amount, ship);
       return { ...x, ship_share: g > 0 ? ship * Number(x.total_price) / g : 0, order_ship: ship };
     });
     setHistory(withShip.sort((a, b) => String(b.purchases?.purchase_date).localeCompare(String(a.purchases?.purchase_date))));
@@ -223,7 +224,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                               {isAdmin && <td />}
                             </tr></tfoot>
                           </table>
-                          <p className="muted small mat-formula">Costo medio = (prezzi + quote di spedizione) ÷ quantità totale. La spedizione di un ordine si divide tra le sue righe in proporzione al prezzo di ciascuna.</p>
+                          <p className="muted small mat-formula">Costo medio = (prezzi + quote di spedizione) ÷ quantità totale. La spedizione di un ordine si divide in proporzione al prezzo: un articolo da 30 € ne prende 30 volte più di uno da 1 €.</p>
                         </>
                       );
                     })() : <span className="muted">Nessun acquisto registrato</span>}
@@ -246,4 +247,11 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       )}
     </div>
   );
+}
+
+/** Valore della merce di un ordine su cui ripartire la spedizione: il totale dell'ordine meno la spedizione,
+ *  se è maggiore delle righe rimaste (righe cancellate), altrimenti la somma delle righe. Come nel database. */
+function goodsBase(itemsSum: number, total: unknown, shipping: unknown): number {
+  const t = total != null ? Number(total) - Number(shipping ?? 0) : 0;
+  return t > itemsSum + 0.01 ? t : itemsSum;
 }
