@@ -1219,3 +1219,6 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
   .section-tabs .st-long { display: none; }
   .section-tabs .st-short { display: block; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 }
+
+.mat-hist tfoot td { border-top: 1px solid var(--line-strong); }
+.mat-formula { margin: 8px 0 0; }

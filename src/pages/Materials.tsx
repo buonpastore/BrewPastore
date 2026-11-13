@@ -43,8 +43,18 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   const toggle = async (id: string) => {
     if (open === id) return setOpen(null);
     setOpen(id);
-    const { data } = await supabase.from("purchase_items").select("*, purchases(supplier, purchase_date)").eq("material_id", id);
-    setHistory((data ?? []).sort((a, b) => String(b.purchases?.purchase_date).localeCompare(String(a.purchases?.purchase_date))));
+    const { data } = await supabase.from("purchase_items").select("*, purchases(supplier, purchase_date, shipping_cost)").eq("material_id", id);
+    const rows = data ?? [];
+    // quota di spedizione di ogni riga: spedizione dell'ordine divisa in proporzione al prezzo delle righe
+    const pids = [...new Set(rows.map((x) => x.purchase_id))];
+    const { data: all } = pids.length ? await supabase.from("purchase_items").select("purchase_id, total_price").in("purchase_id", pids) : { data: [] as Row[] };
+    const goods: Record<string, number> = {};
+    for (const x of all ?? []) goods[x.purchase_id] = (goods[x.purchase_id] ?? 0) + Number(x.total_price);
+    const withShip = rows.map((x) => {
+      const ship = Number(x.purchases?.shipping_cost ?? 0), g = goods[x.purchase_id] ?? 0;
+      return { ...x, ship_share: g > 0 ? ship * Number(x.total_price) / g : 0, order_ship: ship };
+    });
+    setHistory(withShip.sort((a, b) => String(b.purchases?.purchase_date).localeCompare(String(a.purchases?.purchase_date))));
   };
 
   const removeLine = async (h: Row, m: Row) => {
@@ -184,16 +194,39 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                 </tr>
                 {open === m.material_id && (
                   <tr className="sub"><td colSpan={10}>
-                    {history.length ? (
-                      <table>
-                        <thead><tr><th>Data</th><th>Fornitore</th><th>Riga</th><th>Q.tà</th><th>Prezzo</th><th>Prezzo unitario</th>{isAdmin && <th />}</tr></thead>
-                        <tbody>{history.map((h) => (
-                          <tr key={h.id}><td>{date(h.purchases?.purchase_date)}</td><td>{h.purchases?.supplier}</td><td className="small">{h.description}</td><td>{num(h.quantity, 3)} {h.unit}</td><td>{eur(h.total_price)}</td>
-                            <td>{toBase(Number(h.quantity), h.unit) ? fmtUnitPrice(Number(h.total_price) / toBase(Number(h.quantity), h.unit), m.category, m.base_unit) : "—"}</td>
-                            {isAdmin && <td><button className="icon" title="Elimina questa riga d'acquisto" onClick={() => removeLine(h, m)}>🗑️</button></td>}</tr>
-                        ))}</tbody>
-                      </table>
-                    ) : <span className="muted">Nessun acquisto registrato</span>}
+                    {history.length ? (() => {
+                      const q = (h: Row) => toBase(Number(h.quantity), h.unit);
+                      const up = (v: number) => fmtUnitPrice(v, m.category, m.base_unit);
+                      const tq = history.reduce((t, h) => t + q(h), 0), tp = history.reduce((t, h) => t + Number(h.total_price), 0), ts = history.reduce((t, h) => t + h.ship_share, 0);
+                      return (
+                        <>
+                          <table className="mat-hist">
+                            <thead><tr><th>Ordine</th><th>Q.tà</th><th>Prezzo</th><th>Quota sped.</th><th>Unitario</th><th>Con sped.</th>{isAdmin && <th />}</tr></thead>
+                            <tbody>{history.map((h) => (
+                              <tr key={h.id}>
+                                <td>{date(h.purchases?.purchase_date)}<div className="muted small">{h.purchases?.supplier}{h.order_ship ? ` · sped. ordine ${eur(h.order_ship)}` : ""}</div></td>
+                                <td className="nowrap">{num(h.quantity, 3)} {h.unit}</td>
+                                <td className="nowrap">{eur(h.total_price)}</td>
+                                <td className="nowrap">{h.ship_share ? `+ ${eur(h.ship_share)}` : "—"}</td>
+                                <td className="nowrap">{q(h) ? up(Number(h.total_price) / q(h)) : "—"}</td>
+                                <td className="nowrap"><strong>{q(h) ? up((Number(h.total_price) + h.ship_share) / q(h)) : "—"}</strong></td>
+                                {isAdmin && <td><button className="icon" title="Elimina questa riga d'acquisto" onClick={() => removeLine(h, m)}>🗑️</button></td>}
+                              </tr>
+                            ))}</tbody>
+                            <tfoot><tr>
+                              <td><strong>Media</strong></td>
+                              <td className="nowrap">{fmtBaseQty(tq, m.category, m.base_unit)}</td>
+                              <td className="nowrap">{eur(tp)}</td>
+                              <td className="nowrap">{ts ? `+ ${eur(ts)}` : "—"}</td>
+                              <td className="nowrap">{tq ? up(tp / tq) : "—"}</td>
+                              <td className="nowrap"><strong>{tq ? up((tp + ts) / tq) : "—"}</strong></td>
+                              {isAdmin && <td />}
+                            </tr></tfoot>
+                          </table>
+                          <p className="muted small mat-formula">Costo medio = (prezzi + quote di spedizione) ÷ quantità totale. La spedizione di un ordine si divide tra le sue righe in proporzione al prezzo di ciascuna.</p>
+                        </>
+                      );
+                    })() : <span className="muted">Nessun acquisto registrato</span>}
                   </td></tr>
                 )}
               </Fragment>
