@@ -182,15 +182,13 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
   else if (liters) { bottles = Math.floor(liters / 0.66); bottlesGuessed = true; }
   facts.push({ label: "Bottiglie", value: bottles != null ? String(bottles) : "—", source: b.bottles_count ? "inserito" : bottles != null ? "stimato" : "manca" });
 
-  // bottiglie e tappi: solo da imbottigliata
+  // bottiglie e tappi: sempre conteggiati. Prima dell'imbottigliamento sono teorici (bottiglie stimate dai litri)
   let packaging = 0, packagingEstimated = false;
-  if (bottled) {
-    if (pack.length) packaging = pack.reduce((t, r) => t + rowCost(r), 0);
-    else if (bottles) {
-      const size = b.bottle_size_l != null ? Number(b.bottle_size_l) : null;
-      const bp = (cfg ? configuredBottlePrice(size, cfg) : null) ?? bottleUnitPrice(size, mats), cp = capUnitPrice(mats);
-      packaging = bottles * ((bp ?? 0) + (cp ?? 0)); packagingEstimated = true;
-    }
+  if (pack.length) packaging = pack.reduce((t, r) => t + rowCost(r), 0);
+  else if (bottles) {
+    const size = b.bottle_size_l != null ? Number(b.bottle_size_l) : null;
+    const bp = (cfg ? configuredBottlePrice(size, cfg) : null) ?? bottleUnitPrice(size, mats), cp = capUnitPrice(mats);
+    packaging = bottles * ((bp ?? 0) + (cp ?? 0)); packagingEstimated = true;
   }
 
   // corrente: quella inserita nel batch, altrimenti stimata dal processo (acqua da scaldare, mash, bollitura)

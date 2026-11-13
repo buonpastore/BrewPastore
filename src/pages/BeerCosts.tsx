@@ -99,7 +99,7 @@ export function BeerCosts() {
       <div className="bc-help">
         <h3>Come li calcolo</h3>
         <ul>
-          <li><Hourglass size={14} className="ic-guess" /> <strong>Presunto</strong> dalla cotta all'imbottigliamento: materie prime + corrente + acqua.</li>
+          <li><Hourglass size={14} className="ic-guess" /> <strong>Presunto</strong> dalla cotta all'imbottigliamento: materie prime + corrente + acqua + bottiglie e tappi teorici (litri ÷ 0,66).</li>
           <li><CircleAlert size={14} className="ic-warn" /> <strong>Imbottigliata</strong>, costo reale ma con qualche dato stimato o mancante. <CheckCircle2 size={14} className="ic-ok" /> <strong>Completo</strong>: tutti i dati inseriti.</li>
           <li><strong>Materie prime</strong>: ingredienti della ricetta, contati una volta, × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
           <li><strong>Bottiglie e tappi</strong>: bottiglie × {data.cfg.b66 != null ? eur(data.cfg.b66) : "—"} (Impostazioni){cp != null ? ` + tappo ${eur(cp)}` : ""}.</li>
@@ -170,7 +170,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
     <div className="bc-detail">
       <div className="bc-lines">
         <Line label="Materie prime" value={eur(sum.ingredients)} source={sum.missing.length ? "manca" : sum.guessed ? "stimato" : "inserito"} />
-        <Line label="Bottiglie e tappi" value={sum.someBottled ? eur(sum.packaging) : "—"} source={sum.someBottled ? (sum.bottlesGuessed ? "stimato" : "inserito") : undefined} />
+        <Line label={sum.bottlesGuessed ? "Bottiglie e tappi (teorici)" : "Bottiglie e tappi"} value={sum.packaging ? eur(sum.packaging) : "—"} source={sum.packaging ? (sum.bottlesGuessed ? "stimato" : "inserito") : "manca"} />
         <Line label="Corrente" value={eur(sum.energy)} source={factSrc(costs, "Corrente")} />
         <Line label="Acqua" value={eur(sum.water)} source={factSrc(costs, "Acqua")} />
         {sum.other > 0 && <Line label="Altri costi" value={eur(sum.other)} />}

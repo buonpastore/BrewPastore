@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.106", date: "13/11/2026 20:20", text: "Costi birre: bottiglie e tappi conteggiati sempre; prima dell'imbottigliamento sono teorici (bottiglie stimate dai litri)" },
   { version: "0.105", date: "13/11/2026 20:10", text: "Tappi: solo il bordo esterno, con una dentatura più leggera" },
   { version: "0.104", date: "13/11/2026 20:00", text: "Tappi disegnati in modo più semplice: solo il bordo a corona colorato" },
   { version: "0.103", date: "13/11/2026 19:45", text: "Ricette e Costi: il tappo colorato compare accanto al nome della birra; la barra laterale delle ricette torna com'era" },
