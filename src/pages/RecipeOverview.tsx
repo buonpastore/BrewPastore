@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import {
   Beer, Target, Flag, Leaf, Palette, CupSoda, Thermometer, Flame, Droplets, ShowerHead, Wheat, Wind, Snowflake,
-  FlaskConical, Sparkles, Eye, Feather, Flower2, Smile, Waves, ListOrdered, StickyNote, BookOpen,
+  FlaskConical, Sparkles, Eye, Feather, Flower2, Smile, Waves, ListOrdered, StickyNote, BookOpen, BookMarked, MapPin,
 } from "lucide-react";
 import { num, sg, type Row } from "../lib";
 import { abvOf, ebcColor, ebcName, ibuName } from "../beerLook";
+import { findStyle } from "../styleGuide";
 
 function Tile({ icon, label, value, sub, color = "var(--gold)", swatch }: { icon: ReactNode; label: string; value: ReactNode; sub?: string; color?: string; swatch?: string }) {
   return (
@@ -153,6 +154,7 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
         </>
       )}
       {!steps.length && <p className="muted small">Nessun procedimento: usa «Genera riassunto del procedimento» oppure importa la ricetta da testo.</p>}
+      <StyleCard recipe={recipe} abv={abv} />
     </div>
   );
 }
@@ -239,3 +241,65 @@ function narrate(r: Row, steps: string[]): string[] {
 }
 
 const andList = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}` : xs[0] ?? "");
+
+/** In fondo alla scheda: come dovrebbe essere lo stile scelto, confrontato con la ricetta. */
+function StyleCard({ recipe, abv }: { recipe: Row; abv: number | null }) {
+  const found = findStyle(recipe.style);
+  if (!recipe.style) return null;
+  if (!found) return (
+    <>
+      <h3 className="ov-h"><BookMarked size={16} /> Lo stile</h3>
+      <p className="muted small">Non ho le caratteristiche dello stile «{recipe.style}»: sceglilo dal menu a tendina in «Modifica scheda».</p>
+    </>
+  );
+  const { name, info } = found;
+  const val = (x: unknown) => (x != null && x !== "" ? Number(x) : null);
+  const rows: { label: string; range?: [number, number]; value: number | null; fmt: (n: number) => string; unit: string }[] = [
+    { label: "OG", range: info.og, value: val(recipe.target_og), fmt: (n) => n.toFixed(3), unit: "" },
+    { label: "FG", range: info.fg, value: val(recipe.target_fg), fmt: (n) => n.toFixed(3), unit: "" },
+    { label: "Alcol", range: info.abv, value: abv, fmt: (n) => num(n, 1), unit: "%" },
+    { label: "IBU", range: info.ibu, value: val(recipe.target_ibu), fmt: (n) => num(n, 0), unit: "" },
+    { label: "EBC", range: info.ebc, value: val(recipe.target_ebc), fmt: (n) => num(n, 0), unit: "" },
+  ];
+  return (
+    <>
+      <h3 className="ov-h"><BookMarked size={16} /> Lo stile: {name}</h3>
+      <div className="style-card">
+        <div className="style-meta">
+          <span><FlaskConical size={15} /> {info.ferm}</span>
+          <span><MapPin size={15} /> {info.origin}</span>
+        </div>
+        {rows.some((r) => r.range) && (
+          <div className="style-ranges">
+            {rows.filter((r) => r.range).map((r) => {
+              const [lo, hi] = r.range!;
+              const pad = (hi - lo) * 0.4 || 1;
+              const min = lo - pad, max = hi + pad;
+              const pos = (x: number) => Math.min(100, Math.max(0, ((x - min) / (max - min)) * 100));
+              const st = r.value == null ? "none" : r.value < lo - 1e-9 ? "low" : r.value > hi + 1e-9 ? "high" : "ok";
+              return (
+                <div key={r.label} className={"style-row st-" + st}>
+                  <span className="sr-label">{r.label}</span>
+                  <div className="sr-track">
+                    <span className="sr-range" style={{ left: `${pos(lo)}%`, width: `${pos(hi) - pos(lo)}%` }} />
+                    {r.value != null && <span className="sr-mark" style={{ left: `${pos(r.value)}%` }} />}
+                  </div>
+                  <span className="sr-text">
+                    <span className="sr-span">stile {r.fmt(lo)}–{r.fmt(hi)}{r.unit}</span>
+                    <span className="sr-ours">{r.value == null ? "noi —" : `noi ${r.fmt(r.value)}${r.unit} ${st === "ok" ? "✓" : st === "low" ? "↓" : "↑"}`}</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <div className="style-desc">
+          <div><Eye size={16} /><span><strong>Aspetto</strong> {info.look}</span></div>
+          <div><Flower2 size={16} /><span><strong>Aroma</strong> {info.aroma}</span></div>
+          <div><Smile size={16} /><span><strong>Gusto</strong> {info.taste}</span></div>
+        </div>
+        <p className="muted small style-src">Valori indicativi dello stile (linee guida BJCP). ✓ dentro lo stile · ↓ sotto · ↑ sopra.</p>
+      </div>
+    </>
+  );
+}

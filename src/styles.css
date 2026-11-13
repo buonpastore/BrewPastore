@@ -1095,3 +1095,27 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 }
 :root[data-theme="light"] tbody tr:hover td { background: rgba(70, 52, 24, .035); }
 :root[data-theme="light"] ::selection { background: rgba(237, 165, 18, .3); }
+
+/* ---------------- scheda: caratteristiche dello stile ---------------- */
+.style-card { border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--surface-2); padding: 14px; }
+.style-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted); font-size: .9rem; margin-bottom: 12px; }
+.style-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.style-meta svg { color: var(--teal); }
+.style-ranges { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.style-row { display: grid; grid-template-columns: 52px 1fr; grid-template-areas: "l t" "l x"; column-gap: 12px; row-gap: 4px; align-items: center; }
+.sr-label { grid-area: l; font-weight: 700; font-size: .85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.sr-track { grid-area: t; position: relative; height: 10px; border-radius: 99px; background: var(--surface-3); }
+.sr-range { position: absolute; top: 0; bottom: 0; border-radius: 99px; background: color-mix(in srgb, var(--teal) 55%, transparent); }
+.sr-mark { position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--gold); border: 2px solid var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
+.st-high .sr-mark, .st-low .sr-mark { background: var(--magenta); }
+.sr-text { grid-area: x; display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; white-space: nowrap; }
+.sr-span { color: var(--muted); }
+.sr-ours { font-weight: 700; }
+.st-ok .sr-ours { color: var(--teal); }
+.st-high .sr-ours, .st-low .sr-ours { color: var(--magenta); }
+.st-none .sr-ours { color: var(--faint); font-weight: 500; }
+.style-desc { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+.style-desc > div { display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; }
+.style-desc svg { flex: none; margin-top: 3px; color: var(--gold); }
+.style-desc strong { margin-right: 4px; }
+.style-src { margin: 12px 0 0; }
