@@ -841,6 +841,7 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
   --cat-etichette: #a678e2;  /* viola */
   --cat-detergenti: #63d1cf; /* ciano chiaro */
   --cat-altro: #9a8d78;      /* grigio caldo */
+  --cat-other-name: #b49c80; /* nomi degli "altri" ingredienti: marrone-grigio */
 }
 .badge.cat { background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); }
 .bd-cat.c-malto { background: var(--cat-malto); }
@@ -1074,6 +1075,7 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
   --cat-etichette: #7748bd;
   --cat-detergenti: #138f8d;
   --cat-altro: #7a6d58;
+  --cat-other-name: #7d6650;
 }
 :root[data-theme="light"] body {
   background:

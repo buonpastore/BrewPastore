@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase, errMsg, type Row } from "../lib";
 import { display, FieldInput, toDb, type FieldDef } from "./fields";
+import { sortByCat, nameColor } from "../categories";
 
 interface Props {
   table: string;
@@ -18,6 +19,8 @@ interface Props {
   /** trasforma la riga prima del salvataggio */
   beforeSave?: (row: Row) => Row | Promise<Row>;
   reloadKey?: unknown;
+  /** categoria di una riga: se c'è, righe in ordine malti → luppoli → lieviti → resto e nomi colorati */
+  categoryOf?: (row: Row) => string | null | undefined;
 }
 
 /** Tabella di righe figlie (ingredienti, correzioni acqua, costi...) con aggiunta/modifica/eliminazione. */
@@ -34,8 +37,9 @@ export function RowsEditor(p: Props) {
     const { data, error } = await supabase.from(table).select("*").eq(parentKey, parentId)
       .order(ob.column, { ascending: ob.ascending ?? true });
     if (error) return setError(errMsg(error));
-    setRows(data ?? []);
-    onChange?.(data ?? []);
+    const list = p.categoryOf ? sortByCat(data ?? [], p.categoryOf) : data ?? [];
+    setRows(list);
+    onChange?.(list);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, parentKey, parentId, ob.column, ob.ascending]);
 
@@ -111,7 +115,9 @@ export function RowsEditor(p: Props) {
             {rows.map((r) =>
               editId === r.id ? formRow(saveEdit, () => setEditId(null), r.id) : (
                 <tr key={r.id}>
-                  {p.fields.map((f) => <td key={f.key}>{display(f, r)}</td>)}
+                  {p.fields.map((f, k) => (
+                    <td key={f.key} style={p.categoryOf && k === 0 ? { color: nameColor(p.categoryOf(r)), fontWeight: 600 } : undefined}>{display(f, r)}</td>
+                  ))}
                   {p.extraColumns?.map((c) => <td key={c.label}>{c.render(r)}</td>)}
                   {p.canEdit && (
                     <td className="nowrap">

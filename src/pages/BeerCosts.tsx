@@ -1,3 +1,4 @@
+import { sortByCat, nameColor } from "../categories";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Pencil, Calculator, X } from "lucide-react";
@@ -201,9 +202,9 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
         <table className="bc-ing">
           <thead><tr><th>Ingrediente</th><th>Q.tà</th><th>Prezzo</th><th>Costo</th></tr></thead>
           <tbody>
-            {[...groups.values()].map((g) => (
+            {sortByCat([...groups.values()]).map((g) => (
               <tr key={g.name + g.unit}>
-                <td>{g.name}{g.mat && g.mat.name.toLowerCase() !== String(g.name).toLowerCase() && <div className="muted small">da «{g.mat.name}»</div>}</td>
+                <td><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.name}</span>{g.mat && g.mat.name.toLowerCase() !== String(g.name).toLowerCase() && <div className="muted small">da «{g.mat.name}»</div>}</td>
                 <td className="nowrap">{g.category === "lievito" ? yeastQty(g.qty, g.unit) : `${num(g.qty, 3)} ${g.unit}`}</td>
                 {(
                   <>

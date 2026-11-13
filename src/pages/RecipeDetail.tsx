@@ -156,7 +156,7 @@ export function RecipeDetail() {
             )}
             {isAdmin && editIng && (
               <RowsEditor table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} fields={ingFields}
-                canEdit={isAdmin} orderBy={{ column: "sort_order" }} defaults={{ category: "malto", unit: "kg" }}
+                canEdit={isAdmin} orderBy={{ column: "sort_order" }} defaults={{ category: "malto", unit: "kg" }} categoryOf={(r) => r.category}
                 reloadKey={reloadIng} onChange={() => setViewKey((x) => x + 1)} />
             )}
             {isAdmin && !importing && (

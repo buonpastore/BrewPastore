@@ -1,7 +1,7 @@
 import { Droplets, Wheat, ShowerHead, Flame, Wind, Snowflake, FlaskConical, ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 import { num, type Row } from "../lib";
-import { nameColor } from "../categories";
+import { nameColor, sortByCat } from "../categories";
 
 interface Props {
   ingredients: Row[];
@@ -43,7 +43,7 @@ function Items({ list, showStep }: { list: Row[]; showStep?: boolean }) {
   if (!list.length) return null;
   return (
     <ul className="bd-items">
-      {list.map((i) => (
+      {sortByCat(list).map((i) => (
         <li key={i.id ?? i.name + i.step}>
           <span className={"bd-cat c-" + i.category} />
           <strong style={{ color: nameColor(i.category) }}>{i.name}</strong> <span className="muted">{qty(i)}</span>

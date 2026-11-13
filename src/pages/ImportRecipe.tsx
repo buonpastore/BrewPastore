@@ -1,3 +1,4 @@
+import { sortByCat, nameColor } from "../categories";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FilePicker } from "../components/FilePicker";
@@ -46,7 +47,8 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
         const local = parseRecipeText(texts.join("\n"), [...OUR_STYLES, ...FAMOUS_STYLES]);
         if (local.ingredients.length) parsed = local;
       }
-      setData(parsed ?? await parseRecipe(ps));
+      const got = parsed ?? await parseRecipe(ps);
+      setData(got ? { ...got, ingredients: sortByCat(got.ingredients ?? []) } : got);   // malti, luppoli, lieviti, resto
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
   };
@@ -156,7 +158,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
                 <tbody>
                   {data.ingredients.map((ing, i) => (
                     <tr key={i}>
-                      <td data-label="Ingrediente" className="rv-wide"><input value={ing.name} onChange={(e) => setIng(i, "name", e.target.value)} /></td>
+                      <td data-label="Ingrediente" className="rv-wide"><input value={ing.name} style={{ color: nameColor(ing.category), fontWeight: 600 }} onChange={(e) => setIng(i, "name", e.target.value)} /></td>
                       <td data-label="Categoria"><select value={ing.category} onChange={(e) => setIng(i, "category", e.target.value)}>{MATERIAL_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></td>
                       <td data-label="Quantità"><input type="number" step="any" value={ing.quantity} onChange={(e) => setIng(i, "quantity", e.target.value)} style={{ width: 80 }} /></td>
                       <td data-label="Unità"><select value={ing.unit} onChange={(e) => setIng(i, "unit", e.target.value)}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>

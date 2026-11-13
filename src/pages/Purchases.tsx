@@ -1,3 +1,4 @@
+import { sortByCat, nameColor } from "../categories";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -146,10 +147,10 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
       if (!parsed) parsed = await parseDocument(ups.map((u) => u.path));
       const { items: its, ...h } = parsed;
       setHead({ ...h, supplier: h.supplier ?? "", date: h.date ?? new Date().toISOString().slice(0, 10) });
-      setItems(its.map((i) => {
+      setItems(sortByCat(its.map((i) => {
         const match = materials.find((m) => m.name.toLowerCase() === i.material_name.toLowerCase());
         return { ...i, material_id: match?.id ?? "" };
-      }));
+      })));
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
   };
@@ -222,7 +223,7 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
                   {items.map((it, i) => (
                     <tr key={i}>
                       <td data-label="Codice" className="rv-code"><input value={it.code ?? ""} placeholder="—" onChange={(e) => setItem(i, { code: e.target.value })} style={{ width: 95 }} /></td>
-                      <td className="small rv-desc">{it.description}</td>
+                      <td className="small rv-desc" style={{ color: nameColor(it.category), fontWeight: 600 }}>{it.description}</td>
                       <td data-label="Materia prima" className="rv-wide">
                         <select value={it.material_id} onChange={(e) => setItem(i, { material_id: e.target.value })}>
                           <option value="">➕ nuova: {it.material_name}</option>
@@ -306,6 +307,7 @@ export function PurchaseDetail() {
       <div className="panel">
         <h2>Righe</h2>
         <RowsEditor table="purchase_items" parentKey="purchase_id" parentId={p.id} canEdit={isAdmin}
+          reloadKey={materials.length} categoryOf={(r) => materials.find((m) => m.id === r.material_id)?.category}
           defaults={{ unit: "kg" }} onChange={(rows) => setGoods(rows.reduce((s, r) => s + Number(r.total_price), 0))}
           fields={[
             { key: "material_id", label: "Materia prima", type: "select", required: true, options: materials.map((m) => ({ value: m.id, label: m.name })) },

@@ -14,6 +14,14 @@ export const CAT_INFO: Record<string, { label: string; color: string; emoji: str
 export const catColor = (c?: string | null) => (CAT_INFO[c ?? ""] ?? CAT_INFO.altro).color;
 export const catLabel = (c?: string | null) => (CAT_INFO[c ?? ""] ?? CAT_INFO.altro).label;
 
-/** Colore del NOME di un ingrediente: malti, luppoli e lieviti col loro colore; il resto neutro. */
+/** Colore del NOME di un ingrediente: malti giallini, luppoli verdini, lieviti rossini; il resto marrone-grigio. */
 export const nameColor = (c?: string | null) =>
-  c === "malto" || c === "luppolo" || c === "lievito" ? catColor(c) : "var(--text)";
+  c === "malto" || c === "luppolo" || c === "lievito" ? catColor(c) : "var(--cat-other-name)";
+
+/** Ordine fisso in tutta l'app: malti, luppoli, lieviti, poi il resto. */
+export const CAT_ORDER = ["malto", "luppolo", "lievito", "sali_acqua", "additivo", "bottiglie", "tappi", "etichette", "detergenti", "altro"];
+export const catRank = (c?: string | null) => { const i = CAT_ORDER.indexOf(c ?? ""); return i < 0 ? CAT_ORDER.length : i; };
+/** Ordina per categoria mantenendo l'ordine originale dentro ogni categoria. */
+export function sortByCat<T>(rows: T[], cat: (r: T) => string | null | undefined = (r) => (r as { category?: string }).category): T[] {
+  return rows.map((r, i) => ({ r, i })).sort((a, b) => catRank(cat(a.r)) - catRank(cat(b.r)) || a.i - b.i).map((x) => x.r);
+}
