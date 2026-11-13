@@ -45,37 +45,30 @@ export function useCapColors(): CapColor[] {
 }
 export const capInfo = (k?: string | null) => (cache ?? []).find((c) => c.key === k) ?? CAP_COLORS.find((c) => c.key === k) ?? DEFAULT_CAPS.find((c) => c.key === k) ?? null;
 
-/** Tappo a corona disegnato: bordo dentellato, faccia bombata con riflesso. */
+/** Tappo a corona stilizzato: solo il bordo dentellato e il cerchio interno, nel colore del tappo. */
 export function CapIcon({ hex, size = 24, unknown = false, title }: { hex: string; size?: number; unknown?: boolean; title?: string }) {
-  const id = useId().replace(/:/g, "");
   const teeth = 21, pts: string[] = [];
   for (let i = 0; i < teeth * 2; i++) {
-    const a = (Math.PI * i) / teeth - Math.PI / 2, rr = i % 2 ? 44 : 49;
-    pts.push(`${(50 + rr * Math.cos(a)).toFixed(2)},${(50 + rr * Math.sin(a)).toFixed(2)}`);
+    const a = (Math.PI * i) / teeth - Math.PI / 2, rr = i % 2 ? 41 : 47;
+    pts.push(`${(50 + rr * Math.cos(a)).toFixed(1)},${(50 + rr * Math.sin(a)).toFixed(1)}`);
   }
+  const light = isLight(hex);
   return (
     <svg className="cap-icon" width={size} height={size} viewBox="0 0 100 100" role="img" aria-label={title}>
       {title && <title>{title}</title>}
-      <defs>
-        <radialGradient id={`f${id}`} cx="38%" cy="32%" r="70%">
-          <stop offset="0" stopColor="#fff" stopOpacity=".55" />
-          <stop offset=".45" stopColor="#fff" stopOpacity=".08" />
-          <stop offset="1" stopColor="#000" stopOpacity=".28" />
-        </radialGradient>
-        <linearGradient id={`e${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#fff" stopOpacity=".25" />
-          <stop offset="1" stopColor="#000" stopOpacity=".45" />
-        </linearGradient>
-      </defs>
-      <polygon points={pts.join(" ")} fill={hex} />
-      <polygon points={pts.join(" ")} fill={`url(#e${id})`} />
-      <circle cx="50" cy="50" r="37" fill={hex} stroke="rgba(0,0,0,.25)" strokeWidth="1.5" />
-      <circle cx="50" cy="50" r="37" fill={`url(#f${id})`} />
-      <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="1.5" />
-      {unknown && <text x="50" y="62" textAnchor="middle" fontSize="34" fontWeight="700" fill="rgba(255,255,255,.85)">?</text>}
+      {light && <polygon points={pts.join(" ")} fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="11" strokeLinejoin="round" />}
+      <polygon points={pts.join(" ")} fill={hex} fillOpacity=".14" stroke={hex} strokeWidth="7" strokeLinejoin="round" />
+      <circle cx="50" cy="50" r="24" fill="none" stroke={hex} strokeWidth="6" />
+      {unknown && <text x="50" y="61" textAnchor="middle" fontSize="30" fontWeight="700" fill={hex}>?</text>}
     </svg>
   );
 }
+const isLight = (hex: string) => {
+  const m = hex.replace("#", "").match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!m) return false;
+  const [r, g, b] = m.slice(1).map((x) => parseInt(x, 16));
+  return 0.299 * r + 0.587 * g + 0.114 * b > 200;
+};
 
 /** Pallino con il colore del tappo. */
 export function CapDot({ color, size = 18 }: { color?: string | null; size?: number }) {
@@ -138,7 +131,7 @@ export function CapGallery({ limit = 6 }: { limit?: number }) {
             const c = capInfo(b.cap_color);
             return (
               <Link key={b.id} to={`/batch/${b.id}`} className={"cap-card" + (c ? "" : " no-cap")}>
-                {c ? <CapIcon hex={c.hex} size={52} title={`Tappo ${c.label.toLowerCase()}`} /> : <CapIcon hex="#7d766c" size={52} unknown title="Tappo da scegliere" />}
+                {c ? <CapIcon hex={c.hex} size={52} title={`Tappo ${c.label.toLowerCase()}`} /> : <CapIcon hex="#8a8276" size={52} unknown title="Tappo da scegliere" />}
                 <span className="cap-text">
                   <strong>{b.recipes?.name ?? b.code}</strong>
                   <span className="muted small">{[b.recipes?.style, c ? `tappo ${c.label.toLowerCase()}` : "tappo da scegliere"].filter(Boolean).join(" · ")}</span>
