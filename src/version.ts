@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.121", date: "13/11/2026 23:30", text: "Lista dei batch più leggibile da telefono: vista compatta (nome, stato, data) o estesa, con il nome del batch e della ricetta su due righe" },
   { version: "0.120", date: "13/11/2026 23:15", text: "Degustazioni: si possono fare solo sulle birre imbottigliate" },
   { version: "0.119", date: "13/11/2026 23:05", text: "Produzione: i pulsanti Nuova ricetta, Nuovo batch e Nuova degustazione sono uguali, larghi tutta la riga, con l'icona della loro sezione" },
   { version: "0.118", date: "13/11/2026 22:55", text: "Home riordinata: frase del giorno, ultimi messaggi (se ci sono), batch in corso e in fondo «Riconosci le birre dal tappo»" },

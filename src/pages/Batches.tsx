@@ -32,6 +32,9 @@ export function Batches() {
   const [rows, setRows] = useState<Row[]>([]);
   const [costs, setCosts] = useState<Record<string, Row>>({});
   const [status, setStatus] = useState("");
+  const [view, setViewState] = useState<"compatta" | "estesa">(() => { try { return localStorage.getItem("bp-batch-vista") === "estesa" ? "estesa" : "compatta"; } catch { return "compatta"; } });
+  const setView = (v: "compatta" | "estesa") => { setViewState(v); try { localStorage.setItem("bp-batch-vista", v); } catch { /* niente */ } };
+  const full = view === "estesa";
 
   useEffect(() => {
     supabase.from("batches").select("*, recipes(name)").order("brew_date", { ascending: false, nullsFirst: true })
@@ -47,6 +50,10 @@ export function Batches() {
         <h1>Batch</h1>
       </div>
       {isAdmin && <button className="btn primary btn-wide" disabled={busy} onClick={startNew}>{busy ? "Creo…" : <><Beer size={20} /> Nuovo batch</>}</button>}
+      <div className="view-switch" role="group" aria-label="Visualizzazione">
+        <button className={"mini-btn" + (!full ? " on" : "")} onClick={() => setView("compatta")}>☰ <span>Compatta</span></button>
+        <button className={"mini-btn" + (full ? " on" : "")} onClick={() => setView("estesa")}>▦ <span>Estesa</span></button>
+      </div>
       <div className="toolbar">
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tutti gli stati</option>
@@ -54,28 +61,34 @@ export function Batches() {
         </select>
       </div>
       <div className="table-wrap">
-        <table>
-          <thead><tr><th>Batch</th><th>Ricetta</th><th>Stato</th><th>Cotta</th><th>Imbottigliata</th><th>OG → FG</th><th>ABV</th><th>Bottiglie</th><th>€/bottiglia</th>{isAdmin && <th />}</tr></thead>
+        <table className={"batch-list" + (full ? "" : " compact")}>
+          <thead><tr><th>Batch</th><th>Stato</th>{full ? <><th>Cotta</th><th>Imbottigliata</th><th>OG → FG</th><th>ABV</th><th>Bottiglie</th><th>€/bott.</th>{isAdmin && <th />}</> : <th>Data</th>}</tr></thead>
           <tbody>
             {list.map((b) => {
               const c = costs[b.id];
               const total = c ? c.ingredients_cost + c.extra_cost + c.energy_cost + c.water_cost : null;
               return (
                 <tr key={b.id}>
-                  <td className="nowrap"><Link to={`/batch/${b.id}`}>{b.code}</Link> <CapDot color={b.cap_color} size={14} /></td>
-                  <td>{b.recipes?.name}</td>
+                  <td className="bl-name">
+                    <Link to={`/batch/${b.id}`}><strong>{b.code}</strong></Link> <CapDot color={b.cap_color} size={14} />
+                    {b.recipes?.name && <div className="muted small">{b.recipes.name}</div>}
+                  </td>
                   <td><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span></td>
-                  <td>{date(b.brew_date)}</td>
-                  <td>{date(b.bottling_date)}</td>
-                  <td>{sg(b.original_gravity)} → {sg(b.final_gravity)}</td>
-                  <td>{b.abv != null ? `${b.abv}%` : "—"}</td>
-                  <td>{b.bottles_count ?? "—"}</td>
-                  <td>{total != null && b.bottles_count ? eur(total / b.bottles_count) : "—"}</td>
-                  {isAdmin && <td><button className="icon" title="Elimina batch" onClick={() => remove(b)}>🗑️</button></td>}
+                  {full ? (
+                    <>
+                      <td className="nowrap">{date(b.brew_date)}</td>
+                      <td className="nowrap">{date(b.bottling_date)}</td>
+                      <td className="nowrap">{sg(b.original_gravity)} → {sg(b.final_gravity)}</td>
+                      <td className="nowrap">{b.abv != null ? `${b.abv}%` : "—"}</td>
+                      <td>{b.bottles_count ?? "—"}</td>
+                      <td className="nowrap">{total != null && b.bottles_count ? eur(total / b.bottles_count) : "—"}</td>
+                      {isAdmin && <td><button className="icon" title="Elimina batch" onClick={() => remove(b)}>🗑️</button></td>}
+                    </>
+                  ) : <td className="nowrap small">{date(b.bottling_date ?? b.fermentation_start ?? b.brew_date)}</td>}
                 </tr>
               );
             })}
-            {!list.length && <tr><td colSpan={9} className="muted">Nessun batch.</td></tr>}
+            {!list.length && <tr><td colSpan={10} className="muted">Nessun batch.</td></tr>}
           </tbody>
         </table>
       </div>

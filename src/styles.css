@@ -1293,3 +1293,9 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .btn.btn-wide { gap: 10px; align-items: center; }
 
 .tasting-wait { padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--r); text-align: center; margin: 0 0 16px; }
+
+/* lista batch: nome su due righe, vista compatta */
+.batch-list .bl-name { min-width: 120px; }
+.batch-list .bl-name a { display: inline; }
+.batch-list.compact td, .batch-list.compact th { padding: 9px 6px; }
+@media (max-width: 600px) { .batch-list td, .batch-list th { padding: 8px 5px; font-size: .88rem; } .batch-list th { font-size: .62rem; } .batch-list .badge { font-size: .7rem; padding: 2px 7px; white-space: nowrap; } }
