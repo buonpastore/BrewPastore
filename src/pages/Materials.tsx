@@ -203,10 +203,12 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       </div>
       <p className="mat-total">Speso in totale: <strong>{eur(totalSpent)}</strong></p>
       {empty.length > 0 && (
-        <div className="row-actions" style={{ marginTop: 12 }}>
-          <span className="muted small">{empty.length} materie prime senza acquisti {showEmpty ? "mostrate" : "nascoste"}</span>
-          <button className="mini-btn" onClick={() => setShowEmpty(!showEmpty)}>{showEmpty ? "Nascondi" : "Mostra"}</button>
-          {isAdmin && <button className="mini-btn" onClick={cleanEmpty}>🗑️ <span>Elimina quelle senza acquisti</span></button>}
+        <div className="mat-empty">
+          <p><strong>{empty.length}</strong> {empty.length === 1 ? "materia prima senza acquisti" : "materie prime senza acquisti"} {showEmpty ? (empty.length === 1 ? "mostrata nella lista" : "mostrate nella lista") : (empty.length === 1 ? "nascosta" : "nascoste")}</p>
+          <div className={"mat-empty-btns" + (isAdmin ? "" : " one")}>
+            <button className="btn" onClick={() => setShowEmpty(!showEmpty)}>{showEmpty ? "🙈 Nascondi" : "👁️ Mostra"}</button>
+            {isAdmin && <button className="btn danger" onClick={cleanEmpty}>🗑️ Elimina</button>}
+          </div>
         </div>
       )}
     </div>
