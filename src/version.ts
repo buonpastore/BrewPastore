@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.084", date: "13/11/2026 14:15", text: "Costi birre: il prezzo del lievito si trova anche quando è comprato a grammi (11,5 g) e nella ricetta è a bustine, o viceversa" },
   { version: "0.083", date: "13/11/2026 13:40", text: "Costi birre: calcolati sempre ingrediente per ingrediente, senza kit" },
   { version: "0.082", date: "13/11/2026 13:30", text: "Impostazioni: prezzo delle bottiglie da 66 cl (pacco da 24 a 11 €) e da 33 cl; nei costi per ora si usa sempre la bottiglia da 66 cl" },
   { version: "0.081", date: "13/11/2026 13:10", text: "Costi birre: scegli il kit all grain usato (malti, luppoli e lievito già compresi), zucchero ipotizzato a 1 €/kg e collegamento a mano degli ingredienti senza prezzo" },

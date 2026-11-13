@@ -40,7 +40,9 @@ export function matchMaterial(ing: Row, mats: Row[]): Row | null {
   let best: Row | null = null, bestScore = 0;
   for (const m of priced) {
     if (ing.category && m.category && ing.category !== m.category && ing.category !== "altro" && m.category !== "altro") continue;
-    if (unitFamily(ing.unit ?? "kg") !== m.base_unit && !(m.base_unit === "pz" && ing.category === "lievito")) continue;
+    // i lieviti si comprano sia a bustine (pz) sia a grammi (11,5 g): li confronto comunque
+    const yeast = ing.category === "lievito" || m.category === "lievito";
+    if (unitFamily(ing.unit ?? "kg") !== m.base_unit && !(yeast && ["pz", "kg"].includes(m.base_unit))) continue;
     const mt = new Set(tokens(m.name));
     const shared = it.filter((t) => mt.has(t) || [...mt].some((x) => x.length >= 4 && t.length >= 4 && (x.startsWith(t) || t.startsWith(x))));
     const score = shared.length / it.length - (mt.size - shared.length) * 0.01;
@@ -58,7 +60,11 @@ export function ingredientCost(ing: Row, mats: Row[]): { cost: number | null; ma
     return d != null ? { cost: toBase(Number(ing.quantity), ing.unit) * d, mat: null, guessed: d } : { cost: null, mat: null };
   }
   // lievito comprato a bustine ma scritto in grammi nella ricetta: conto 1 bustina
-  const qty = mat.base_unit === "pz" && unitFamily(ing.unit) !== "pz" ? 1 : toBase(Number(ing.quantity), ing.unit);
+  const SACHET_KG = 0.0115;   // bustina standard di lievito secco: 11,5 g
+  const fam = unitFamily(ing.unit ?? "kg"), q = Number(ing.quantity ?? 0);
+  const qty = mat.base_unit === "pz" && fam === "kg" ? Math.max(1, Math.ceil(toBase(q, ing.unit) / SACHET_KG - 0.01))   // grammi → bustine
+    : mat.base_unit === "kg" && fam === "pz" ? q * SACHET_KG                                                             // bustine → kg
+    : toBase(q, ing.unit);
   return { cost: qty * Number(mat.avg_unit_cost), mat };
 }
 
