@@ -2,7 +2,7 @@ import { CapDot } from "../components/CapColor";
 import { sortByCat, nameColor } from "../categories";
 import { Fragment, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Calculator, X } from "lucide-react";
+import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, Calculator, X } from "lucide-react";
 import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
@@ -100,7 +100,7 @@ export function BeerCosts() {
         <h3>Come li calcolo</h3>
         <ul>
           <li><Hourglass size={14} className="ic-guess" /> <strong>Presunto</strong> dalla cotta all'imbottigliamento: materie prime + corrente + acqua + bottiglie e tappi stimati (litri ÷ 0,66).</li>
-          <li><CircleAlert size={14} className="ic-warn" /> <strong>Imbottigliata</strong>, costo reale ma con qualche dato stimato o mancante. <CheckCircle2 size={14} className="ic-ok" /> <strong>Completo</strong>: tutti i dati inseriti.</li>
+          <li><BottleIcon size={14} className="ic-warn" /> <strong>Imbottigliata</strong>, costo reale ma con qualche dato stimato o mancante. <BadgeCheck size={14} className="ic-ok" /> <strong>Completo</strong>: tutti i dati inseriti.</li>
           <li><strong>Materie prime</strong>: ingredienti della ricetta, contati una volta, × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
           <li><strong>Bottiglie e tappi</strong>: bottiglie × {data.cfg.b66 != null ? eur(data.cfg.b66) : "—"} (Impostazioni){cp != null ? ` + tappo ${eur(cp)}` : ""}.</li>
           <li><strong>Corrente</strong>: kWh inseriti nei batch × {eur(data.energy)}/kWh.</li>
@@ -118,10 +118,21 @@ export function SrcIcon({ source }: { source: Source }) {
 }
 
 /** Stato del costo della birra, solo con un'icona. */
+/** Bottiglia di birra stilizzata (linea), stesso stile delle altre icone. */
+function BottleIcon({ size = 18, className }: { size?: number; className?: string }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M10 2h4" />
+      <path d="M10.5 2v4.5c0 1-.6 1.6-1.4 2.4C8.4 9.6 8 10.6 8 11.8V20a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-8.2c0-1.2-.4-2.2-1.1-2.9-.8-.8-1.4-1.4-1.4-2.4V2" />
+      <path d="M8 14h8" />
+    </svg>
+  );
+}
+
 function StateIcon({ sum }: { sum: ReturnType<typeof sumCosts> }) {
-  if (sum.complete) return <CheckCircle2 size={18} className="ic-ok" aria-label="costo reale, dati completi" />;
-  if (sum.allBottled) return <CircleAlert size={18} className="ic-warn" aria-label="imbottigliata, qualche dato stimato" />;
-  return <Hourglass size={18} className="ic-guess" aria-label="costo presunto, non ancora imbottigliata" />;
+  if (sum.complete) return <span title="Costo reale, dati completi"><BadgeCheck size={19} className="ic-ok" /></span>;
+  if (sum.allBottled) return <span title="Imbottigliata: costo reale, qualche dato stimato"><BottleIcon size={19} className="ic-warn" /></span>;
+  return <span title="Costo presunto, non ancora imbottigliata"><Hourglass size={18} className="ic-guess" /></span>;
 }
 
 function Line({ label, value, source }: { label: string; value: string; source?: Source }) {
