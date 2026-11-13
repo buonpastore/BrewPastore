@@ -28,8 +28,8 @@ export const GROUPS: Group[] = [
     key: "conti", label: "Conti", icon: Coins, to: "/costi", color: "var(--teal)",
     tabs: [
       { to: "/costi", label: "Costi birre", short: "Costi", icon: Calculator, color: "var(--gold)" },
-      { to: "/spese", label: "Spese condivise", short: "Spese", icon: Wallet, color: "var(--teal)" },
-      { to: "/materie-prime", label: "Materie prime", short: "Materie", icon: Wheat, color: "var(--magenta)", also: ["/acquisti"] },
+      { to: "/materie-prime", label: "Materie prime", short: "Materie", icon: Wheat, color: "var(--teal)", also: ["/acquisti"] },
+      { to: "/spese", label: "Spese condivise", short: "Spese", icon: Wallet, color: "var(--magenta)" },
       { to: "/impianto", label: "Preventivi impianto", short: "Preventivi", icon: Wrench, color: "var(--gold)" },
     ],
   },

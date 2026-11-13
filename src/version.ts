@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.094", date: "13/11/2026 16:40", text: "Conti: ordine delle schede Costi, Materie, Spese, Preventivi" },
   { version: "0.093", date: "13/11/2026 16:30", text: "Batch: il pulsante «Nuovo batch» è largo tutta la riga" },
   { version: "0.092", date: "13/11/2026 16:20", text: "Ricetta → Batch: i batch sono in ordine di lavorazione (cotta, fermentazione, maturazione, imbottigliamento, bevuta) con la data del passaggio" },
   { version: "0.091", date: "13/11/2026 16:05", text: "Materie prime: toccando un nome vedi il calcolo del costo medio riga per riga (prezzo, quota di spedizione, prezzo unitario con e senza spedizione e media)" },
