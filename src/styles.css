@@ -1179,3 +1179,8 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 
 /* mentre si scrive sul telefono la barra in basso sparisce */
 @media (max-width: 900px) { body.typing .bottom-nav { display: none; } }
+.bc-kind { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 99px; }
+.bc-kind.real { color: var(--teal); background: color-mix(in srgb, var(--teal) 15%, transparent); }
+.bc-kind.guess { color: var(--magenta); background: color-mix(in srgb, var(--magenta) 14%, transparent); }
+.bc-sub { width: 100%; padding-left: 26px; }
+.bc-note { margin: 4px 0 0; text-align: center; }
