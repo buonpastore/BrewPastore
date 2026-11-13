@@ -905,11 +905,15 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 /* scheda ricetta: griglie omogenee */
 .ov-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .ov-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ov-grid.cols-1 { grid-template-columns: 1fr; }
+.ov-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ov-summary p { margin: 0 0 10px; }
+.ov-summary p:last-child { margin-bottom: 0; }
 @media (max-width: 900px) { .ov-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .ov-grid.cols-3, .ov-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* procedimento: riassunto + passi a schede */
-.ov-summary { margin: 0 0 14px; padding: 14px 16px; border-radius: var(--r); background: linear-gradient(150deg, rgba(237, 165, 18, .12), rgba(237, 165, 18, .03)); border: 1px solid rgba(237, 165, 18, .3); line-height: 1.6; font-weight: 500; }
+.ov-summary { margin: 0 0 14px; padding: 14px 16px; border-radius: var(--r); background: linear-gradient(150deg, rgba(237, 165, 18, .12), rgba(237, 165, 18, .03)); border: 1px solid rgba(237, 165, 18, .3); line-height: 1.6; }
 .ov-steps { gap: 10px; }
 .ov-steps::before { display: none; }
 .ov-steps > li.ov-step { display: block; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: var(--r); }
@@ -940,7 +944,7 @@ button.qe-title { width: 100%; background: none; border: 0; padding: 0; cursor: 
 .recipe-pick-btn:hover, .recipe-pick-btn:active { border-color: var(--gold); }
 .qe-phase { scroll-margin-top: calc(var(--topbar-h) + 12px); }
 .mat-name { font-weight: 600; } .mat-name:hover { filter: brightness(1.15); text-decoration: none; }
-@media (max-width: 600px) { .ov-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .ov-grid.cols-3 .ov-tile { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px; } .ov-grid.cols-3 .ov-value { font-size: 1.02rem; } .ov-grid.cols-3 .ov-ico { width: 32px; height: 32px; } }
+@media (max-width: 600px) { .ov-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .ov-grid.cols-1, .ov-grid.cols-2 { gap: 6px; } .ov-grid.cols-3 .ov-tile { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px; } .ov-grid.cols-3 .ov-value { font-size: 1.02rem; } .ov-grid.cols-3 .ov-ico { width: 32px; height: 32px; } }
 th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: var(--text); } th.sortable.on { color: var(--gold); }
 
 /* ---------------- calcolatore bottiglie ---------------- */

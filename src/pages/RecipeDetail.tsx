@@ -127,9 +127,16 @@ export function RecipeDetail() {
       ]} />
 
       <div className="panel">
-        {tab === "scheda" && isAdmin && (
-          <div className="row-actions" style={{ margin: "0 0 14px" }}>
-            <button className="mini-btn" onClick={async () => {
+        {tab === "scheda" && (editScheda && isAdmin ? (
+          <RecordForm table="recipes" row={recipe} sections={RECIPE_SECTIONS} canEdit={isAdmin} startEditing
+            onSaved={(r) => { setRecipe(r); setEditScheda(false); }} onCancel={() => setEditScheda(false)} />
+        ) : (
+          <>
+            <RecipeOverview recipe={recipe} />
+            {isAdmin && (
+              <div className="row-actions" style={{ marginTop: 16 }}>
+                <button className="btn" onClick={() => setEditScheda(true)}>✏️ Modifica scheda</button>
+                <button className="btn" onClick={async () => {
               const { data: ings } = await supabase.from("recipe_ingredients").select("*").eq("recipe_id", recipe.id).order("sort_order");
               const text = buildProcedure({
                 mashTemp: recipe.mash_temp_c, mashTime: recipe.mash_time_min, boil: recipe.boil_time_min,
@@ -140,16 +147,9 @@ export function RecipeDetail() {
               const { data, error } = await supabase.from("recipes").update({ procedure: text }).eq("id", recipe.id).select().single();
               if (error) return alert(errMsg(error));
               setRecipe(data);
-            }}>📝 <span>Genera riassunto del procedimento</span></button>
-          </div>
-        )}
-        {tab === "scheda" && (editScheda && isAdmin ? (
-          <RecordForm table="recipes" row={recipe} sections={RECIPE_SECTIONS} canEdit={isAdmin} startEditing
-            onSaved={(r) => { setRecipe(r); setEditScheda(false); }} onCancel={() => setEditScheda(false)} />
-        ) : (
-          <>
-            <RecipeOverview recipe={recipe} />
-            {isAdmin && <button className="btn" style={{ marginTop: 16 }} onClick={() => setEditScheda(true)}>✏️ Modifica scheda</button>}
+            }}>📝 Genera riassunto del procedimento</button>
+              </div>
+            )}
           </>
         ))}
         {tab === "ingredienti" && (

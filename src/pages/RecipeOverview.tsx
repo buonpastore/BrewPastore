@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import {
   Beer, Target, Flag, Leaf, Palette, CupSoda, Thermometer, Flame, Droplets, ShowerHead, Wheat, Wind, Snowflake,
-  FlaskConical, Sparkles, Eye, Feather, Flower2, Smile, Waves, ListOrdered, StickyNote,
+  FlaskConical, Sparkles, Eye, Feather, Flower2, Smile, Waves, ListOrdered, StickyNote, BookOpen,
 } from "lucide-react";
 import { num, sg, type Row } from "../lib";
 import { abvOf, ebcColor, ebcName, ibuName } from "../beerLook";
@@ -51,6 +51,11 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
   // procedimento: righe "1. Mash: …" → passaggi
   const steps = String(recipe.procedure ?? "").split(/\n+/).map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean);
 
+  const phases = mashPhases(steps.find((x) => /^mash/i.test(x)) ?? "");
+  const boilStep = steps.find((x) => /^bollitura/i.test(x)) ?? "";
+  const nAdds = boilStep.includes(":") ? boilStep.split(":").slice(1).join(":").split(/,\s*/).filter((x) => x.trim()).length : 0;
+  const hopAdds = nAdds ? `${nAdds} ${nAdds === 1 ? "aggiunta" : "aggiunte"} durante la bollitura` : "";
+
   const notes = recipe.notes && !/^Lett[ao] direttamente dal testo/i.test(recipe.notes) ? recipe.notes : null;
 
   return (
@@ -63,20 +68,32 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
           swatch={ebc != null ? ebcColor(ebc) : undefined} color="var(--cat-malto)" />
       </div>
 
+      <h3 className="ov-h"><Droplets size={16} /> Acqua</h3>
+      <div className="ov-grid cols-2">
+        <Tile icon={<Droplets size={20} />} label="Acqua di mash" value={recipe.mash_water_l != null ? `${num(recipe.mash_water_l, 1)} L` : "—"} sub="nel tino con i grani" color="var(--teal)" />
+        <Tile icon={<ShowerHead size={20} />} label="Acqua di sparge" value={recipe.sparge_water_l != null ? `${num(recipe.sparge_water_l, 1)} L` : "—"} sub="a 76–78 °C" color="var(--teal)" />
+      </div>
+
+      <h3 className="ov-h"><Thermometer size={16} /> Processo</h3>
+      <div className={`ov-grid cols-${Math.min(Math.max(phases.length, 1), 3)}`}>
+        {phases.length ? phases.map((ph, i) => (
+          <Tile key={i} icon={<Thermometer size={20} />} label={ph.name} value={`${ph.temp} °C`} sub={ph.min ? `per ${ph.min} minuti` : undefined}
+            color={/out/i.test(ph.name) ? "var(--magenta)" : "var(--gold)"} />
+        )) : (
+          <Tile icon={<Thermometer size={20} />} label="Mash" value={recipe.mash_temp_c ? `${num(recipe.mash_temp_c, 1)} °C` : "—"}
+            sub={recipe.mash_time_min ? `per ${recipe.mash_time_min} minuti` : undefined} color="var(--gold)" />
+        )}
+      </div>
+      <div className="ov-grid cols-1" style={{ marginTop: 10 }}>
+        <Tile icon={<Flame size={20} />} label="Bollitura" value={recipe.boil_time_min ? `${recipe.boil_time_min} minuti` : "—"}
+          sub={hopAdds ? hopAdds : undefined} color="var(--magenta)" />
+      </div>
+
       <h3 className="ov-h"><Target size={16} /> Densità e volume</h3>
       <div className="ov-grid cols-3">
         <Tile icon={<Target size={20} />} label="OG prevista" value={sg(recipe.target_og)} sub="densità iniziale" color="var(--teal)" />
         <Tile icon={<Flag size={20} />} label="FG prevista" value={sg(recipe.target_fg)} sub="densità finale" color="var(--teal)" />
         <Tile icon={<CupSoda size={20} />} label="Volume" value={recipe.batch_size_l ? `${num(recipe.batch_size_l, 1)} L` : "—"} sub="in fermentatore" color="var(--magenta)" />
-      </div>
-
-      <h3 className="ov-h"><Thermometer size={16} /> Processo</h3>
-      <div className="ov-grid cols-4">
-        <Tile icon={<Thermometer size={20} />} label="Mash" value={recipe.mash_temp_c ? `${num(recipe.mash_temp_c, 1)} °C` : "—"}
-          sub={recipe.mash_time_min ? `per ${recipe.mash_time_min} minuti` : undefined} color="var(--gold)" />
-        <Tile icon={<Flame size={20} />} label="Bollitura" value={recipe.boil_time_min ? `${recipe.boil_time_min} min` : "—"} color="var(--magenta)" />
-        <Tile icon={<Droplets size={20} />} label="Acqua di mash" value={recipe.mash_water_l != null ? `${num(recipe.mash_water_l, 1)} L` : "—"} color="var(--teal)" />
-        <Tile icon={<ShowerHead size={20} />} label="Acqua di sparge" value={recipe.sparge_water_l != null ? `${num(recipe.sparge_water_l, 1)} L` : "—"} sub="a 76–78 °C" color="var(--teal)" />
       </div>
 
       {descParts.length > 0 && (
@@ -103,7 +120,6 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
       {steps.length > 0 && (
         <>
           <h3 className="ov-h"><ListOrdered size={16} /> Procedimento</h3>
-          <p className="ov-summary">{summarize(recipe, steps)}</p>
           <ol className="ov-steps">
             {steps.map((st, i) => {
               const [ico, color] = stepIcon(st);
@@ -125,6 +141,8 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
               );
             })}
           </ol>
+          <h3 className="ov-h"><BookOpen size={16} /> Il procedimento in breve</h3>
+          <div className="ov-summary">{narrate(recipe, steps).map((t, i) => <p key={i}>{t}</p>)}</div>
         </>
       )}
 
@@ -154,34 +172,70 @@ function splitDetails(body: string): string[] {
   return parts.length > 1 ? parts : [t];
 }
 
-/** Riassunto discorsivo del procedimento, dai passi e dai dati della ricetta. */
-function summarize(r: Row, steps: string[]): string {
-  const find = (rx: RegExp) => steps.find((s) => rx.test(s)) ?? "";
-  const names = (txt: string) => [...new Set(txt.replace(/^[^:]*:\s*/, "").split(/,\s*/)
-    .map((x) => x.replace(/\s+\d.*$/, "").trim()).filter((x) => x && !/^\d/.test(x)))];
-  const parts: string[] = [];
-  const head = `${r.style ? `${r.style}` : "Birra"}${r.batch_size_l ? ` da ${String(r.batch_size_l).replace(".", ",")} litri` : ""}`;
-  const mash = find(/^mash/i);
-  const temps = [...mash.matchAll(/(\d{2})\s*°C/g)].map((m) => m[1]).filter((t, i, a) => a.indexOf(t) === i);
-  if (temps.length > 1) parts.push(`mash a step ${temps.filter((t) => Number(t) < 76).join(" → ")} °C${temps.some((t) => Number(t) >= 76) ? " con mash out" : ""}`);
-  else if (r.mash_temp_c) parts.push(`mash a ${String(r.mash_temp_c).replace(".", ",")} °C per ${r.mash_time_min ?? "?"} minuti`);
-  const boil = find(/^bollitura/i);
-  if (boil) {
-    const n = names(boil.split(":").slice(1).join(":") || "");
-    parts.push(`bollitura di ${r.boil_time_min ?? boil.match(/(\d+)\s*min/)?.[1] ?? "?"} minuti${n.length ? ` con ${andList(n.map((x, i) => (i === 0 ? x : x.charAt(0).toLowerCase() + x.slice(1))))}` : ""}`);
+/** Fasi del mash: "Prima fase 63 °C × 60 min → Mash out 78 °C × 10 min con …" */
+function mashPhases(mash: string): { name: string; temp: string; min: string | null }[] {
+  const body = mash.replace(/^mash\s*:?\s*/i, "").split(/\s+con\s+/)[0];
+  const out: { name: string; temp: string; min: string | null }[] = [];
+  body.split(/\s*→\s*/).forEach((part, i) => {
+    const m = part.match(/^(.*?)\s*(\d{2}(?:[.,]\d)?)\s*°C(?:\s*(?:×|x|per)\s*(\d{1,3})\s*min)?/i);
+    if (!m) return;
+    const name = m[1].replace(/[:,]\s*$/, "").trim();
+    out.push({ name: name ? name.charAt(0).toUpperCase() + name.slice(1) : `Fase ${i + 1}`, temp: m[2].replace(".", ","), min: m[3] ?? null });
+  });
+  return out;
+}
+
+const lc = (x: string) => (x ? x.charAt(0).toLowerCase() + x.slice(1) : x);
+const after = (s: string) => s.replace(/^[^:]*:\s*/, "").replace(/\.$/, "").trim();
+
+/** Resoconto discorsivo del procedimento, un paragrafo per fase. */
+function narrate(r: Row, steps: string[]): string[] {
+  const out: string[] = [];
+  const abv = abvOf(r.target_og, r.target_fg);
+  const ibu = r.target_ibu != null ? Number(r.target_ibu) : null;
+  const ebc = r.target_ebc != null ? Number(r.target_ebc) : null;
+  const lit = (x: unknown) => String(x).replace(".", ",");
+  const intro = [`${r.style ? `Una ${r.style}` : "Una birra"}${r.batch_size_l ? ` da ${lit(r.batch_size_l)} litri` : ""}`];
+  const traits = [
+    abv != null ? `circa ${num(abv, 1)}% di alcol` : null,
+    ibu != null ? `amarezza ${ibuName(ibu).toLowerCase()} (${num(ibu, 0)} IBU)` : null,
+    ebc != null ? `colore ${ebcName(ebc).toLowerCase()}` : null,
+  ].filter(Boolean);
+  out.push(`${intro[0]}${r.target_og && r.target_fg ? `: si parte da una densità di ${sg(r.target_og)} per arrivare a ${sg(r.target_fg)}` : ""}${traits.length ? `, con ${andList(traits as string[])}` : ""}.`);
+
+  for (const st of steps) {
+    const low = st.toLowerCase();
+    if (/^acqua/.test(low)) {
+      const parts = after(st).split(/,\s*/);
+      const waters = parts.filter((p) => /\bL per\b/.test(p));
+      const salts = parts.filter((p) => !/\bL per\b/.test(p));
+      out.push(`Si prepara l'acqua${waters.length ? `: ${andList(waters)}` : ""}${salts.length ? `, correggendola con ${andList(salts.map(lc))}` : ""}.`);
+    } else if (/^mash/.test(low)) {
+      const ph = mashPhases(st);
+      const grains = st.split(/\s+con\s+/)[1]?.replace(/\.$/, "");
+      const seq = ph.map((p, i) => `${i === 0 ? "" : i === ph.length - 1 ? "e infine " : "poi "}${lc(p.name)} a ${p.temp} °C${p.min ? ` per ${p.min} minuti` : ""}`);
+      out.push(`${grains ? `I grani (${grains}) vanno in ammostamento` : "Si passa all'ammostamento"}${seq.length ? `: ${seq.join(", ")}` : r.mash_temp_c ? ` a ${lit(r.mash_temp_c)} °C per ${r.mash_time_min ?? "?"} minuti` : ""}. In questa fase gli enzimi trasformano gli amidi in zuccheri.`);
+    } else if (/^sparge/.test(low)) {
+      out.push(`Con lo sparge si risciacquano le trebbie${/con\s+([\d.,]+)\s*L/i.test(st) ? ` con ${st.match(/con\s+([\d.,]+)\s*L/i)![1]} litri d'acqua` : ""}${/a\s+([\d–-]+)\s*°C/.test(st) ? ` a ${st.match(/a\s+([\d–-]+)\s*°C/)![1]} °C` : ""}, per recuperare tutti gli zuccheri.`);
+    } else if (/^bollitura/.test(low)) {
+      const min = st.match(/(\d+)\s*min/)?.[1] ?? r.boil_time_min;
+      const adds = st.includes(":") ? after(st).split(/,\s*/).filter(Boolean) : [];
+      out.push(`Il mosto bolle per ${min ?? "?"} minuti${adds.length ? `; le aggiunte sono ${andList(adds.map((a) => a.replace(/ a (\d+)'$/, " a $1 minuti dalla fine")))}` : ""}. La bollitura dà l'amaro e sterilizza il mosto.`);
+    } else if (/^whirlpool/.test(low)) {
+      out.push(`A fuoco spento, nel whirlpool${st.match(/a\s+(\d+)\s*°C/) ? ` a ${st.match(/a\s+(\d+)\s*°C/)![1]} °C` : ""}, si aggiungono ${andList(after(st).split(/,\s*/))} per l'aroma.`);
+    } else if (/^raffredd/.test(low)) {
+      out.push(`${st.replace(/\.$/, "").replace(/^Raffreddare/, "Si raffredda il mosto").replace(/ e inoculare /, " e si inocula il lievito: ")}.`);
+    } else if (/^fermentaz/.test(low)) {
+      out.push(`La fermentazione segue questo profilo: ${after(st).split(/\s*→\s*/).map(lc).join(", poi ")}.`);
+    } else if (/^dry hop/.test(low)) {
+      out.push(`Durante la fermentazione si fa il dry hop con ${andList(after(st).split(/,\s*/))}, per dare profumo senza aggiungere amaro.`);
+    } else if (/^carbonaz/.test(low)) {
+      out.push(`All'imbottigliamento si punta a una carbonazione di ${after(st)}.`);
+    } else {
+      out.push(st.replace(/\s*$/, "").replace(/([^.])$/, "$1."));
+    }
   }
-  const wp = find(/^whirlpool/i);
-  if (wp) { const n = names(wp.split(":").slice(1).join(":")); if (n.length) parts.push(`whirlpool con ${n.join(", ")}`); }
-  const cool = find(/inoculare/i);
-  const yeast = cool.match(/inoculare\s+([^(.]+)/i)?.[1]?.trim();
-  const ferm = find(/^fermentaz/i);
-  const ft = [...ferm.matchAll(/(\d{2}(?:–\d{2})?)\s*°C/g)].map((m) => m[1]);
-  if (yeast || ft.length) parts.push(`fermentazione${yeast ? ` con ${yeast}` : ""}${ft.length > 1 ? ` da ${ft[0]} °C fino a ${ft[ft.length - 1]} °C` : ft.length ? ` a ${ft[0]} °C` : ""}`);
-  const dry = find(/^dry hop/i);
-  if (dry) { const n = names(dry.split(":").slice(1).join(":")); if (n.length) parts.push(`dry hop con ${n.join(", ")}`); }
-  const carb = find(/^carbonaz/i).replace(/^[^:]*:\s*/, "").replace(/\.$/, "");
-  if (carb) parts.push(`carbonazione a ${carb}`);
-  return parts.length ? `${head}: ${parts.join("; ")}.` : `${head}.`;
+  return out;
 }
 
 const andList = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}` : xs[0] ?? "");
