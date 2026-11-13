@@ -1184,3 +1184,7 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .bc-kind.guess { color: var(--magenta); background: color-mix(in srgb, var(--magenta) 14%, transparent); }
 .bc-sub { width: 100%; padding-left: 26px; }
 .bc-note { margin: 4px 0 0; text-align: center; }
+
+.bc-kit select, .bc-link { width: 100%; }
+.bc-link { min-width: 150px; font-size: .85rem; padding: 6px 8px; border-color: var(--warn); }
+.bc-kit p { margin: 6px 0 0; }
