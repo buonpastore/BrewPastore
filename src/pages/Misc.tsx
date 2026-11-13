@@ -224,6 +224,7 @@ export function Settings() {
   const saveSetting = async (s: Row, value: string) => {
     const { error } = await supabase.from("settings").update({ value: Number(value.replace(",", ".")) }).eq("key", s.key);
     setMsg(error ? errMsg(error) : `${s.label} salvato ✓`);
+    if (!error) setSettings((all) => all.map((x) => (x.key === s.key ? { ...x, value: Number(value.replace(",", ".")) } : x)));
   };
   const saveName = async () => {
     const { error } = await supabase.from("profiles").update({ display_name: name }).eq("id", profile!.id);
@@ -249,7 +250,7 @@ export function Settings() {
       </div>
       {isAdmin && <MascotUpload />}
       <div className="panel">
-        <h2>Prezzi utenze (per il costo dei batch)</h2>
+        <h2>Prezzi per i costi delle birre</h2>
         <table>
           <tbody>
             {settings.map((s) => (
@@ -262,6 +263,13 @@ export function Settings() {
             ))}
           </tbody>
         </table>
+        {(() => {
+          const per = (k: string) => { const p = settings.find((x) => x.key === `bottle_${k}_pack_price`), q = settings.find((x) => x.key === `bottle_${k}_pack_qty`); return p && q && Number(p.value) > 0 && Number(q.value) > 0 ? eur(Number(p.value) / Number(q.value)) : null; };
+          const b66 = per("66"), b33 = per("33");
+          return settings.some((x) => x.key.startsWith("bottle_"))
+            ? <p className="muted small">Bottiglia da 66 cl: {b66 ?? "—"} l'una · da 33 cl: {b33 ?? "non impostato"}. Nei costi per ora si usa sempre la bottiglia da 66 cl.</p>
+            : <p className="muted small">Per impostare il prezzo delle bottiglie esegui nello SQL Editor di Supabase il file <code>0008_prezzo_bottiglie.sql</code> (intanto uso 11 € per 24 bottiglie da 66 cl).</p>;
+        })()}
       </div>
       <div className="panel">
         <h2>Utenti</h2>

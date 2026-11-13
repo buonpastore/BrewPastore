@@ -3,12 +3,12 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase, eur, num, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { computeBatchCost, sumCosts, ingredientCost, bottleUnitPrice, capUnitPrice, isKit, KIT_COVERS, type BatchCost } from "../costs";
+import { computeBatchCost, sumCosts, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, KIT_COVERS, type BatchCost, type BottlePrices } from "../costs";
 
 /** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
 export function BeerCosts() {
   const [sp] = useSearchParams();
-  const [data, setData] = useState<{ recipes: Row[]; batches: Row[]; bIngs: Row[]; rIngs: Row[]; extras: Row[]; mats: Row[]; energy: number; water: number } | null>(null);
+  const [data, setData] = useState<{ recipes: Row[]; batches: Row[]; bIngs: Row[]; rIngs: Row[]; extras: Row[]; mats: Row[]; energy: number; water: number; cfg: BottlePrices } | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
 
@@ -23,7 +23,7 @@ export function BeerCosts() {
       supabase.from("settings").select("*"),
     ]).then(([r, b, bi, ri, e, m, st]) => {
       const val = (k: string) => Number((st.data ?? []).find((x) => x.key === k)?.value ?? 0);
-      setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: m.data ?? [], energy: val("energy_price_kwh"), water: val("water_price_l") });
+      setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: m.data ?? [], energy: val("energy_price_kwh"), water: val("water_price_l"), cfg: bottlePricesFrom(st.data ?? []) });
       const want = (b.data ?? []).find((x) => x.id === sp.get("batch"));
       if (want) setOpen(want.recipe_id);
     });
@@ -37,12 +37,12 @@ export function BeerCosts() {
 
   const beers = recipes.map((r) => {
     const list = batches.filter((b) => b.recipe_id === r.id);
-    const costs = list.map((b) => computeBatchCost(b, r, ingsOf(b), extras.filter((x) => x.batch_id === b.id), mats, data.energy, data.water));
+    const costs = list.map((b) => computeBatchCost(b, r, ingsOf(b), extras.filter((x) => x.batch_id === b.id), mats, data.energy, data.water, data.cfg));
     return { recipe: r, list, costs, sum: sumCosts(costs) };
   }).filter((x) => x.list.length || !x.recipe.archived)
     .sort((a, b) => Number(b.list.length > 0) - Number(a.list.length > 0) || a.recipe.name.localeCompare(b.recipe.name, "it"));
 
-  const bp = bottleUnitPrice(0.33, mats), bp66 = bottleUnitPrice(0.66, mats), cp = capUnitPrice(mats);
+  const cp = capUnitPrice(mats);
 
   return (
     <div>
@@ -81,11 +81,11 @@ export function BeerCosts() {
       <div className="bc-help">
         <h3>Come li calcolo</h3>
         <ul>
-          <li><strong>Costo presunto</strong> (dopo la cotta, prima di imbottigliare): materie prime + corrente + acqua, sui litri in fermentatore. A bottiglia è stimato su bottiglie da 33 cl, vetro escluso.</li>
+          <li><strong>Costo presunto</strong> (dopo la cotta, prima di imbottigliare): materie prime + corrente + acqua, sui litri in fermentatore. A bottiglia è stimato su bottiglie da 66 cl, vetro escluso.</li>
           <li><strong>Costo reale</strong> (dopo l'imbottigliamento): si aggiungono bottiglie e tappi; al litro sui litri imbottigliati, a bottiglia sulle bottiglie riempite.</li>
           <li><strong>Materie prime</strong>: ingredienti di tutti i batch × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
-          <li><strong>Bottiglie e tappi</strong>: bottiglie × prezzo medio d'acquisto
-            {bp != null || bp66 != null || cp != null ? <> (oggi: 33 cl {bp != null ? eur(bp) : "—"}, 66 cl {bp66 != null ? eur(bp66) : "—"}, tappo {cp != null ? eur(cp) : "—"})</> : " (carica un acquisto di bottiglie e tappi)"}.</li>
+          <li><strong>Bottiglie e tappi</strong>: bottiglie × prezzo della bottiglia da 66 cl impostato in Impostazioni
+            ({data.cfg.b66 != null ? `${eur(data.cfg.b66)} a bottiglia` : "non impostato"}; per ora vale per tutte le bottiglie) + tappo {cp != null ? `${eur(cp)} (da acquisti)` : "— (nessun acquisto di tappi)"}.</li>
           <li><strong>Corrente</strong>: kWh inseriti nei batch × {eur(data.energy)}/kWh.</li>
         </ul>
       </div>
@@ -159,7 +159,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
         <Line label="Materie prime" value={eur(sum.ingredients)} warn={sum.missing.length > 0}
           note={sum.missing.length ? `(senza prezzo: ${sum.missing.slice(0, 3).join(", ")}${sum.missing.length > 3 ? "…" : ""})` : sum.kitBatches ? `(di cui kit ${eur(sum.kit)})` : undefined} />
         <Line label="Bottiglie e tappi" value={sum.someBottled ? eur(sum.packaging) : "—"}
-          note={!sum.someBottled ? "(dopo l'imbottigliamento)" : sum.packagingEstimated ? "(da prezzo medio d'acquisto)" : undefined} />
+          note={!sum.someBottled ? "(dopo l'imbottigliamento)" : sum.packagingEstimated ? "(bottiglia da 66 cl dalle Impostazioni)" : undefined} />
         <Line label="Corrente" value={eur(sum.energy)} warn={sum.energyMissing} note={sum.energyMissing ? "(mancano i kWh in qualche batch)" : undefined} />
         {sum.water > 0 && <Line label="Acqua" value={eur(sum.water)} />}
         {sum.other > 0 && <Line label="Altri costi" value={eur(sum.other)} />}
@@ -167,7 +167,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
         <div className="bc-per">
           <div><small>al litro</small><strong>{sum.perLiter != null ? eur(sum.perLiter) : "—"}</strong><span className="muted small">{sum.liters ? `${num(sum.liters, 1)} L` : "litri mancanti"}</span></div>
           <div><small>a bottiglia</small><strong>{sum.perBottle != null ? eur(sum.perBottle) : "—"}</strong>
-            <span className="muted small">{sum.realBottles ? `${sum.realBottles} bottiglie` : ""}{sum.guessBottles ? `${sum.realBottles ? " + " : ""}~${sum.guessBottles} da 33 cl presunte` : ""}{!sum.bottles ? "bottiglie mancanti" : ""}</span></div>
+            <span className="muted small">{sum.realBottles ? `${sum.realBottles} bottiglie` : ""}{sum.guessBottles ? `${sum.realBottles ? " + " : ""}~${sum.guessBottles} da 66 cl presunte` : ""}{!sum.bottles ? "bottiglie mancanti" : ""}</span></div>
         </div>
         {notBottled > 0 && <p className="muted small bc-note">{notBottled === costs.length ? "Non ancora imbottigliata: è un costo presunto, diventa reale quando inserisci le bottiglie." : `${notBottled} batch su ${costs.length} non ancora imbottigliati: per quelli il costo è presunto.`}</p>}
       </div>

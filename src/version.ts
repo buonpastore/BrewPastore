@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.082", date: "13/11/2026 13:30", text: "Impostazioni: prezzo delle bottiglie da 66 cl (pacco da 24 a 11 €) e da 33 cl; nei costi per ora si usa sempre la bottiglia da 66 cl" },
   { version: "0.081", date: "13/11/2026 13:10", text: "Costi birre: scegli il kit all grain usato (malti, luppoli e lievito già compresi), zucchero ipotizzato a 1 €/kg e collegamento a mano degli ingredienti senza prezzo" },
   { version: "0.080", date: "13/11/2026 12:45", text: "Costi birre: costo per birra (tutti i batch insieme), presunto dopo la cotta e reale dopo l'imbottigliamento; le materie prime ora vengono contate anche se l'ingrediente non è collegato all'acquisto" },
   { version: "0.079", date: "13/11/2026 12:20", text: "Telefono: la barra in basso si nasconde mentre scrivi e non resta più a metà schermo; descrizione delle ricette senza voci ripetute (es. «Colore» due volte)" },

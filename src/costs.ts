@@ -64,6 +64,19 @@ export function ingredientCost(ing: Row, mats: Row[]): { cost: number | null; ma
 
 const avgOf = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
+/** Prezzi delle bottiglie impostati in Impostazioni (€ a bottiglia). Per ora si usa sempre quello da 66 cl. */
+export interface BottlePrices { b66: number | null; b33: number | null }
+export function bottlePricesFrom(settings: Row[]): BottlePrices {
+  const v = (k: string) => { const x = settings.find((s) => s.key === k); return x ? Number(x.value) : null; };
+  const p66 = v("bottle_66_pack_price") ?? 11, q66 = v("bottle_66_pack_qty") ?? 24;   // pacco da 24 a 11 € se non configurato
+  const p33 = v("bottle_33_pack_price"), q33 = v("bottle_33_pack_qty") ?? 24;
+  return { b66: p66 > 0 && q66 > 0 ? p66 / q66 : null, b33: p33 && p33 > 0 && q33 > 0 ? p33 / q33 : null };
+}
+/** Prezzo di una bottiglia: impostazioni (66 cl per ora per tutte), altrimenti acquisti. */
+export function configuredBottlePrice(_sizeL: number | null, cfg: BottlePrices): number | null {
+  return cfg.b66;   // per ora consideriamo sempre la bottiglia da 66 cl
+}
+
 /** Prezzo medio di una bottiglia della misura giusta (dagli acquisti). */
 export function bottleUnitPrice(sizeL: number | null, mats: Row[]): number | null {
   const all = mats.filter((m) => m.category === "bottiglie" && Number(m.avg_unit_cost) > 0);
@@ -86,7 +99,7 @@ export interface BatchCost {
   liters: number | null; bottles: number | null;
 }
 
-export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], extras: Row[], mats: Row[], energyPrice: number, waterPrice: number): BatchCost {
+export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], extras: Row[], mats: Row[], energyPrice: number, waterPrice: number, cfg?: BottlePrices): BatchCost {
   const bottled = isBottled(b);
   const kitRows = extras.filter((r) => isKit(r.description ?? "") || (r.material_id && isKit(mats.find((m) => m.material_id === r.material_id)?.name ?? "")));
   let ingredients = 0; const missing: string[] = [];
@@ -107,7 +120,8 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
   if (bottled) {
     if (pack.length) packaging = pack.reduce((t, r) => t + rowCost(r), 0);
     else if (bottles) {
-      const bp = bottleUnitPrice(b.bottle_size_l != null ? Number(b.bottle_size_l) : null, mats), cp = capUnitPrice(mats);
+      const size = b.bottle_size_l != null ? Number(b.bottle_size_l) : null;
+      const bp = (cfg ? configuredBottlePrice(size, cfg) : null) ?? bottleUnitPrice(size, mats), cp = capUnitPrice(mats);
       packaging = bottles * ((bp ?? 0) + (cp ?? 0)); packagingEstimated = true;
     }
   }
@@ -129,8 +143,8 @@ export function sumCosts(list: BatchCost[]) {
   const total = s((c) => c.total);
   const liters = s((c) => c.liters ?? 0);
   const realBottles = s((c) => c.bottles ?? 0);
-  // bottiglie presunte (da 33 cl) per i batch non ancora imbottigliati
-  const guessBottles = list.filter((c) => !c.bottles && c.liters).reduce((t, c) => t + Math.floor((c.liters ?? 0) / 0.33), 0);
+  // bottiglie presunte (da 66 cl) per i batch non ancora imbottigliati
+  const guessBottles = list.filter((c) => !c.bottles && c.liters).reduce((t, c) => t + Math.floor((c.liters ?? 0) / 0.66), 0);
   const bottles = realBottles + guessBottles;
   return {
     total, liters, bottles, realBottles, guessBottles,
