@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.070", date: "13/11/2026 06:05", text: "Materie prime: l'avviso delle materie prime senza acquisti (Mostra / Elimina) è in fondo alla lista" },
   { version: "0.069", date: "13/11/2026 05:55", text: "Materie prime: anche le schede «Costi medi» e «Acquisti e fatture» sono larghe uguali" },
   { version: "0.068", date: "13/11/2026 05:45", text: "Materie prime: pulsanti Compatta/Estesa larghi uguali e totale speso in fondo alla lista" },
   { version: "0.067", date: "13/11/2026 05:35", text: "Ricetta: su telefono le 6 schede sono su 2 righe da 3, tutte visibili senza scorrere" },

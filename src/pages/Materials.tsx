@@ -154,13 +154,6 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
           <option value="count:desc">Ordina: numero di acquisti</option>
         </select>
       </div>
-      {empty.length > 0 && (
-        <div className="row-actions" style={{ marginTop: -4, marginBottom: 12 }}>
-          <span className="muted small">{empty.length} materie prime senza acquisti {showEmpty ? "mostrate" : "nascoste"}</span>
-          <button className="mini-btn" onClick={() => setShowEmpty(!showEmpty)}>{showEmpty ? "Nascondi" : "Mostra"}</button>
-          {isAdmin && <button className="mini-btn" onClick={cleanEmpty}>🗑️ <span>Elimina quelle senza acquisti</span></button>}
-        </div>
-      )}
       <div className="table-wrap">
         <table className={full ? "" : "mat-compact"}>
           <thead><tr><Th k="name">Materia prima</Th><Th k="category">Categoria</Th>{full && <><Th k="qty">Acquistato</Th><Th k="spent">Speso</Th></>}<Th k="avg">Costo medio</Th><Th k="last">{full ? "Ultimo acquisto" : "Ultimo costo"}</Th>{full && <Th k="count">Acquisti</Th>}{full && isAdmin && <th />}</tr></thead>
@@ -209,6 +202,13 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
         </table>
       </div>
       <p className="mat-total">Speso in totale: <strong>{eur(totalSpent)}</strong></p>
+      {empty.length > 0 && (
+        <div className="row-actions" style={{ marginTop: 12 }}>
+          <span className="muted small">{empty.length} materie prime senza acquisti {showEmpty ? "mostrate" : "nascoste"}</span>
+          <button className="mini-btn" onClick={() => setShowEmpty(!showEmpty)}>{showEmpty ? "Nascondi" : "Mostra"}</button>
+          {isAdmin && <button className="mini-btn" onClick={cleanEmpty}>🗑️ <span>Elimina quelle senza acquisti</span></button>}
+        </div>
+      )}
     </div>
   );
 }
