@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.118", date: "13/11/2026 22:55", text: "Home riordinata: frase del giorno, ultimi messaggi (se ci sono), batch in corso e in fondo «Riconosci le birre dal tappo»" },
   { version: "0.117", date: "13/11/2026 22:40", text: "Costi birre: se la quantità della ricetta sta nell'ultimo acquisto uso il prezzo dell'ultimo acquisto (icona orologio), altrimenti il costo medio ponderato (icona bilancia)" },
   { version: "0.116", date: "13/11/2026 22:20", text: "Costi birre: indicatori uguali dappertutto — ✕ rossa manca qualcosa, clessidra gialla teorico, bollino verde confermato" },
   { version: "0.115", date: "13/11/2026 22:10", text: "Costi birre: la corrente calcolata dai dati confermati nel batch (acqua di mash e sparge, tempi) conta come precisa" },

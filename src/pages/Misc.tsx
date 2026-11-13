@@ -124,9 +124,19 @@ export function Dashboard() {
         </div>
       ) : null}
 
-      <CapGallery />
+      {recent.length > 0 && (
+        <>
+          <h2>Ultimi messaggi</h2>
+          <div className="panel">
+            {recent.map((m) => (
+              <div key={m.id} className="small"><strong>{nameOf(m.user_id)}</strong>: {m.body.slice(0, 140)}</div>
+            ))}
+            <Link to="/chat" className="small">Apri la chat →</Link>
+          </div>
+        </>
+      )}
 
-      <h2>Ultimo batch di ogni ricetta</h2>
+      <h2>Batch in corso</h2>
       <div className="cards">
         {active.map((b) => {
           const ref = b.first_tasting_date ?? b.bottling_date ?? b.fermentation_start ?? b.brew_date;
@@ -144,14 +154,7 @@ export function Dashboard() {
         {!active.length && <p className="muted">Nessun batch ancora. <Link to="/ricette">Scegli una ricetta</Link> e cotta!</p>}
       </div>
 
-      <h2>Ultimi messaggi</h2>
-      <div className="panel">
-        {recent.map((m) => (
-          <div key={m.id} className="small"><strong>{nameOf(m.user_id)}</strong>: {m.body.slice(0, 140)}</div>
-        ))}
-        {!recent.length && <p className="muted">Nessun messaggio.</p>}
-        <Link to="/chat" className="small">Apri la chat →</Link>
-      </div>
+      <CapGallery />
     </div>
   );
 }
