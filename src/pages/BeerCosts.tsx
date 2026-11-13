@@ -255,7 +255,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
 /** Lievito sempre in bustine (1 bustina = 11,5 g). */
 function yeastQty(q: number, unit: string) {
   const n = ["g", "kg", "mg"].includes(unit) ? Math.max(1, Math.round((unit === "kg" ? q * 1000 : unit === "mg" ? q / 1000 : q) / 11.5)) : q;
-  return `${num(n, 1)} ${n === 1 ? "bustina" : "bustine"}`;
+  return `${num(n, 1)} pz`;
 }
 
 /** Fonte di un dato (il peggiore tra i batch): manca > stimato > inserito. */

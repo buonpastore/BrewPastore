@@ -13,7 +13,7 @@ const GROUPS = ORDER.map((c) => ({ cat: [c], title: CAT_INFO[c].label, color: CA
 const kg = (i: Row) => (i.unit === "kg" ? Number(i.quantity) : i.unit === "g" ? Number(i.quantity) / 1000 : 0);
 const grams = (i: Row) => (i.unit === "g" ? Number(i.quantity) : i.unit === "kg" ? Number(i.quantity) * 1000 : 0);
 const qty = (i: Row) => (i.unit === "pz"
-  ? (i.category === "lievito" ? `${num(Number(i.quantity), 2)} ${Number(i.quantity) === 1 ? "bustina" : "bustine"}` : `${num(Number(i.quantity), 2)} pz`)
+  ? `${num(Number(i.quantity), 2)} pz`
   : `${num(Number(i.quantity), 3)} ${i.unit}`);
 
 /** Totale di un gruppo: peso, pezzi o numero di voci. */
@@ -26,7 +26,7 @@ function groupTotal(list: Row[], volume?: number | null): string {
   }
   if (units.size === 1 && units.has("pz")) {
     const n = list.reduce((t, i) => t + Number(i.quantity), 0);
-    return list[0].category === "lievito" ? `${num(n, 2)} ${n === 1 ? "bustina" : "bustine"}` : `${num(n, 2)} pz`;
+    return `${num(n, 2)} pz`;
   }
   if (units.size === 1) return `${num(list.reduce((t, i) => t + Number(i.quantity), 0), 3)} ${list[0].unit}`;
   return `${list.length} voci`;
