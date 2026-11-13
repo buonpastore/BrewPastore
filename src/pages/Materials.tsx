@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
 import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, fmtUnitPrice, fmtBaseQty, toBase, type Row } from "../lib";
-import { Link } from "react-router-dom";
 import { deleteMaterialsWithoutPurchases } from "../rebuild";
 import { catColor, nameColor } from "../categories";
 
@@ -93,6 +92,9 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   };
 
   const [showEmpty, setShowEmpty] = useState(false);
+  const [view, setViewState] = useState<"estesa" | "compatta">(() => { try { return localStorage.getItem("bp-materie-vista") === "compatta" ? "compatta" : "estesa"; } catch { return "estesa"; } });
+  const setView = (v: "estesa" | "compatta") => { setViewState(v); try { localStorage.setItem("bp-materie-vista", v); } catch { /* niente */ } };
+  const full = view === "estesa";
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "category", dir: "asc" });
   const empty = rows.filter((r) => Number(r.purchases_count) === 0);
   const filtered = rows.filter((r) => (showEmpty || Number(r.purchases_count) > 0) && (!cat || r.category === cat) && r.name.toLowerCase().includes(q.toLowerCase()));
@@ -131,7 +133,10 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       <div className="page-head">
         {!embedded && <h1>Materie prime e costi medi</h1>}
       </div>
-      <p className="muted">Costo medio ponderato su tutti gli acquisti e prezzo dell'ultimo acquisto (spedizione inclusa). Malti al kg, luppoli al grammo, lieviti a unità. Per aggiungere prezzi carica gli acquisti in <Link to="/materie-prime?vista=acquisti">Acquisti e fatture</Link>.</p>
+      <div className="view-switch" role="group" aria-label="Visualizzazione">
+        <button className={"mini-btn" + (!full ? " on" : "")} onClick={() => setView("compatta")}>☰ <span>Compatta</span></button>
+        <button className={"mini-btn" + (full ? " on" : "")} onClick={() => setView("estesa")}>▦ <span>Estesa</span></button>
+      </div>
       <div className="toolbar">
         <input placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={cat} onChange={(e) => setCat(e.target.value)}>
@@ -152,22 +157,22 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       </div>
       {empty.length > 0 && (
         <div className="row-actions" style={{ marginTop: -4, marginBottom: 12 }}>
-          <span className="muted small">{empty.length} materie prime senza acquisti {showEmpty ? "mostrate" : "nascoste"} (create dalle ricette o da import sbagliati)</span>
+          <span className="muted small">{empty.length} materie prime senza acquisti {showEmpty ? "mostrate" : "nascoste"}</span>
           <button className="mini-btn" onClick={() => setShowEmpty(!showEmpty)}>{showEmpty ? "Nascondi" : "Mostra"}</button>
           {isAdmin && <button className="mini-btn" onClick={cleanEmpty}>🗑️ <span>Elimina quelle senza acquisti</span></button>}
         </div>
       )}
       <div className="table-wrap">
-        <table>
-          <thead><tr><Th k="name">Materia prima</Th><Th k="category">Categoria</Th><Th k="qty">Acquistato</Th><Th k="spent">Speso</Th><Th k="avg">Costo medio</Th><Th k="last">Ultimo acquisto</Th><Th k="count">Acquisti</Th>{isAdmin && <th />}</tr></thead>
+        <table className={full ? "" : "mat-compact"}>
+          <thead><tr><Th k="name">Materia prima</Th><Th k="category">Categoria</Th>{full && <><Th k="qty">Acquistato</Th><Th k="spent">Speso</Th></>}<Th k="avg">Costo medio</Th><Th k="last">{full ? "Ultimo acquisto" : "Ultimo costo"}</Th>{full && <Th k="count">Acquisti</Th>}{full && isAdmin && <th />}</tr></thead>
           <tbody>
             {list.map((m) => (
               <Fragment key={m.material_id}>
                 <tr>
                   <td><button className="link mat-name" style={{ color: nameColor(m.category) }} onClick={() => toggle(m.material_id)}>{open === m.material_id ? "▾" : "▸"} {m.name}</button></td>
                   <td><span className="badge cat" style={{ ["--c" as string]: catColor(m.category) }}>{m.category.replace("_", " ")}</span></td>
-                  <td className="nowrap">{fmtBaseQty(m.qty_purchased, m.category, m.base_unit)}</td>
-                  <td>{eur(m.total_spent)}</td>
+                  {full && <td className="nowrap">{fmtBaseQty(m.qty_purchased, m.category, m.base_unit)}</td>}
+                  {full && <td>{eur(m.total_spent)}</td>}
                   <td className="nowrap"><strong>{fmtUnitPrice(m.avg_unit_cost, m.category, m.base_unit)}</strong></td>
                   <td className="nowrap">
                     {last[m.material_id] ? (() => {
@@ -177,13 +182,13 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                         <>
                           <strong>{fmtUnitPrice(l.cost, m.category, m.base_unit)}</strong>
                           {Math.abs(diff) >= 1 && <span className={diff > 0 ? "warn small" : "ok small"}> {diff > 0 ? "▲" : "▼"}{num(Math.abs(diff), 0)}%</span>}
-                          <div className="muted small">{date(l.date)} · {l.supplier}</div>
+                          {full && <div className="muted small">{date(l.date)} · {l.supplier}</div>}
                         </>
                       );
                     })() : "—"}
                   </td>
-                  <td>{m.purchases_count}</td>
-                  {isAdmin && <td className="nowrap"><button className="icon" title="Modifica" onClick={() => edit(m)}>✏️</button><button className="icon" title="Unisci a un'altra (duplicati)" onClick={() => merge(m)}>🔗</button><button className="icon" title="Elimina materia prima" onClick={() => removeMaterial(m)}>🗑️</button></td>}
+                  {full && <td>{m.purchases_count}</td>}
+                  {full && isAdmin && <td className="nowrap"><button className="icon" title="Modifica" onClick={() => edit(m)}>✏️</button><button className="icon" title="Unisci a un'altra (duplicati)" onClick={() => merge(m)}>🔗</button><button className="icon" title="Elimina materia prima" onClick={() => removeMaterial(m)}>🗑️</button></td>}
                 </tr>
                 {open === m.material_id && (
                   <tr className="sub"><td colSpan={10}>

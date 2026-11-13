@@ -980,3 +980,14 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 /* azioni della ricetta, in fondo dopo i dati */
 .recipe-actions { margin-top: 16px; }
 @media (max-width: 600px) { .recipe-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .recipe-actions .primary { grid-column: 1 / -1; } }
+
+/* materie prime: scelta della visualizzazione */
+.view-switch { display: flex; gap: 8px; margin: 0 0 12px; }
+.mat-compact td, .mat-compact th { padding: 9px 6px; }
+.mat-compact th { white-space: normal; letter-spacing: .03em; }
+@media (max-width: 600px) {
+  .mat-compact td, .mat-compact th { padding: 8px 4px; font-size: .86rem; }
+  .mat-compact th { font-size: .62rem; }
+  .mat-compact .badge.cat { font-size: .66rem; padding: 2px 6px; }
+  .mat-compact .warn.small, .mat-compact .ok.small { display: block; }
+}

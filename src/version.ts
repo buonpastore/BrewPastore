@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.064", date: "13/11/2026 04:45", text: "Materie prime: scegli la vista compatta (nome, categoria, costo medio, ultimo costo) o estesa; tolte le descrizioni inutili" },
   { version: "0.063", date: "13/11/2026 04:25", text: "Ricetta: i pulsanti Nuovo batch, Duplica ed Elimina sono in fondo, sotto i dati" },
   { version: "0.062", date: "13/11/2026 04:10", text: "Scheda ricetta: acqua in una sezione a parte, fasi del mash in riquadri con la bollitura sotto, resoconto descrittivo del procedimento e pulsanti in fondo" },
   { version: "0.061", date: "13/11/2026 03:35", text: "Batch: «Salva e chiudi» salva tutto e torna all'elenco dei batch" },
