@@ -1270,3 +1270,5 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .cap-btn .cap-icon { transition: transform .12s; }
 .cap-btn.on .cap-icon { transform: scale(1.12); }
 @media (max-width: 600px) { .cap-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; } .cap-btn small { font-size: .66rem; } }
+
+.rc-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

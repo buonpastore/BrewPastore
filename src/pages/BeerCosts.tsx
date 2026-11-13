@@ -1,3 +1,4 @@
+import { CapDot } from "../components/CapColor";
 import { sortByCat, nameColor } from "../categories";
 import { Fragment, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -75,6 +76,7 @@ export function BeerCosts() {
                 <span className="bc-title">
                   {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   <strong>{recipe.name}</strong>
+                  <CapDot color={[...all].filter((b) => b.cap_color).sort((x, y) => String(y.bottling_date ?? y.brew_date ?? "").localeCompare(String(x.bottling_date ?? x.brew_date ?? "")))[0]?.cap_color} size={20} />
                   {list.length > 0 && <StateIcon sum={sum} />}
                   <span className="muted small bc-sub">
                     {list.length ? `${sum.liters ? `${num(sum.liters, 1)} L` : "litri ?"}${sum.bottles ? ` · ${sum.bottles} bottiglie` : ""}` : "non ancora cotta"}

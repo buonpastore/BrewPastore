@@ -1,4 +1,4 @@
-import { capInfo, useCapColors } from "../components/CapColor";
+import { CapDot, useCapColors } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase, errMsg, num, date, type Row } from "../lib";
@@ -79,8 +79,8 @@ export function Recipes() {
         {list.map((r) => {
           const last = (r.batches as Row[]).map((b) => b.brew_date).filter(Boolean).sort().pop();
           return (
-            <Link key={r.id} to={`/ricette/${r.id}`} className={"card" + (capOf(r) ? " has-cap" : "")} style={capOf(r) ? { ["--cap" as string]: capInfo(capOf(r))?.hex } : undefined}>
-              <h3>{r.name} {r.archived && <span className="badge">archiviata</span>}</h3>
+            <Link key={r.id} to={`/ricette/${r.id}`} className="card">
+              <h3 className="rc-title">{r.name} <CapDot color={capOf(r)} size={22} /> {r.archived && <span className="badge">archiviata</span>}</h3>
               <div className="rc-style">{r.style ?? "stile non indicato"}</div>
               <div className="rc-traits">
                 {abvOf(r.target_og, r.target_fg) != null && (

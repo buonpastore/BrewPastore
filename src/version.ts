@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.103", date: "13/11/2026 19:45", text: "Ricette e Costi: il tappo colorato compare accanto al nome della birra; la barra laterale delle ricette torna com'era" },
   { version: "0.102", date: "13/11/2026 19:30", text: "Tappi disegnati come veri tappi a corona; in Home «Riconosci le birre dal tappo» mostra sempre le ultime birre, anche quelle col tappo ancora da scegliere" },
   { version: "0.101", date: "13/11/2026 19:15", text: "Costi birre: corrente e acqua stimate dal processo se non le inserisci (poi diventano reali); stesso prodotto comprato con nomi diversi messo in media insieme; toccando un ingrediente vedi acquisto per acquisto prezzo e spedizione" },
   { version: "0.100", date: "13/11/2026 18:45", text: "Import di ricette e acquisti da screenshot e file di testo senza AI: il testo dello screenshot viene letto direttamente sul telefono. Se non trovo ingredienti si apre comunque la revisione per inserirli a mano" },
