@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.077", date: "13/11/2026 07:55", text: "Home: per ogni ricetta si vede solo l'ultimo batch con il suo stato attuale" },
   { version: "0.076", date: "13/11/2026 07:40", text: "Nuovo batch: vedi i batch precedenti della ricetta con il loro stato (cotta, in fermentazione, imbottigliata, bevuta)" },
   { version: "0.075", date: "13/11/2026 07:25", text: "Batch: le 12 schede sono su righe da 3 (su computer da 6), tutte visibili senza scorrere" },
   { version: "0.074", date: "13/11/2026 07:10", text: "Scheda ricetta: in fondo le caratteristiche dello stile (OG, FG, alcol, IBU, EBC, aspetto, aroma, gusto) confrontate con la ricetta" },

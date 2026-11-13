@@ -1,3 +1,4 @@
+import { lastStep } from "../components/PreviousBatches";
 import { getThemePref, setThemePref, sunTimes, type ThemePref } from "../theme";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -72,8 +73,18 @@ export function Dashboard() {
   const [pending, setPending] = useState(0);
 
   useEffect(() => {
-    supabase.from("batches").select("*, recipes(name)").not("status", "eq", "finito").order("brew_date", { ascending: false })
-      .then(({ data }) => setActive(data ?? []));
+    // per ogni ricetta solo il batch più recente, con il suo stato attuale
+    supabase.from("batches").select("*, recipes(name, archived)")
+      .then(({ data }) => {
+        const key = (b: Row) => String(b.brew_date ?? b.created_at ?? "") + String(b.created_at ?? "");
+        const latest: Record<string, Row> = {};
+        for (const b of data ?? []) {
+          if (b.recipes?.archived) continue;
+          const k = b.recipe_id ?? b.id;
+          if (!latest[k] || key(b) > key(latest[k])) latest[k] = b;
+        }
+        setActive(Object.values(latest).sort((a, b) => key(b).localeCompare(key(a))));
+      });
     supabase.from("messages").select("*").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecent(data ?? []));
     if (profile) {
       supabase.from("member_balances").select("balance").eq("user_id", profile.id).single().then(({ data }) => setMyBalance(data?.balance ?? null));
@@ -111,22 +122,22 @@ export function Dashboard() {
         </div>
       ) : null}
 
-      <h2>Batch in corso</h2>
+      <h2>Ultimo batch di ogni ricetta</h2>
       <div className="cards">
         {active.map((b) => {
-          const ref = b.bottling_date ?? b.fermentation_start ?? b.brew_date;
+          const ref = b.first_tasting_date ?? b.bottling_date ?? b.fermentation_start ?? b.brew_date;
           const d = days(ref);
           return (
             <Link key={b.id} to={`/batch/${b.id}`} className="card">
               <h3>{b.code}</h3>
               <div className="muted">{b.recipes?.name}</div>
-              <div><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span> {d != null && <span className="muted small">da {d} giorni</span>}</div>
+              <div><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span> {d != null && <span className="muted small">{d === 0 ? "da oggi" : d === 1 ? "da 1 giorno" : `da ${d} giorni`}</span>}</div>
               <div className="stats"><span>OG {sg(b.original_gravity)}</span><span>FG {sg(b.final_gravity)}</span>{b.bottles_count && <span>{b.bottles_count} bott.</span>}</div>
-              <div className="muted small">Cotta {date(b.brew_date)}</div>
+              <div className="muted small">{lastStep(b).replace(/^./, (c) => c.toUpperCase())}</div>
             </Link>
           );
         })}
-        {!active.length && <p className="muted">Nessun batch in corso. <Link to="/ricette">Scegli una ricetta</Link> e cotta!</p>}
+        {!active.length && <p className="muted">Nessun batch ancora. <Link to="/ricette">Scegli una ricetta</Link> e cotta!</p>}
       </div>
 
       <h2>Ultimi messaggi</h2>
