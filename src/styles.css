@@ -1188,3 +1188,24 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .bc-kit select, .bc-link { width: 100%; }
 .bc-link { min-width: 150px; font-size: .85rem; padding: 6px 8px; border-color: var(--warn); }
 .bc-kit p { margin: 6px 0 0; }
+
+/* costi: icone di stato e fonte dei dati */
+.ic-ok { color: var(--teal); flex: none; }
+.ic-warn { color: var(--gold); flex: none; }
+.ic-guess { color: var(--magenta); flex: none; }
+.src { vertical-align: -1px; flex: none; }
+.src-in { color: var(--teal); }
+.src-est { color: var(--gold); }
+.src-miss { color: var(--magenta); }
+.bc-facts { display: flex; flex-direction: column; gap: 10px; }
+.bc-fact-code { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; margin-bottom: 6px; }
+.bc-fact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 760px) { .bc-fact-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.bc-fact { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.bc-fact small { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+.bc-fact strong { display: inline-flex; align-items: center; gap: 6px; }
+.bc-fact.src-stimato { border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.bc-fact.src-manca { border-color: color-mix(in srgb, var(--magenta) 45%, transparent); }
+.bc-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; color: var(--muted); font-size: .82rem; }
+.bc-legend .src { margin-left: 6px; }
+.bc-help li svg { vertical-align: -2px; }

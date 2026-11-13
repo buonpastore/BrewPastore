@@ -122,31 +122,56 @@ export function capUnitPrice(mats: Row[]): number | null {
   return avgOf(mats.filter((m) => m.category === "tappi" && Number(m.avg_unit_cost) > 0).map((m) => Number(m.avg_unit_cost)));
 }
 
-export const isBottled = (b: Row) => Boolean(b.bottles_count) || b.status === "imbottigliato" || b.status === "finito" || Boolean(b.bottling_date);
+/** Batch davvero fatto (non uno creato e lasciato vuoto). */
+export const isBrewed = (b: Row) => Boolean(b.brew_date || b.fermentation_start || b.bottling_date || b.bottles_count || b.original_gravity || b.volume_bottled_l)
+  || (b.status && b.status !== "pianificato");
+/** Imbottigliato: da qui il costo è reale. */
+export const isBottled = (b: Row) => Boolean(b.bottles_count || b.bottling_date || b.volume_bottled_l || b.first_tasting_date) || b.status === "imbottigliato" || b.status === "finito";
+
+/** Da dove viene un dato: inserito da voi, stimato/calcolato da me, oppure mancante. */
+export type Source = "inserito" | "stimato" | "manca";
+export interface Fact { label: string; value: string; source: Source }
+const fmt = (n: number, d = 1) => n.toLocaleString("it-IT", { maximumFractionDigits: d });
 
 export interface BatchCost {
-  bottled: boolean;
-  ingredients: number; missing: string[]; kit: number;
+  code: string; bottled: boolean;
+  ingredients: number; missing: string[]; guessed: number; kit: number;
   packaging: number; packagingEstimated: boolean;
   energy: number; energyMissing: boolean; water: number; other: number; total: number;
-  liters: number | null; bottles: number | null;
+  liters: number | null; bottles: number | null; bottlesGuessed: boolean;
+  facts: Fact[];
 }
 
 export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], extras: Row[], mats: Row[], energyPrice: number, waterPrice: number, cfg?: BottlePrices): BatchCost {
   const bottled = isBottled(b);
   const kitRows = extras.filter((r) => isKit(r.description ?? "") || (r.material_id && isKit(mats.find((m) => m.material_id === r.material_id)?.name ?? "")));
-  let ingredients = 0; const missing: string[] = [];
+  let ingredients = 0, guessed = 0, priced = 0; const missing: string[] = [];
   for (const i of ings) {
-    const { cost } = ingredientCost(i, mats);
-    if (cost == null) missing.push(i.name); else ingredients += cost;
+    const r = ingredientCost(i, mats);
+    if (r.cost == null) missing.push(i.name); else { ingredients += r.cost; if (r.guessed != null) guessed++; else priced++; }
   }
   const avg: Record<string, number> = Object.fromEntries(mats.map((m) => [m.material_id, Number(m.avg_unit_cost ?? 0)]));
   const rowCost = (r: Row) => Number(r.quantity ?? 0) * Number(r.unit_cost ?? (r.material_id ? avg[r.material_id] ?? 0 : 0));
   const kit = 0;   // i costi si fanno sempre senza kit: eventuali righe "Kit" vengono ignorate
   const pack = extras.filter((r) => r.category === "bottiglie" || r.category === "tappi");
   const other = extras.filter((r) => !(r.category === "bottiglie" || r.category === "tappi") && !kitRows.includes(r)).reduce((t, r) => t + rowCost(r), 0);
-  const bottles = b.bottles_count ? Number(b.bottles_count) : null;
+  const facts: Fact[] = [];
 
+  // litri
+  let liters: number | null = null, litSrc: Source = "manca";
+  if (bottled && b.volume_bottled_l) { liters = Number(b.volume_bottled_l); litSrc = "inserito"; }
+  else if (bottled && b.bottles_count && b.bottle_size_l) { liters = Number(b.bottles_count) * Number(b.bottle_size_l); litSrc = "stimato"; }
+  else if (b.volume_fermenter_l) { liters = Number(b.volume_fermenter_l); litSrc = bottled ? "stimato" : "inserito"; }
+  else if (recipe?.batch_size_l) { liters = Number(recipe.batch_size_l); litSrc = "stimato"; }
+  facts.push({ label: bottled ? "Litri imbottigliati" : "Litri in fermentatore", value: liters != null ? `${fmt(liters)} L` : "—", source: litSrc });
+
+  // bottiglie
+  let bottles: number | null = null, bottlesGuessed = false;
+  if (b.bottles_count) bottles = Number(b.bottles_count);
+  else if (liters) { bottles = Math.floor(liters / 0.66); bottlesGuessed = true; }
+  facts.push({ label: "Bottiglie", value: bottles != null ? String(bottles) : "—", source: b.bottles_count ? "inserito" : bottles != null ? "stimato" : "manca" });
+
+  // bottiglie e tappi: solo da imbottigliata
   let packaging = 0, packagingEstimated = false;
   if (bottled) {
     if (pack.length) packaging = pack.reduce((t, r) => t + rowCost(r), 0);
@@ -156,15 +181,19 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
       packaging = bottles * ((bp ?? 0) + (cp ?? 0)); packagingEstimated = true;
     }
   }
+
+  // corrente
   const energyMissing = b.energy_kwh == null;
   const energy = Number(b.energy_kwh ?? 0) * energyPrice;
+  facts.push({ label: "Corrente", value: energyMissing ? "—" : `${fmt(Number(b.energy_kwh))} kWh`, source: energyMissing ? "manca" : "inserito" });
+
+  // ingredienti
+  facts.push({ label: "Prezzi ingredienti", value: `${priced + guessed}/${ings.length}`, source: missing.length ? "manca" : guessed ? "stimato" : "inserito" });
+
   const water = Number(b.water_used_l ?? 0) * waterPrice;
-  const liters = bottled && b.volume_bottled_l ? Number(b.volume_bottled_l)
-    : bottled && bottles && b.bottle_size_l ? bottles * Number(b.bottle_size_l)
-    : b.volume_fermenter_l ? Number(b.volume_fermenter_l) : recipe?.batch_size_l ? Number(recipe.batch_size_l) : null;
   return {
-    bottled, ingredients, missing, kit, packaging, packagingEstimated, energy, energyMissing, water, other,
-    total: ingredients + packaging + energy + water + other, liters, bottles: bottled ? bottles : null,
+    code: b.code ?? "", bottled, ingredients, missing, guessed, kit, packaging, packagingEstimated, energy, energyMissing, water, other,
+    total: ingredients + packaging + energy + water + other, liters, bottles, bottlesGuessed, facts,
   };
 }
 
@@ -173,16 +202,17 @@ export function sumCosts(list: BatchCost[]) {
   const s = (f: (c: BatchCost) => number) => list.reduce((t, c) => t + f(c), 0);
   const total = s((c) => c.total);
   const liters = s((c) => c.liters ?? 0);
-  const realBottles = s((c) => c.bottles ?? 0);
-  // bottiglie presunte (da 66 cl) per i batch non ancora imbottigliati
-  const guessBottles = list.filter((c) => !c.bottles && c.liters).reduce((t, c) => t + Math.floor((c.liters ?? 0) / 0.66), 0);
-  const bottles = realBottles + guessBottles;
+  const bottles = s((c) => c.bottles ?? 0);
+  const allBottled = list.length > 0 && list.every((c) => c.bottled);
+  // completo = imbottigliata e tutti i dati inseriti (niente stime né mancanti)
+  const complete = allBottled && list.every((c) => c.facts.every((f) => f.source === "inserito"));
   return {
-    total, liters, bottles, realBottles, guessBottles,
-    ingredients: s((c) => c.ingredients), kit: s((c) => c.kit), kitBatches: list.filter((c) => c.kit > 0).length, packaging: s((c) => c.packaging), energy: s((c) => c.energy), water: s((c) => c.water), other: s((c) => c.other),
+    total, liters, bottles,
+    ingredients: s((c) => c.ingredients), kit: s((c) => c.kit), packaging: s((c) => c.packaging), energy: s((c) => c.energy), water: s((c) => c.water), other: s((c) => c.other),
     perLiter: liters ? total / liters : null, perBottle: bottles ? total / bottles : null,
-    allBottled: list.length > 0 && list.every((c) => c.bottled), someBottled: list.some((c) => c.bottled),
+    allBottled, someBottled: list.some((c) => c.bottled), complete,
     packagingEstimated: list.some((c) => c.packagingEstimated), energyMissing: list.some((c) => c.energyMissing),
+    bottlesGuessed: list.some((c) => c.bottlesGuessed), guessed: s((c) => c.guessed),
     missing: [...new Set(list.flatMap((c) => c.missing))],
   };
 }

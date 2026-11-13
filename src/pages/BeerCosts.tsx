@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Hourglass, CircleAlert, Pencil, Calculator, X } from "lucide-react";
 import { supabase, eur, num, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { sizeFromName, computeBatchCost, sumCosts, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
+import { sizeFromName, isBrewed, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
 /** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
 export function BeerCosts() {
@@ -41,7 +41,7 @@ export function BeerCosts() {
   const ingsOf = (b: Row) => { const own = bIngs.filter((i) => i.batch_id === b.id); return own.length ? own : rIngs.filter((i) => i.recipe_id === b.recipe_id); };
 
   const beers = recipes.map((r) => {
-    const list = batches.filter((b) => b.recipe_id === r.id);
+    const list = batches.filter((b) => b.recipe_id === r.id && isBrewed(b));   // i batch creati e mai fatti non contano
     const costs = list.map((b) => computeBatchCost(b, r, ingsOf(b), extras.filter((x) => x.batch_id === b.id), mats, data.energy, data.water, data.cfg));
     return { recipe: r, list, costs, sum: sumCosts(costs) };
   }).filter((x) => x.list.length || !x.recipe.archived)
@@ -57,16 +57,15 @@ export function BeerCosts() {
       <div className="bc-list">
         {beers.map(({ recipe, list, costs, sum }) => {
           const isOpen = open === recipe.id;
-          const kind = !list.length ? null : sum.allBottled ? "reale" : sum.someBottled ? "in parte presunto" : "presunto";
           return (
             <section key={recipe.id} className={"bc-recipe" + (isOpen ? " open" : "")}>
               <button className="bc-head" onClick={() => setOpen(isOpen ? null : recipe.id)}>
                 <span className="bc-title">
                   {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   <strong>{recipe.name}</strong>
-                  {kind && <span className={"bc-kind " + (kind === "reale" ? "real" : "guess")}>costo {kind}</span>}
+                  {list.length > 0 && <StateIcon sum={sum} />}
                   <span className="muted small bc-sub">
-                    {list.length ? `${list.length} batch · ${sum.liters ? `${num(sum.liters, 1)} L` : "litri ?"}${sum.realBottles ? ` · ${sum.realBottles} bottiglie` : ""}` : "nessun batch ancora"}
+                    {list.length ? `${list.length} batch · ${sum.liters ? `${num(sum.liters, 1)} L` : "litri ?"}${sum.bottles ? ` · ${sum.bottles} bottiglie` : ""}` : "nessun batch ancora"}
                   </span>
                 </span>
                 {list.length > 0 && (
@@ -86,11 +85,10 @@ export function BeerCosts() {
       <div className="bc-help">
         <h3>Come li calcolo</h3>
         <ul>
-          <li><strong>Costo presunto</strong> (dopo la cotta, prima di imbottigliare): materie prime + corrente + acqua, sui litri in fermentatore. A bottiglia è stimato su bottiglie da 66 cl, vetro escluso.</li>
-          <li><strong>Costo reale</strong> (dopo l'imbottigliamento): si aggiungono bottiglie e tappi; al litro sui litri imbottigliati, a bottiglia sulle bottiglie riempite.</li>
+          <li><Hourglass size={14} className="ic-guess" /> <strong>Presunto</strong> dalla cotta all'imbottigliamento: materie prime + corrente + acqua.</li>
+          <li><CircleAlert size={14} className="ic-warn" /> <strong>Imbottigliata</strong>, costo reale ma con qualche dato stimato o mancante. <CheckCircle2 size={14} className="ic-ok" /> <strong>Completo</strong>: tutti i dati inseriti.</li>
           <li><strong>Materie prime</strong>: ingredienti di tutti i batch × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
-          <li><strong>Bottiglie e tappi</strong>: bottiglie × prezzo della bottiglia da 66 cl impostato in Impostazioni
-            ({data.cfg.b66 != null ? `${eur(data.cfg.b66)} a bottiglia` : "non impostato"}; per ora vale per tutte le bottiglie) + tappo {cp != null ? `${eur(cp)} (da acquisti)` : "— (nessun acquisto di tappi)"}.</li>
+          <li><strong>Bottiglie e tappi</strong>: bottiglie × {data.cfg.b66 != null ? eur(data.cfg.b66) : "—"} (Impostazioni){cp != null ? ` + tappo ${eur(cp)}` : ""}.</li>
           <li><strong>Corrente</strong>: kWh inseriti nei batch × {eur(data.energy)}/kWh.</li>
         </ul>
       </div>
@@ -98,10 +96,24 @@ export function BeerCosts() {
   );
 }
 
-function Line({ label, value, note, warn }: { label: string; value: string; note?: string; warn?: boolean }) {
+/** Icona della fonte del dato: ✎ inserito · calcolatrice stimato · ✕ manca. */
+export function SrcIcon({ source }: { source: Source }) {
+  if (source === "inserito") return <Pencil size={13} className="src src-in" aria-label="inserito" />;
+  if (source === "stimato") return <Calculator size={13} className="src src-est" aria-label="stimato" />;
+  return <X size={13} className="src src-miss" aria-label="manca" />;
+}
+
+/** Stato del costo della birra, solo con un'icona. */
+function StateIcon({ sum }: { sum: ReturnType<typeof sumCosts> }) {
+  if (sum.complete) return <CheckCircle2 size={18} className="ic-ok" aria-label="costo reale, dati completi" />;
+  if (sum.allBottled) return <CircleAlert size={18} className="ic-warn" aria-label="imbottigliata, qualche dato stimato" />;
+  return <Hourglass size={18} className="ic-guess" aria-label="costo presunto, non ancora imbottigliata" />;
+}
+
+function Line({ label, value, source }: { label: string; value: string; source?: Source }) {
   return (
-    <div className={"bc-line" + (warn ? " warn" : "")}>
-      <span>{label}{note && <small> {note}</small>}</span>
+    <div className="bc-line">
+      <span>{label} {source && <SrcIcon source={source} />}</span>
       <strong>{value}</strong>
     </div>
   );
@@ -139,24 +151,38 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
     g.cost = cost == null || g.cost == null ? null : g.cost + cost;
     groups.set(k, g);
   }
-  const notBottled = costs.filter((c) => !c.bottled).length;
   return (
     <div className="bc-detail">
       <div className="bc-lines">
-        <Line label="Materie prime" value={eur(sum.ingredients)} warn={sum.missing.length > 0}
-          note={sum.missing.length ? `(senza prezzo: ${sum.missing.slice(0, 3).join(", ")}${sum.missing.length > 3 ? "…" : ""})` : undefined} />
-        <Line label="Bottiglie e tappi" value={sum.someBottled ? eur(sum.packaging) : "—"}
-          note={!sum.someBottled ? "(dopo l'imbottigliamento)" : sum.packagingEstimated ? "(bottiglia da 66 cl dalle Impostazioni)" : undefined} />
-        <Line label="Corrente" value={eur(sum.energy)} warn={sum.energyMissing} note={sum.energyMissing ? "(mancano i kWh in qualche batch)" : undefined} />
+        <Line label="Materie prime" value={eur(sum.ingredients)} source={sum.missing.length ? "manca" : sum.guessed ? "stimato" : "inserito"} />
+        <Line label="Bottiglie e tappi" value={sum.someBottled ? eur(sum.packaging) : "—"} source={sum.someBottled ? (sum.bottlesGuessed ? "stimato" : "inserito") : undefined} />
+        <Line label="Corrente" value={eur(sum.energy)} source={sum.energyMissing ? "manca" : "inserito"} />
         {sum.water > 0 && <Line label="Acqua" value={eur(sum.water)} />}
         {sum.other > 0 && <Line label="Altri costi" value={eur(sum.other)} />}
         <div className="bc-line total"><span>Totale</span><strong>{eur(sum.total)}</strong></div>
         <div className="bc-per">
-          <div><small>al litro</small><strong>{sum.perLiter != null ? eur(sum.perLiter) : "—"}</strong><span className="muted small">{sum.liters ? `${num(sum.liters, 1)} L` : "litri mancanti"}</span></div>
+          <div><small>al litro</small><strong>{sum.perLiter != null ? eur(sum.perLiter) : "—"}</strong><span className="muted small">{sum.liters ? `${num(sum.liters, 1)} L` : "—"}</span></div>
           <div><small>a bottiglia</small><strong>{sum.perBottle != null ? eur(sum.perBottle) : "—"}</strong>
-            <span className="muted small">{sum.realBottles ? `${sum.realBottles} bottiglie` : ""}{sum.guessBottles ? `${sum.realBottles ? " + " : ""}~${sum.guessBottles} da 66 cl presunte` : ""}{!sum.bottles ? "bottiglie mancanti" : ""}</span></div>
+            <span className="muted small">{sum.bottles ? `${sum.bottles} bottiglie` : "—"} {sum.bottles > 0 && <SrcIcon source={sum.bottlesGuessed ? "stimato" : "inserito"} />}</span></div>
         </div>
-        {notBottled > 0 && <p className="muted small bc-note">{notBottled === costs.length ? "Non ancora imbottigliata: è un costo presunto, diventa reale quando inserisci le bottiglie." : `${notBottled} batch su ${costs.length} non ancora imbottigliati: per quelli il costo è presunto.`}</p>}
+      </div>
+
+      <h3>Dati usati</h3>
+      <div className="bc-facts">
+        {costs.map((c) => (
+          <div key={c.code} className="bc-fact-batch">
+            {costs.length > 1 && <span className="bc-fact-code">{c.code} {c.bottled ? null : <Hourglass size={13} className="ic-guess" />}</span>}
+            <div className="bc-fact-grid">
+              {c.facts.map((f) => (
+                <span key={f.label} className={"bc-fact src-" + f.source}>
+                  <small>{f.label}</small>
+                  <strong>{f.value} <SrcIcon source={f.source} /></strong>
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+        <p className="bc-legend"><SrcIcon source="inserito" /> inserito <SrcIcon source="stimato" /> stimato <SrcIcon source="manca" /> manca</p>
       </div>
 
       <h3>Materie prime usate</h3>
