@@ -43,8 +43,9 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
     supabase.from("tasting_summary").select("*").then(({ data }) => setSummary(data ?? []));
   }, [filter, reload]);
   useEffect(() => {
-    supabase.from("batches").select("id, code, status, recipes(name)").order("brew_date", { ascending: false, nullsFirst: false })
-      .then(({ data }) => setBatches(data ?? []));
+    // si degustano solo le birre imbottigliate
+    supabase.from("batches").select("id, code, status, bottling_date, bottles_count, recipes(name)").order("brew_date", { ascending: false, nullsFirst: false })
+      .then(({ data }) => setBatches((data ?? []).filter((b) => b.bottling_date || b.bottles_count || b.status === "imbottigliato" || b.status === "finito")));
   }, []);
 
   const remove = async (t: Row) => {
@@ -59,9 +60,16 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
 
   return (
     <div>
-      <button className="btn primary btn-wide" onClick={() => setEditing({ batch_id: filter || batches[0]?.id || "", rating: 0, tasted_on: new Date().toISOString().slice(0, 10) })}>
-        <Star size={20} /> Nuova degustazione
-      </button>
+      {(() => {
+        const ok = batchId ? batches.some((b) => b.id === batchId) : batches.length > 0;
+        return ok ? (
+          <button className="btn primary btn-wide" onClick={() => setEditing({ batch_id: (filter && batches.some((b) => b.id === filter) ? filter : batches[0]?.id) || "", rating: 0, tasted_on: new Date().toISOString().slice(0, 10) })}>
+            <Star size={20} /> Nuova degustazione
+          </button>
+        ) : (
+          <p className="muted tasting-wait">🍾 {batchId ? "Questa birra non è ancora imbottigliata: la degustazione si potrà fare dopo l'imbottigliamento." : "Nessuna birra imbottigliata da degustare: si degustano solo le birre già in bottiglia."}</p>
+        );
+      })()}
       <div className="toolbar">
         {!batchId && (
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
