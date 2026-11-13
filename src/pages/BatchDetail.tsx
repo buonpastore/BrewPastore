@@ -1,3 +1,4 @@
+import { DedupeButton } from "../components/DedupeButton";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -304,7 +305,7 @@ export function BatchDetail() {
         {tab === "ingredienti" && (
           <>
             <p className="muted small">Copiati dalla ricetta alla creazione del batch: correggi le quantità realmente usate. Il costo usa la materia prima collegata.</p>
-            {isAdmin && <div className="row-actions" style={{ margin: "0 0 10px" }}><CleanNamesButton table="batch_ingredients" parentKey="batch_id" parentId={batch.id} onDone={() => setReloadIng((x) => x + 1)} /></div>}
+            {isAdmin && <div className="row-actions" style={{ margin: "0 0 10px" }}><CleanNamesButton table="batch_ingredients" parentKey="batch_id" parentId={batch.id} onDone={() => setReloadIng((x) => x + 1)} /><DedupeButton table="batch_ingredients" parentKey="batch_id" parentId={batch.id} onDone={() => setReloadIng((x) => x + 1)} /></div>}
             <RowsEditor table="batch_ingredients" parentKey="batch_id" parentId={batch.id} canEdit={isAdmin} reloadKey={reloadIng} categoryOf={(r) => r.category}
               defaults={{ unit: "kg", category: "malto" }}
               fields={[

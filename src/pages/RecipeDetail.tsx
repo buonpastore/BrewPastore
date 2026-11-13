@@ -1,3 +1,4 @@
+import { DedupeButton } from "../components/DedupeButton";
 import { Beer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -153,6 +154,7 @@ export function RecipeDetail() {
               <div className="ing-tools">
                 <button className={"mini-btn" + (editIng ? " on" : "")} onClick={() => setEditIng(!editIng)}>✏️ <span>{editIng ? "Chiudi modifica" : "Modifica ingredienti"}</span></button>
                 <CleanNamesButton table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} onDone={() => setReloadIng((x) => x + 1)} />
+                <DedupeButton table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} onDone={() => setReloadIng((x) => x + 1)} />
               </div>
             )}
             {isAdmin && editIng && (

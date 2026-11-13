@@ -1,3 +1,4 @@
+import { dedupeIngredients } from "./dedupe";
 import { buildProcedure } from "./procedure";
 /**
  * Lettura "senza AI" del testo di un ordine (es. copiato dalla pagina ordini di Mr Malt o da un'email).
@@ -47,7 +48,7 @@ const BRANDS = /mr\.?\s*malt[®]?|birramia|brewferm/gi;
 export function guessCategory(name: string): string {
   const n = name.toLowerCase().replace(BRANDS, "");
   if (/\bkit\b/.test(n) || EQUIPMENT.test(n)) return "altro";
-  if (/luppol|\bhop|pellet|cascade|citra|mosaic|simcoe|saaz|hallertau|magnum|centennial|amarillo|galaxy|nelson/.test(n)) return "luppolo";
+  if (/luppol|\bhop|pellet|cascade|citra|mosaic|simcoe|saaz|hallertau|magnum|centennial|amarillo|galaxy|nelson|goldings|\bekg\b|fuggle|challenger|target|northdown|bramling|styrian|tettnang|spalt|perle|tradition|hersbrucker|chinook|columbus|warrior|el dorado|sabro|idaho|strata|azacca|ekuanot|motueka|riwaka|wakatu|cashmere|willamette|crystal hop|sorachi|polaris|mandarina|huell|cascade|admiral|first gold|pilgrim|sovereign|jester|olicana|east kent/.test(n)) return "luppolo";
   if (/lievit|yeast|safale|saflager|safbrew|us-?05|s-?04|w-?34\/70|wlp|wyeast|lallemand|fermentis|nottingham|verdant|bry-?97|kveik/.test(n)) return "lievito";
   if (/star\s?san|pbw|percarbonat|detergen|sanific|igieniz|chemipro|soda caustica/.test(n)) return "detergenti";
   if (/acido|gesso|cloruro|solfato|calcio|magnesio|campden|metabisolf|bicarbonat|sale /.test(n)) return "sali_acqua";
@@ -323,6 +324,10 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     if (!name) continue;
     ingredients.push({ name: name.charAt(0).toUpperCase() + name.slice(1), category, quantity, unit, step: stepOf(line, category) });
   }
+
+  // ingredienti elencati due volte (es. tabella + procedimento): ne tengo uno solo
+  const unique = dedupeIngredients(ingredients).kept;
+  ingredients.length = 0; ingredients.push(...unique);
 
   // nome e stile: prima riga "titolo" senza quantità
   const SECTION = /^(ingredienti|parametri|dati|malti|cereali|fermentabili|luppoli|lievit[oi]|acqua(?: e sali)?|sali|procedimento|processo|istruzioni|note|mash|bollitura|fermentazione|imbottigliamento|profilo|ricetta|recipe)\s*:?$/i;
