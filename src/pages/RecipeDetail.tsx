@@ -114,7 +114,7 @@ export function RecipeDetail() {
           onClose={() => setDeleting(false)} />
       )}
 
-      <Tabs active={tab} onChange={setTab} tabs={[
+      <Tabs grid active={tab} onChange={setTab} tabs={[
         ["scheda", "Scheda"], ["ingredienti", "Ingredienti"], ["acqua", "Acqua"], ["cottura", "Cottura"], ["batch", `Batch (${batches.length})`],
         ["documenti", "Documenti"],
       ]} />

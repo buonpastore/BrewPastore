@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.067", date: "13/11/2026 05:35", text: "Ricetta: su telefono le 6 schede sono su 2 righe da 3, tutte visibili senza scorrere" },
   { version: "0.066", date: "13/11/2026 05:20", text: "Ingredienti della ricetta: il totale di ogni tipo (malti, luppoli, lieviti…) è sul titolo del gruppo, sopra il dettaglio" },
   { version: "0.065", date: "13/11/2026 05:05", text: "Spese: «Le mie quote da pagare» sempre visibile sotto i due pulsanti. Ricette: un solo pulsante «Nuova ricetta» che chiede se importarla o inserirla a mano" },
   { version: "0.064", date: "13/11/2026 04:45", text: "Materie prime: scegli la vista compatta (nome, categoria, costo medio, ultimo costo) o estesa; tolte le descrizioni inutili" },

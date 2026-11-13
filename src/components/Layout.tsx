@@ -131,9 +131,9 @@ export function Layout() {
   );
 }
 
-export function Tabs({ tabs, active, onChange }: { tabs: [string, string][]; active: string; onChange: (k: string) => void }) {
+export function Tabs({ tabs, active, onChange, grid = false }: { tabs: [string, string][]; active: string; onChange: (k: string) => void; grid?: boolean }) {
   return (
-    <div className="tabs" role="tablist">
+    <div className={"tabs" + (grid ? " tabs-grid" : "")} role="tablist">
       {tabs.map(([k, label]) => (
         <button key={k} role="tab" aria-selected={active === k} className={active === k ? "active" : ""} onClick={() => onChange(k)}>
           {label}

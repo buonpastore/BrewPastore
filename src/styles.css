@@ -1007,3 +1007,9 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 /* totale per tipo sul titolo del gruppo */
 .ing-total { text-transform: none; letter-spacing: 0; margin-left: auto; font-size: .92rem; font-weight: 700; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); border: 1px solid color-mix(in srgb, var(--c) 35%, transparent); padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
 .ing-count { margin: 12px 0 0; text-align: right; }
+
+/* schede della ricetta: su telefono 2 righe da 3, tutte visibili */
+@media (max-width: 700px) {
+  .tabs.tabs-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; overflow: visible; width: 100%; }
+  .tabs.tabs-grid button { width: 100%; min-height: 44px; padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
