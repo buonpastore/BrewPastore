@@ -352,7 +352,7 @@ export function BatchDetail() {
 
       <div className="panel">
         {tab === "dati" && isNew && isAdmin && <NewBatchCard batch={batch} onSaved={setBatch} onDone={() => setSp({}, { replace: true })} />}
-        {tab === "dati" && <QuickEntry key={batch.id} batch={batch} canEdit={isAdmin} onSaved={setBatch} onDelete={() => setDeleting(true)} focusKey={focusKey} focusStatus={focusStatus} />}
+        {tab === "dati" && <QuickEntry key={batch.id} batch={batch} canEdit={isAdmin} onSaved={setBatch} onDelete={() => setDeleting(true)} focusKey={focusKey} focusStatus={focusStatus} onAfterSave={() => nav("/batch")} />}
         {tab === "log" && <RecordForm table="batches" row={batch} sections={SECTIONS.filter((s) => !["Carbonazione", "pH", "Gravity"].includes(s.title ?? ""))} canEdit={isAdmin} onSaved={setBatch} />}
         {tab === "cottura" && <BatchBrewDay batch={batch} recipe={recipe} />}
         {tab === "chimici" && (

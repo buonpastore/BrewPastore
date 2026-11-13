@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.061", date: "13/11/2026 03:35", text: "Batch: «Salva e chiudi» salva tutto e torna all'elenco dei batch" },
   { version: "0.060", date: "13/11/2026 03:25", text: "Batch, fase Acqua: litri di mash e sparge in alto, pH iniziale e corretto sotto; il pH corretto viene copiato nel pH del mash" },
   { version: "0.059", date: "13/11/2026 03:15", text: "Imbottigliamento: calcolatore bottiglie da 0,66 e 0,33 (anche misto) con priming per bottiglia" },
   { version: "0.058", date: "13/11/2026 03:05", text: "Materie prime in ordine malti, luppoli, lieviti e il resto; ordinamento per ogni colonna e menu «Ordina per»" },

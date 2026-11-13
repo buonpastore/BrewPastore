@@ -220,7 +220,7 @@ export function phasesFor(status?: string | null): string[] {
   }
 }
 
-export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, focusStatus }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null }) {
+export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, focusStatus, onAfterSave }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null; onAfterSave?: () => void }) {
   const [open, setOpen] = useState<Set<string>>(() => new Set(phasesFor(batch.status)));
   const rootRef = useRef<HTMLDivElement>(null);
   // dopo un pulsante di stato: apri solo le fasi interessanti e portale in vista
@@ -239,7 +239,8 @@ export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, fo
     const { data } = await supabase.from("batches").select("*").eq("id", batch.id).single();
     if (data) onSaved(data);
     setSaveMsg("✓ Tutto salvato");
-    window.setTimeout(() => setSaveMsg(""), 2500);
+    if (onAfterSave) window.setTimeout(onAfterSave, 600);   // chiudo il batch e torno all'elenco
+    else window.setTimeout(() => setSaveMsg(""), 2500);
   };
   return (
     <FlushCtx.Provider value={flushers}>
@@ -268,7 +269,7 @@ export function QuickEntry({ batch, canEdit, onSaved, onDelete, focusKey = 0, fo
       {batch.abv != null && <p className="qe-abv">🍺 Grado alcolico: <strong>{num(batch.abv, 1)}% vol</strong></p>}
       {canEdit && (
         <div className="qe-bottom">
-          <button className="big-action primary" onClick={saveAll}><Save size={20} /> {saveMsg || "Salva"}</button>
+          <button className="big-action primary" onClick={saveAll}><Save size={20} /> {saveMsg || "Salva e chiudi"}</button>
           {onDelete && <button className="big-action danger" onClick={onDelete}><Trash2 size={20} /> Elimina batch</button>}
         </div>
       )}
