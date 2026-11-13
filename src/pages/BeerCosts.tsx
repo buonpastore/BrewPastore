@@ -219,7 +219,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
             {sortByCat([...groups.values()]).map((g) => (
               <Fragment key={g.name + g.unit}>
               <tr className={g.mat ? "bc-ing-row" : ""} onClick={() => g.mat && setOpenIng(openIng === g.name + g.unit ? null : g.name + g.unit)}>
-                <td><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.mat ? (openIng === g.name + g.unit ? "▾ " : "▸ ") : ""}{g.name}</span>{g.mat && g.mat.name.toLowerCase() !== String(g.name).toLowerCase() && <div className="muted small">da «{g.mat.name}»</div>}</td>
+                <td><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.mat ? (openIng === g.name + g.unit ? "▾ " : "▸ ") : ""}{g.name}</span></td>
                 <td className="nowrap">{g.category === "lievito" ? yeastQty(g.qty, g.unit) : `${num(g.qty, 3)} ${g.unit}`}</td>
                 {(
                   <>
@@ -290,6 +290,7 @@ function PriceBreakdown({ mat, lines }: { mat: Row; lines: Row[] }) {
   const noShip = rows.reduce((t, l) => t + Number(l.total_price), 0), qq = rows.reduce((t, l) => t + q(l), 0);
   return (
     <div className="bc-break">
+      <div className="bc-break-from">Prezzo preso da: <strong>{mat.name}</strong></div>
       {rows.map((l, i) => (
         <div key={i} className="bc-break-row">
           <span><strong>{date(l.purchases?.purchase_date)}</strong> · {l.purchases?.supplier}{ids.length > 1 || rows.length > 0 ? ` · ${l.description ?? ""}` : ""} · <Link to={`/acquisti/${l.purchase_id}`}>apri l'ordine</Link></span>

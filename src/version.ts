@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.112", date: "13/11/2026 21:35", text: "Costi birre: nella lista delle materie prime non c'è più la riga «da …»; il prodotto da cui prendo il prezzo si vede toccando l'ingrediente" },
   { version: "0.111", date: "13/11/2026 21:25", text: "Costi birre: icone di stato più chiare — clessidra presunto, bottiglia imbottigliata, coccarda con spunta completo" },
   { version: "0.110", date: "13/11/2026 21:10", text: "Costi birre: lo zucchero a 1 €/kg è un prezzo fisso deciso da voi e conta come preciso, non stimato" },
   { version: "0.109", date: "13/11/2026 21:00", text: "Costi birre: nuove icone per i dati — calcolatrice verde = preciso, clessidra = stimato, ✕ = manca; tolta la scritta «teorici»" },
