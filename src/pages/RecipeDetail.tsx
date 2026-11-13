@@ -62,8 +62,8 @@ export function RecipeDetail() {
 
   useEffect(() => {
     supabase.from("recipes").select("*").eq("id", id!).single().then(({ data }) => setRecipe(data));
-    supabase.from("batches").select("id, code, status, brew_date, original_gravity, final_gravity, abv")
-      .eq("recipe_id", id!).order("brew_date", { ascending: false, nullsFirst: true }).then(({ data }) => setBatches(data ?? []));
+    supabase.from("batches").select("id, code, status, brew_date, fermentation_start, bottling_date, first_tasting_date, created_at, original_gravity, final_gravity, abv")
+      .eq("recipe_id", id!).then(({ data }) => setBatches(sortByProcess(data ?? [])));
     loadMaterials().then(setMaterials);
   }, [id]);
 
@@ -172,13 +172,13 @@ export function RecipeDetail() {
         )}
         {tab === "batch" && (
           <table>
-            <thead><tr><th>Batch</th><th>Stato</th><th>Cotta</th><th>OG</th><th>FG</th><th>ABV</th></tr></thead>
+            <thead><tr><th>Batch</th><th>Stato</th><th>Data</th><th>OG</th><th>FG</th><th>ABV</th></tr></thead>
             <tbody>
               {batches.map((b) => (
                 <tr key={b.id}>
                   <td><Link to={`/batch/${b.id}`}>{b.code}</Link></td>
                   <td><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span></td>
-                  <td>{date(b.brew_date)}</td><td>{sg(b.original_gravity)}</td><td>{sg(b.final_gravity)}</td>
+                  <td className="nowrap">{date(stepDate(b))}</td><td>{sg(b.original_gravity)}</td><td>{sg(b.final_gravity)}</td>
                   <td>{b.abv != null ? b.abv + "%" : "—"}</td>
                 </tr>
               ))}
@@ -210,4 +210,13 @@ function RecipeBrewDay({ recipe }: { recipe: Row }) {
     <BrewDay ingredients={ings} mashTemp={recipe.mash_temp_c} mashTime={recipe.mash_time_min} boilTime={recipe.boil_time_min}
       mashWater={recipe.mash_water_l} spargeWater={recipe.sparge_water_l} volume={recipe.batch_size_l} procedure={recipe.procedure} />
   );
+}
+
+/** Ordine del processo: cotta → fermentazione → maturazione → imbottigliamento → bevuta. */
+const STAGE = ["pianificato", "cotta", "fermentazione", "maturazione", "imbottigliato", "finito"];
+const stepDate = (b: Row) => (b.status === "finito" ? b.first_tasting_date : b.status === "imbottigliato" ? b.bottling_date
+  : b.status === "fermentazione" || b.status === "maturazione" ? b.fermentation_start : b.brew_date) ?? b.brew_date ?? null;
+function sortByProcess(rows: Row[]): Row[] {
+  const rank = (b: Row) => { const i = STAGE.indexOf(b.status); return i < 0 ? 0 : i; };
+  return [...rows].sort((a, b) => rank(a) - rank(b) || String(stepDate(a) ?? a.created_at ?? "").localeCompare(String(stepDate(b) ?? b.created_at ?? "")));
 }
