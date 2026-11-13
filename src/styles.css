@@ -1016,3 +1016,7 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
   .tabs.tabs-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; overflow: visible; width: 100%; }
   .tabs.tabs-grid button { width: 100%; min-height: 44px; padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* schede larghe uguali */
+.tabs.tabs-full { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); width: 100%; max-width: 520px; }
+.tabs.tabs-full button { width: 100%; text-align: center; min-height: 42px; }

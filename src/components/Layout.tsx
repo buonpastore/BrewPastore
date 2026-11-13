@@ -131,9 +131,9 @@ export function Layout() {
   );
 }
 
-export function Tabs({ tabs, active, onChange, grid = false }: { tabs: [string, string][]; active: string; onChange: (k: string) => void; grid?: boolean }) {
+export function Tabs({ tabs, active, onChange, grid = false, full = false }: { tabs: [string, string][]; active: string; onChange: (k: string) => void; grid?: boolean; full?: boolean }) {
   return (
-    <div className={"tabs" + (grid ? " tabs-grid" : "")} role="tablist">
+    <div className={"tabs" + (grid ? " tabs-grid" : "") + (full ? " tabs-full" : "")} role="tablist" style={full ? { ["--n" as string]: tabs.length } : undefined}>
       {tabs.map(([k, label]) => (
         <button key={k} role="tab" aria-selected={active === k} className={active === k ? "active" : ""} onClick={() => onChange(k)}>
           {label}

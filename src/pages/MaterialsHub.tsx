@@ -10,7 +10,7 @@ export function MaterialsHub() {
   return (
     <div>
       <h1>Materie prime</h1>
-      <Tabs active={tab} onChange={(k) => setSp(k === "acquisti" ? { vista: "acquisti" } : {}, { replace: true })}
+      <Tabs full active={tab} onChange={(k) => setSp(k === "acquisti" ? { vista: "acquisti" } : {}, { replace: true })}
         tabs={[["costi", "Costi medi"], ["acquisti", "Acquisti e fatture"]]} />
       {tab === "costi" ? <Materials embedded /> : <Purchases embedded />}
     </div>
