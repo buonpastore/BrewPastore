@@ -1,3 +1,4 @@
+import { textOf } from "../ocr";
 import { sortByCat, nameColor } from "../categories";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -112,6 +113,8 @@ interface ReviewItem { code?: string | null; description: string; material_name:
 
 /** Upload → lettura AI → revisione → salvataggio acquisto */
 export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void; initialFiles?: File[] }) {
+  const [progress, setProgress] = useState("");
+  const [warn, setWarn] = useState("");
   const nav = useNavigate();
   const [step, setStep] = useState<"upload" | "reading" | "review" | "saving">("upload");
   const [picked, setPicked] = useState<File[]>(initialFiles ?? []);
@@ -137,14 +140,21 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
       const ups = [];
       for (const f of picked) ups.push({ path: await uploadFile("purchases/import", f), name: f.name, type: f.type, size: f.size });
       setUploaded(ups);
-      // testo incollato: prima prova la lettura diretta (non serve l'AI)
-      let parsed: ParsedDocument | null = null;
-      if (picked.every((f) => f.type.startsWith("text/") || /\.txt$/i.test(f.name))) {
-        const texts = await Promise.all(picked.map((f) => f.text()));
-        const local = parseOrderText(texts.join("\n"));
+      // testo e screenshot: lettura diretta sul telefono (immagini con l'OCR), senza AI
+      let parsed: ParsedDocument | null = null, local: ParsedDocument | null = null;
+      const text = await textOf(picked, setProgress);
+      if (text) {
+        local = parseOrderText(text);
         if (local.items.length) parsed = local;
       }
-      if (!parsed) parsed = await parseDocument(ups.map((u) => u.path));
+      if (!parsed) {
+        try { parsed = await parseDocument(ups.map((u) => u.path)); }
+        catch (e) {
+          if (!local) throw e;
+          parsed = local;
+          setWarn("Non ho trovato righe d'acquisto nel testo: controlla che si legga bene, oppure usa «Inserimento manuale».");
+        }
+      }
       const { items: its, ...h } = parsed;
       setHead({ ...h, supplier: h.supplier ?? "", date: h.date ?? new Date().toISOString().slice(0, 10) });
       setItems(sortByCat(its.map((i) => {
@@ -207,7 +217,8 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
             <PickedList files={picked} onRemove={(i) => setPicked(picked.filter((_, j) => j !== i))} />
           </>
         )}
-        {step === "reading" && <p>⏳ Sto leggendo il documento… (può volerci fino a un minuto)</p>}
+        {step === "reading" && <p>⏳ {progress || "Sto leggendo il documento…"} <span className="muted small">(la prima volta lo screenshot può richiedere qualche secondo in più)</span></p>}
+        {warn && step === "review" && <p className="warn">⚠️ {warn}</p>}
         {(step === "review" || step === "saving") && (
           <>
             <div className="form-grid">

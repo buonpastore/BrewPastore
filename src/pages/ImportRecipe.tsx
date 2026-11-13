@@ -1,3 +1,4 @@
+import { textOf } from "../ocr";
 import { sortByCat, nameColor } from "../categories";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +33,8 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
       .then(({ count }) => setExisting(count ?? 0));
   }, [recipeId]);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState("");
+  const [warn, setWarn] = useState("");
 
   const read = async () => {
     if (!picked.length) return;
@@ -40,14 +43,22 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
       const ps: string[] = [];
       for (const f of picked) ps.push(await uploadFile("recipes/import", f));
       setPaths(ps);
-      // testo incollato: prima la lettura diretta (non serve l'AI)
-      let parsed: ParsedRecipe | null = null;
-      if (picked.every((f) => f.type.startsWith("text/") || /\.(txt|md)$/i.test(f.name))) {
-        const texts = await Promise.all(picked.map((f) => f.text()));
-        const local = parseRecipeText(texts.join("\n"), [...OUR_STYLES, ...FAMOUS_STYLES]);
+      // testo e screenshot: lettura diretta sul telefono (testo così com'è, immagini con l'OCR), senza AI
+      let parsed: ParsedRecipe | null = null, local: ParsedRecipe | null = null;
+      const text = await textOf(picked, setProgress);
+      if (text) {
+        local = parseRecipeText(text, [...OUR_STYLES, ...FAMOUS_STYLES]);
         if (local.ingredients.length) parsed = local;
       }
-      const got = parsed ?? await parseRecipe(ps);
+      let got: ParsedRecipe | null = parsed;
+      if (!got) {
+        try { got = await parseRecipe(ps); }
+        catch (e) {
+          if (!local) throw e;   // PDF senza AI: niente da fare
+          got = local;           // AI non attiva: apro comunque la revisione per inserire a mano
+          setWarn("Non ho trovato ingredienti nel testo: controlla che si legga bene, oppure aggiungili a mano qui sotto.");
+        }
+      }
       setData(got ? { ...got, ingredients: sortByCat(got.ingredients ?? []) } : got);   // malti, luppoli, lieviti, resto
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
@@ -126,7 +137,8 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
             <PickedList files={picked} onRemove={(i) => setPicked(picked.filter((_, j) => j !== i))} />
           </>
         )}
-        {step === "reading" && <p>⏳ Sto leggendo la ricetta… (può volerci fino a un minuto)</p>}
+        {step === "reading" && <p>⏳ {progress || "Sto leggendo la ricetta…"} <span className="muted small">(la prima volta lo screenshot può richiedere qualche secondo in più)</span></p>}
+        {warn && step === "review" && <p className="warn">⚠️ {warn}</p>}
         {(step === "review" || step === "saving") && data && (
           <>
             <div className="form-grid">
@@ -169,6 +181,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
                 </tbody>
               </table>
             </div>
+            <button className="btn small" style={{ marginTop: 8 }} onClick={() => setData({ ...data, ingredients: [...data.ingredients, { name: "", category: "malto", quantity: 0, unit: "kg", step: null }] })}>+ Aggiungi ingrediente</button>
             {data.notes && !/^Lett[ao] direttamente dal testo/i.test(data.notes) && <p className="note">📝 {data.notes}</p>}
           </>
         )}

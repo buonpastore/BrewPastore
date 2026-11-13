@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.100", date: "13/11/2026 18:45", text: "Import di ricette e acquisti da screenshot e file di testo senza AI: il testo dello screenshot viene letto direttamente sul telefono. Se non trovo ingredienti si apre comunque la revisione per inserirli a mano" },
   { version: "0.099", date: "13/11/2026 18:15", text: "Imbottigliamento: bottiglie divise tra i tre soci (es. 33 → 11 a testa); ricette con la barra del colore del tappo; colori dei tappi (rosso, arancione, giallo, verde, bianco) aggiungibili in Impostazioni. Da eseguire: 0011_colori_tappi.sql" },
   { version: "0.098", date: "13/11/2026 17:50", text: "Imbottigliamento: scegli il colore del tappo; in Home «Riconosci le birre dal tappo» con le ultime 6 birre (nome, stile, colore). Da eseguire: 0010_colore_tappo.sql" },
   { version: "0.097", date: "13/11/2026 17:30", text: "Ingredienti ovunque in ordine malti, luppoli, lieviti e poi il resto, con i nomi colorati (malti giallini, luppoli verdini, lieviti rossini, altro marrone-grigio)" },
