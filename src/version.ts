@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.124", date: "14/11/2026 00:10", text: "Batch: la CO₂ obiettivo proposta viene dalla ricetta (es. «Carbonazione 2,5–3,0 volumi» → 2,8); se non c'è, è la media tipica dello stile" },
   { version: "0.123", date: "13/11/2026 23:55", text: "Batch: i dati vuoti hanno un valore proposto (pH 5,5, acqua e OG/FG dalla ricetta, corrente e acqua calcolate, bottiglie dai litri, priming…): se non li tocchi vengono salvati con «Salva e chiudi». Corrente e acqua ora sono nella cotta" },
   { version: "0.122", date: "13/11/2026 23:40", text: "Ricetta → Batch: la tabella non allarga più la pagina sul telefono (nome e data su due righe, OG/FG insieme)" },
   { version: "0.121", date: "13/11/2026 23:30", text: "Lista dei batch più leggibile da telefono: vista compatta (nome, stato, data) o estesa, con il nome del batch e della ricetta su due righe" },

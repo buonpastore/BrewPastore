@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { supabase, errMsg, num, type Row } from "../lib";
 import { BottleCalc } from "./BottleCalc";
 import { estimateBrew } from "../costs";
+import { recipeCo2 } from "../styleGuide";
 import { primingGrams } from "../lib";
 
 type Kind = "ph" | "sg" | "l" | "int" | "kwh" | "g" | "co2";
@@ -311,7 +312,8 @@ function suggestions(b: Row, r?: Row): Record<string, number | null> {
   const fermL = n(b.volume_fermenter_l) ?? n(r?.batch_size_l);
   const bottledL = n(b.volume_bottled_l) ?? (fermL != null ? Math.max(0, Math.round((fermL - 1) * 2) / 2) : null);   // ~1 L resta sul fondo
   const style = String(r?.style ?? "").toLowerCase();
-  const co2 = n(b.target_co2_vol) ?? (/weiss|weizen|blanche|wit|saison|tripel/.test(style) ? 3 : /stout|porter|bitter|english|scotch|barley/.test(style) ? 2.2 : 2.5);
+  // CO₂: dalla ricetta se c'è, altrimenti la media dello stile, altrimenti 2,5
+  const co2 = n(b.target_co2_vol) ?? recipeCo2(r)?.value ?? (/weiss|weizen|blanche|wit|saison|tripel/.test(style) ? 3 : 2.5);
   const est = estimateBrew(b, r);
   return {
     mash_water_l: n(r?.mash_water_l), sparge_water_l: n(r?.sparge_water_l),

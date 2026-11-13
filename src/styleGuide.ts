@@ -125,3 +125,30 @@ export function findStyle(style: string | null | undefined): { name: string; inf
   const best = exact ?? cands.filter(([n]) => s.includes(` ${n} `)).sort((a, b) => b[0].length - a[0].length)[0];
   return best ? { name: best[1], info: STYLE_GUIDE[best[1]] } : null;
 }
+
+/** Volumi di CO₂ tipici di ogni stile (indicativi). */
+export const STYLE_CO2: Record<string, [number, number]> = {
+  "IPA": [2.2, 2.7], "Weiss": [3.3, 4.0], "Blanche": [2.8, 3.3], "Dubbel": [2.4, 2.9], "APA": [2.3, 2.8], "English Ale": [1.8, 2.3],
+  "Winter Ale": [2.0, 2.5], "Bock": [2.2, 2.6], "Doppelbock": [2.2, 2.6], "Saison": [2.8, 3.5], "Pilsner": [2.4, 2.7], "Helles": [2.3, 2.6],
+  "Lager": [2.5, 2.8], "Märzen": [2.2, 2.6], "Dunkel": [2.2, 2.6], "Schwarzbier": [2.2, 2.6], "Vienna Lager": [2.3, 2.6], "Rauchbier": [2.2, 2.6],
+  "Bitter": [1.5, 2.0], "Golden Ale": [2.0, 2.4], "Brown Ale": [1.8, 2.3], "Irish Red Ale": [2.0, 2.4], "Porter": [1.8, 2.4], "Stout": [1.8, 2.3],
+  "Imperial Stout": [1.8, 2.3], "Barley Wine": [1.6, 2.2], "Scotch Ale": [1.6, 2.2], "American Amber Ale": [2.2, 2.6], "Session IPA": [2.3, 2.7],
+  "Double IPA": [2.2, 2.6], "NEIPA": [2.3, 2.6], "Black IPA": [2.2, 2.6], "Cream Ale": [2.5, 2.8], "Tripel": [2.8, 3.5], "Quadrupel": [2.3, 2.9],
+  "Belgian Strong Ale": [2.8, 3.5], "Belgian Blonde": [2.4, 2.9], "Kölsch": [2.4, 2.8], "Altbier": [2.3, 2.6], "Dunkelweizen": [3.3, 4.0],
+  "Weizenbock": [3.2, 3.8], "Berliner Weisse": [3.0, 3.5], "Gose": [2.8, 3.2], "Lambic": [2.0, 2.8], "Sour Ale": [2.5, 3.0],
+  "Italian Grape Ale": [2.4, 3.0], "Birra alla frutta": [2.4, 2.8],
+};
+
+/** CO₂ obiettivo: dalla ricetta se è scritta (es. «Carbonazione: 2,5–3,0 volumi»), altrimenti media dello stile. */
+export function recipeCo2(recipe?: { procedure?: string | null; notes?: string | null; description?: string | null; style?: string | null } | null): { value: number; from: "ricetta" | "stile" } | null {
+  const txt = [recipe?.procedure, recipe?.notes, recipe?.description].filter(Boolean).join("\n");
+  const m = txt.match(/carbonazion[ea][^\d\n]{0,40}(\d(?:[.,]\d+)?)(?:\s*[–—-]\s*(\d(?:[.,]\d+)?))?/i) ?? txt.match(/(\d(?:[.,]\d+)?)(?:\s*[–—-]\s*(\d(?:[.,]\d+)?))?\s*vol(?:umi)?\s*(?:di\s*)?co/i);
+  if (m) {
+    const a = Number(m[1].replace(",", ".")), b = m[2] ? Number(m[2].replace(",", ".")) : a;
+    const v = (a + b) / 2;
+    if (v >= 1 && v <= 5) return { value: Math.round(v * 10) / 10, from: "ricetta" };
+  }
+  const st = findStyle(recipe?.style);
+  const r = st ? STYLE_CO2[st.name] : null;
+  return r ? { value: Math.round(((r[0] + r[1]) / 2) * 10) / 10, from: "stile" } : null;
+}
