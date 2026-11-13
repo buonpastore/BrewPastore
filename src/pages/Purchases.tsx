@@ -89,9 +89,9 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
             <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
               title="📋 Incolla qui" hint="fattura, screenshot, scontrino o testo" />
           )}
-          <div className="row-actions">
-            <button className="mini-btn" onClick={manual}>✏️ <span>Inserimento manuale</span></button>
-            <button className="mini-btn" disabled={rebuilding !== null} onClick={rebuild}>♻️ <span>{rebuilding ?? "Rileggi tutti gli ordini salvati"}</span></button>
+          <div className="pu-tools">
+            <button className="btn" onClick={manual}>✏️ Inserimento manuale</button>
+            <button className="btn" disabled={rebuilding !== null} onClick={rebuild}>♻️ {rebuilding ?? "Rileggi tutti gli ordini salvati"}</button>
           </div>
           {report && (
             <div className="rebuild-report">

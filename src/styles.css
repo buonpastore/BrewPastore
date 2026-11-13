@@ -1028,3 +1028,8 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .mat-empty-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .mat-empty-btns.one { grid-template-columns: 1fr; }
 .mat-empty-btns .btn { width: 100%; justify-content: center; min-height: 46px; }
+
+/* acquisti: strumenti in fondo, ordinati e centrati */
+.pu-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.pu-tools .btn { width: 100%; justify-content: center; text-align: center; min-height: 46px; }
+@media (max-width: 600px) { .pu-tools { grid-template-columns: 1fr; } }
