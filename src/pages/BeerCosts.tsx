@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { supabase, eur, num, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { computeBatchCost, sumCosts, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
+import { sizeFromName, computeBatchCost, sumCosts, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
 /** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
 export function BeerCosts() {
@@ -21,9 +21,14 @@ export function BeerCosts() {
       supabase.from("batch_costs").select("*"),
       supabase.from("material_costs").select("*"),
       supabase.from("settings").select("*"),
-    ]).then(([r, b, bi, ri, e, m, st]) => {
+      supabase.from("purchase_items").select("material_id, description"),
+    ]).then(([r, b, bi, ri, e, m, st, pi]) => {
+      // peso di un pezzo letto dalle righe d'acquisto (es. "Coriandolo in semi - 100 g")
+      const piece: Record<string, number> = {};
+      for (const x of pi.data ?? []) { const z = sizeFromName(x.description ?? ""); if (x.material_id && z && !piece[x.material_id]) piece[x.material_id] = z; }
+      const matsRows = (m.data ?? []).map((x) => ({ ...x, piece_size: piece[x.material_id] ?? null }));
       const val = (k: string) => Number((st.data ?? []).find((x) => x.key === k)?.value ?? 0);
-      setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: m.data ?? [], energy: val("energy_price_kwh"), water: val("water_price_l"), cfg: bottlePricesFrom(st.data ?? []) });
+      setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: matsRows, energy: val("energy_price_kwh"), water: val("water_price_l"), cfg: bottlePricesFrom(st.data ?? []) });
       const want = (b.data ?? []).find((x) => x.id === sp.get("batch"));
       if (want) setOpen(want.recipe_id);
     });
@@ -174,7 +179,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, onChange 
                             .map((m) => <option key={m.material_id} value={m.material_id}>{m.name}</option>)}
                         </select>
                       ) : <span className="warn">nessun prezzo</span>}</td>
-                    <td className="nowrap">{g.cost != null ? eur(g.cost) : "—"}</td>
+                    <td className="nowrap">{g.cost != null ? eur(g.cost) : g.mat ? <span className="warn small">unità non convertibile</span> : "—"}</td>
                   </>
                 )}
               </tr>

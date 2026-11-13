@@ -40,15 +40,46 @@ export function matchMaterial(ing: Row, mats: Row[]): Row | null {
   let best: Row | null = null, bestScore = 0;
   for (const m of priced) {
     if (ing.category && m.category && ing.category !== m.category && ing.category !== "altro" && m.category !== "altro") continue;
-    // i lieviti si comprano sia a bustine (pz) sia a grammi (11,5 g): li confronto comunque
-    const yeast = ing.category === "lievito" || m.category === "lievito";
-    if (unitFamily(ing.unit ?? "kg") !== m.base_unit && !(yeast && ["pz", "kg"].includes(m.base_unit))) continue;
     const mt = new Set(tokens(m.name));
     const shared = it.filter((t) => mt.has(t) || [...mt].some((x) => x.length >= 4 && t.length >= 4 && (x.startsWith(t) || t.startsWith(x))));
     const score = shared.length / it.length - (mt.size - shared.length) * 0.01;
     if (shared.length && score > bestScore) { best = m; bestScore = score; }
   }
   return bestScore >= 0.5 ? best : null;
+}
+
+/* ---------- conversione delle unità di misura ----------
+   Il prezzo medio è sempre per unità base della materia prima (kg, l o pezzo).
+   La quantità dell'ingrediente (g, kg, ml, l, pz…) viene portata in quella unità. */
+const SACHET_KG = 0.0115;   // bustina standard di lievito secco: 11,5 g
+
+/** Peso/volume di un pezzo letto dal nome ("… - 100 g", "11,5 g", "5 kg", "ml 946") in kg o l. */
+export function sizeFromName(name: string): number | null {
+  const t = String(name ?? "");
+  let n: string | undefined, u: string | undefined;
+  const a = t.match(/(\d+(?:[.,]\d+)?)\s*(kg|gr|g|mg|lt|l|ml|cl)\b/i);        // "100 g", "11,5 g", "5 kg"
+  if (a) { n = a[1]; u = a[2]; }
+  else { const b = t.match(/\b(kg|gr|g|ml|cl|lt|l)\s*(\d+(?:[.,]\d+)?)\b/i); if (b) { u = b[1]; n = b[2]; } }   // "ml 946", "gr 454"
+  if (!n || !u) return null;
+  const v = Number(n.replace(",", "."));
+  const unit = u.toLowerCase().replace(/^gr$/, "g").replace(/^lt$/, "l");
+  return v > 0 ? toBase(v, unit) : null;
+}
+
+/** Quantità dell'ingrediente nell'unità base della materia prima (null se non convertibile). */
+export function convertQty(q: number, unit: string, mat: Row, ing: Row): number | null {
+  const from = unitFamily(unit), to = mat.base_unit as string;
+  if (from === to) return toBase(q, unit);
+  if ((from === "kg" && to === "l") || (from === "l" && to === "kg")) return toBase(q, unit);   // densità ≈ 1
+  const yeast = ing.category === "lievito" || mat.category === "lievito";
+  const piece = sizeFromName(ing.name) ?? sizeFromName(mat.name) ?? (mat.piece_size ? Number(mat.piece_size) : null) ?? (yeast ? SACHET_KG : null);   // quanto pesa un pezzo
+  if (from === "pz") return piece != null ? q * piece : null;                     // pezzi → kg/l
+  if (to === "pz") {                                                              // kg/l → pezzi
+    if (piece == null) return null;
+    const n = toBase(q, unit) / piece;
+    return yeast ? Math.max(1, Math.ceil(n - 0.01)) : n;                          // il lievito si usa a bustine intere
+  }
+  return null;
 }
 
 /** Costo di un ingrediente (null se non ho un prezzo). guessed = prezzo ipotizzato. */
@@ -59,12 +90,8 @@ export function ingredientCost(ing: Row, mats: Row[]): { cost: number | null; ma
     const d = defaultPrice(ing);
     return d != null ? { cost: toBase(Number(ing.quantity), ing.unit) * d, mat: null, guessed: d } : { cost: null, mat: null };
   }
-  // lievito comprato a bustine ma scritto in grammi nella ricetta: conto 1 bustina
-  const SACHET_KG = 0.0115;   // bustina standard di lievito secco: 11,5 g
-  const fam = unitFamily(ing.unit ?? "kg"), q = Number(ing.quantity ?? 0);
-  const qty = mat.base_unit === "pz" && fam === "kg" ? Math.max(1, Math.ceil(toBase(q, ing.unit) / SACHET_KG - 0.01))   // grammi → bustine
-    : mat.base_unit === "kg" && fam === "pz" ? q * SACHET_KG                                                             // bustine → kg
-    : toBase(q, ing.unit);
+  const qty = convertQty(Number(ing.quantity ?? 0), ing.unit ?? "kg", mat, ing);
+  if (qty == null) return { cost: null, mat };
   return { cost: qty * Number(mat.avg_unit_cost), mat };
 }
 
