@@ -98,7 +98,10 @@ export function Layout() {
         <div className="user">
           <span className="user-name">{profile?.display_name}</span>
           {isAdmin && <span className="badge admin">admin</span>}
-          <NavLink to="/impostazioni" className="avatar" title="Impostazioni e profilo">{initials(profile?.display_name)}</NavLink>
+          <NavLink to="/impostazioni" className="avatar" title="Impostazioni e profilo" aria-label="Impostazioni">
+            <span className="avatar-in">{initials(profile?.display_name)}</span>
+            <span className="avatar-gear"><Settings size={12} strokeWidth={2.5} /></span>
+          </NavLink>
           <button className="icon-btn desktop-only" title="Esci" onClick={() => supabase.auth.signOut()}><LogOut size={18} /></button>
         </div>
       </header>

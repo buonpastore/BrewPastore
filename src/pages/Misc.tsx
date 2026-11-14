@@ -227,6 +227,8 @@ export function Settings() {
   const [settingsTab, setSettingsTab] = useState(() => (/versioni|storico/.test(window.location.hash) ? "app" : "utente"));
   const [settings, setSettings] = useState<Row[]>([]);
   const [name, setName] = useState(profile?.display_name ?? "");
+  // il profilo arriva dopo il primo disegno: riempio il nome appena è pronto
+  useEffect(() => { if (profile?.display_name) setName((n) => n || profile.display_name); }, [profile?.display_name]);
   const [msg, setMsg] = useState("");
 
   useEffect(() => { supabase.from("settings").select("*").neq("key", "gas_price_m3").order("key").then(({ data }) => setSettings(data ?? [])); }, []);
