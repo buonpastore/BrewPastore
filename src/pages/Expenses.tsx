@@ -8,7 +8,7 @@ import { useAuth } from "../auth";
    2. gli altri vedono le quote da pagare e toccano «Ho saldato»;
    3. quando tutti hanno saldato, la spesa passa nello storico. */
 
-const TYPES = ["Ordine materie prime", "Bottiglie", "Altro"];
+const TYPES = ["Materie prime", "Bottiglie", "Altro"];
 
 export function Expenses() {
   const { session, profiles, nameOf, isAdmin } = useAuth();
