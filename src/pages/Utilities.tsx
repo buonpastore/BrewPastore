@@ -173,11 +173,11 @@ function Carbonation() {
 /* ------------------------------------------------------------------ */
 function PhAdjust() {
   const current = useCurrentBatch();
-  const [liters, setLiters] = useState("");
-  const [ph, setPh] = useState("");
-  const [target, setTarget] = useState("5,4");
-  const L = Number(liters.replace(",", ".")) || Number(current?.mash_water_l ?? current?.recipes?.mash_water_l ?? 0);
-  const now = Number(ph.replace(",", ".")), want = Number(target.replace(",", "."));
+  const [liters, setLiters] = useState<number | null>(null);
+  const [ph, setPh] = useState<number | null>(null);
+  const [target, setTarget] = useState(5.4);
+  const L = liters ?? Number(current?.mash_water_l ?? current?.recipes?.mash_water_l ?? 16);
+  const now = ph ?? Number(current?.mash_ph ?? 5.6), want = target;
   const diff = now && want ? now - want : 0;
   // regole pratiche (mash di malto chiaro): acido lattico 80% ≈ 1,1 ml ogni 19 L per abbassare di 0,1;
   // bicarbonato di sodio ≈ 1,5 g ogni 19 L per alzare di 0,1. Il potere tampone dei malti cambia molto: è una stima.
@@ -186,12 +186,12 @@ function PhAdjust() {
   return (
     <div>
       <h1>Correzione del pH</h1>
-      <div className="form-grid">
-        <label><span>Litri di acqua nel mash</span><input inputMode="decimal" value={liters} placeholder={L ? num(L, 1) : "es. 16"} onChange={(e) => setLiters(e.target.value)} /></label>
-        <label><span>pH misurato adesso</span><input inputMode="decimal" value={ph} placeholder="es. 5,8" onChange={(e) => setPh(e.target.value)} /></label>
-        <label><span>pH che vuoi</span><input inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} /></label>
+      <div className="ut-steppers">
+        <Stepper label="Litri di acqua nel mash" value={L} step={0.5} digits={1} onChange={setLiters} unit="L" />
+        <Stepper label="pH misurato adesso" value={now} step={0.05} digits={2} onChange={setPh} />
+        <Stepper label="pH che vuoi" value={want} step={0.05} digits={2} onChange={setTarget} />
       </div>
-      <div className="row-actions">{["5,2", "5,3", "5,4", "5,5"].map((v) => <button key={v} className={"mini-btn" + (target === v ? " on" : "")} onClick={() => setTarget(v)}>{v}</button>)}</div>
+      <div className="row-actions">{[5.2, 5.3, 5.4, 5.5].map((v) => <button key={v} className={"mini-btn" + (Math.abs(target - v) < 0.001 ? " on" : "")} onClick={() => setTarget(v)}>{num(v, 1)}</button>)}</div>
       {!now || !L ? <p className="muted">Inserisci litri e pH misurato.</p> : Math.abs(diff) < 0.03 ? (
         <div className="ut-result"><div className="ut-ok">✓ Il pH va già bene.</div></div>
       ) : (

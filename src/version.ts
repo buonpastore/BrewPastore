@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.214", date: "15/11/2026 11:55", text: "Correzione del pH più comoda: litri, pH misurato e pH voluto si cambiano con − e + ai lati (partono dal batch in corso); restano i pulsanti rapidi 5,2–5,5" },
   { version: "0.213", date: "15/11/2026 11:45", text: "Chat: con la fotocamera accanto al messaggio mandi una foto (rimpicciolita per non pesare, si apre toccandola), con l’icona del grafico crei un sondaggio. Tutti votano toccando l’opzione (una o più risposte), vedono barre, numeri e chi ha votato, e possono aggiungere le proprie opzioni. Da eseguire: 0021_chat_foto_sondaggi.sql" },
   { version: "0.212", date: "15/11/2026 11:15", text: "Carbonazione più comoda: carbonazione voluta, temperatura e litri si cambiano con − e + ai lati, come nella correzione della densità" },
   { version: "0.211", date: "15/11/2026 10:55", text: "Nuova utilità «Correzione densità» (accanto al pH): con litri nel fermentatore, densità misurata e densità voluta (partono dal batch in corso, si cambiano con − e +) ti dice quanti grammi di zucchero, destrosio, estratto di malto o miele aggiungere; se la densità è più alta, va bene così (e ti dice quanta acqua servirebbe per scendere)" },
