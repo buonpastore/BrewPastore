@@ -19,6 +19,7 @@ export interface Profile {
   id: string;
   display_name: string;
   role: "admin" | "viewer";
+  avatar_path?: string | null;
 }
 
 export const STATUS_LABELS: Record<string, string> = {

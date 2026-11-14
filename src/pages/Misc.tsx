@@ -1,5 +1,6 @@
 import { whoOf } from "./Tasks";
-import { LogIn, Minus, Plus } from "lucide-react";
+import { LogIn, Minus, Plus, Camera } from "lucide-react";
+import { UserAvatar } from "../components/UserAvatar";
 import { loginAs } from "../impersonate";
 import { Tabs } from "../components/Layout";
 import { CapColorsSettings } from "../components/CapColor";
@@ -261,6 +262,7 @@ export function Settings() {
       {tab === "utente" && (
         <div className="panel">
           <h2>Il mio profilo</h2>
+          <AvatarUpload />
           <div className="inline-form">
             <label><span>Nome visualizzato</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
             <button className="btn small" onClick={saveName}>Salva</button>
@@ -272,7 +274,6 @@ export function Settings() {
       {tab === "aspetto" && (
         <>
           <ThemePicker />
-          {isAdmin && <MascotUpload />}
         </>
       )}
       {tab === "costi" && (() => {
@@ -323,7 +324,7 @@ export function Settings() {
               const me = p.id === profile?.id;
               return (
                 <div key={p.id} className={"socio" + (me ? " me" : "")}>
-                  <span className="socio-av">{(p.display_name ?? "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</span>
+                  <UserAvatar id={p.id} size={42} className={"socio-uav" + (me ? " me" : "")} />
                   <span className="socio-txt">
                     <strong>{p.display_name}{me && <span className="muted"> (tu)</span>}</strong>
                     <span className={"badge " + (p.role === "admin" ? "socio-admin" : "socio-view")}>{p.role === "admin" ? "Amministratore" : "Consultazione"}</span>
@@ -399,6 +400,51 @@ function MyTasks() {
         ))}
       </div>
     </>
+  );
+}
+
+/** La mia foto: la vedono tutti in alto a destra, nei Soci, in chat e nelle task. */
+function AvatarUpload() {
+  const { profile, reloadProfiles } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const pick = async (f: File) => {
+    if (!profile) return;
+    setBusy(true); setErr("");
+    try {
+      // ritaglio quadrato e rimpicciolisco a 256 px: carica in un attimo anche dal telefono
+      const img = await createImageBitmap(f);
+      const side = Math.min(img.width, img.height), c = document.createElement("canvas");
+      c.width = c.height = 256;
+      c.getContext("2d")!.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 256, 256);
+      const blob: Blob = await new Promise((ok) => c.toBlob((b) => ok(b!), "image/jpeg", 0.88));
+      const path = `${profile.id}/${Date.now()}.jpg`;
+      const up = await supabase.storage.from("avatars").upload(path, blob, { contentType: "image/jpeg", upsert: true });
+      if (up.error) throw up.error;
+      const { error } = await supabase.from("profiles").update({ avatar_path: path }).eq("id", profile.id);
+      if (error) throw error;
+      reloadProfiles();
+    } catch (e) {
+      const m = errMsg(e);
+      setErr(/avatar|bucket|column|schema cache/i.test(m) ? "Manca un aggiornamento del database: esegui su Supabase il file 0015_foto_utente.sql." : m);
+    }
+    setBusy(false);
+  };
+  const remove = async () => {
+    if (!profile) return;
+    await supabase.from("profiles").update({ avatar_path: null }).eq("id", profile.id);
+    reloadProfiles();
+  };
+  return (
+    <div className="av-up">
+      <UserAvatar id={profile?.id} size={72} className="ring" />
+      <div className="av-up-btns">
+        <label className="btn small"><Camera size={16} /> {busy ? "Carico…" : profile?.avatar_path ? "Cambia foto" : "Metti una foto"}
+          <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} /></label>
+        {profile?.avatar_path && <button className="btn small" onClick={remove}>Togli</button>}
+      </div>
+      {err && <p className="error small">{err}</p>}
+    </div>
   );
 }
 

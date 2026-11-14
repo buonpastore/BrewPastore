@@ -1,3 +1,4 @@
+import { UserAvatar } from "./UserAvatar";
 import { useEffect, useRef, useState } from "react";
 import { supabase, errMsg, dateTime, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -60,7 +61,7 @@ export function ChatPanel({ recipeId, batchId }: Props) {
         {msgs.map((m) => (
           <div key={m.id} className={"msg" + (m.user_id === me ? " mine" : "")}>
             <div className="msg-head">
-              <strong>{nameOf(m.user_id)}</strong> <span className="muted small">{dateTime(m.created_at)}</span>
+              <UserAvatar id={m.user_id} size={22} /> <strong>{nameOf(m.user_id)}</strong> <span className="muted small">{dateTime(m.created_at)}</span>
               {(m.user_id === me || isAdmin) && <button className="icon tiny" onClick={() => remove(m.id)}>✕</button>}
             </div>
             <div className="pre">{m.body}</div>

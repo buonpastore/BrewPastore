@@ -9,10 +9,11 @@ interface AuthState {
   isAdmin: boolean;
   loading: boolean;
   nameOf: (id: string | null | undefined) => string;
+  reloadProfiles: () => void;
 }
 
 const Ctx = createContext<AuthState>({
-  session: null, profile: null, profiles: [], isAdmin: false, loading: true, nameOf: () => "",
+  session: null, profile: null, profiles: [], isAdmin: false, loading: true, nameOf: () => "", reloadProfiles: () => undefined,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -29,18 +30,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const [rev, setRev] = useState(0);
   useEffect(() => {
     if (!session) { setProfiles([]); return; }
     loadMascot();
-    supabase.from("profiles").select("id, display_name, role").order("display_name")
-      .then(({ data }) => { setProfiles((data as Profile[]) ?? []); setLoading(false); });
-  }, [session?.user.id]);
+    (async () => {
+      let res = await supabase.from("profiles").select("id, display_name, role, avatar_path").order("display_name");
+      // database non ancora aggiornato (0015): senza foto
+      if (res.error) res = await supabase.from("profiles").select("id, display_name, role").order("display_name") as typeof res;
+      setProfiles((res.data as Profile[]) ?? []); setLoading(false);
+    })();
+  }, [session?.user.id, rev]);
 
   const profile = profiles.find((p) => p.id === session?.user.id) ?? null;
   const nameOf = (id: string | null | undefined) => profiles.find((p) => p.id === id)?.display_name ?? "—";
 
   return (
-    <Ctx.Provider value={{ session, profile, profiles, isAdmin: profile?.role === "admin", loading, nameOf }}>
+    <Ctx.Provider value={{ session, profile, profiles, isAdmin: profile?.role === "admin", loading, nameOf, reloadProfiles: () => setRev((x) => x + 1) }}>
       {children}
     </Ctx.Provider>
   );

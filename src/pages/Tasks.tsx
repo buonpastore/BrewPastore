@@ -1,3 +1,4 @@
+import { UserAvatar } from "../components/UserAvatar";
 import { useEffect, useState } from "react";
 import { ClipboardList, ChevronDown, ChevronRight, Paperclip, Send, Trash2, CircleDot, Loader, CheckCircle2, X } from "lucide-react";
 import { supabase, uploadFile, openFile, errMsg, date, type Row } from "../lib";
@@ -210,7 +211,7 @@ function TaskDetail({ task, me, onClose, onChanged, onEdit }: { task: Row; me: s
         <div className="tk-notes">
           {notes.map((n) => (
             <div key={n.id} className={"tk-note" + (n.user_id === me ? " mine" : "")}>
-              <div className="tk-note-head"><b>{nameOf(n.user_id)}</b><span className="muted small">{new Date(n.created_at).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+              <div className="tk-note-head"><UserAvatar id={n.user_id} size={22} /><b>{nameOf(n.user_id)}</b><span className="muted small">{new Date(n.created_at).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                 {(n.user_id === me || isAdmin) && <button className="icon tiny" onClick={() => delNote(n)} aria-label="Elimina nota"><Trash2 size={14} /></button>}</div>
               {n.body && <p>{n.body}</p>}
               {n.file_path && (
