@@ -2,7 +2,7 @@ import { CapDot } from "../components/CapColor";
 import { sortByCat, nameColor } from "../categories";
 import { Fragment, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, X, Clock, Scale } from "lucide-react";
+import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, X, Clock, Scale, Info } from "lucide-react";
 import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { type PriceBasis, neededTotals, piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
@@ -114,15 +114,15 @@ export function BeerCosts() {
         })}
       </div>
 
-      <div className="bc-help">
-        <h3>Come li calcolo</h3>
+      <details className="bc-help bc-info">
+        <summary><Info size={16} /> Info: come li calcolo</summary>
         <ul>
           <li><SrcIcon source="manca" /> <strong>Manca</strong> qualche dato · <SrcIcon source="stimato" /> <strong>teorico</strong>: dati stimati o birra non ancora imbottigliata · <SrcIcon source="inserito" /> <strong>confermato</strong>: tutti i dati inseriti.</li>
           <li><strong>Materie prime</strong>: ingredienti della ricetta, contati una volta, × costo medio degli acquisti (spedizione compresa). Se l'ingrediente non è collegato, lo cerco per nome tra le materie prime acquistate.</li>
           <li><strong>Bottiglie e tappi</strong>: bottiglie × {data.cfg.b66 != null ? eur(data.cfg.b66) : "—"} (Impostazioni){cp != null ? ` + tappo ${eur(cp)}` : ""}.</li>
           <li><strong>Corrente</strong>: kWh inseriti nel batch, oppure calcolati da litri d'acqua e tempi di mash e bollitura, × {eur(data.energy)}/kWh.</li>
         </ul>
-      </div>
+      </details>
     </div>
   );
 }

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.210", date: "15/11/2026 10:40", text: "Costi birre: la spiegazione «come li calcolo» in fondo è chiusa sotto la voce «Info», si apre toccandola" },
   { version: "0.209", date: "15/11/2026 10:30", text: "Gira la bottiglia davvero a caso: ogni spinta ha una forza casuale (da 3 a 7 giri) e la birra è semplicemente quella dove si ferma il collo. Mentre gira puoi toccarla di nuovo per darle un’altra spinta, anche più volte" },
   { version: "0.208", date: "15/11/2026 10:05", text: "Home: in «Batch in corso» restano solo i batch cotti, in fermentazione o imbottigliati; quelli ancora da cuocere, degustati o esauriti non si vedono più" },
   { version: "0.207", date: "15/11/2026 09:55", text: "Gira la bottiglia più curata: bande colorate a pillola staccate tra loro, fondo «tavolo» sfumato, nomi tutti della stessa grandezza, la birra scelta con la banda più grossa e luminosa. Quando si ferma, la pagina scende fino al risultato anche su iPhone" },

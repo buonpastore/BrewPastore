@@ -1909,3 +1909,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ring-text { fill: var(--text); font-weight: 700; }
 .ring-win .ring-pill { stroke-width: 13; opacity: 1; filter: drop-shadow(0 0 5px currentColor); }
 .ring-win .ring-text { fill: var(--gold-2); font-weight: 800; }
+/* costi birre: spiegazione chiusa sotto «Info» */
+.bc-info > summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 700; color: var(--muted); list-style: none; padding: 4px 0; }
+.bc-info > summary::-webkit-details-marker { display: none; }
+.bc-info[open] > summary { color: var(--text); margin-bottom: 8px; }
