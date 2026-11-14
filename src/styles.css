@@ -1848,7 +1848,9 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ring-win .ring-text { font-weight: 900; fill: var(--gold-2); }
 .bottle-btn { position: absolute; top: 50%; left: 50%; width: 46%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; background: none; padding: 0; cursor: pointer; border-radius: 50%; }
 .bottle-btn:disabled { cursor: default; }
-.bottle { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); }
+.bottle { width: 100%; height: 100%; display: block; }
+/* l'ombra sta sul pulsante fermo: resta sempre verso il basso mentre la bottiglia gira */
+.bottle-btn { filter: drop-shadow(0 5px 5px rgba(0, 0, 0, .55)); }
 .bottle-glass { stroke: color-mix(in srgb, var(--gold) 70%, #000); stroke-width: .9; stroke-linejoin: round; }
 .bottle-lip { fill: #5a300c; stroke: color-mix(in srgb, var(--gold) 70%, #000); stroke-width: .7; }
 .bottle-cap { fill: var(--gold); stroke: #6b4a08; stroke-width: .6; stroke-linejoin: round; }

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.205", date: "15/11/2026 09:30", text: "Gira la bottiglia più realistica: ogni spinta è diversa (da 3 a 6 giri, più giri = più tempo), parte subito veloce e rallenta piano come per l’attrito del tavolo, alla fine va un filo oltre e si assesta tornando indietro; l’ombra resta sempre sotto" },
   { version: "0.204", date: "15/11/2026 09:10", text: "Gira la bottiglia: la bottiglia è più piccola e gira attorno al suo centro, a metà bottiglia, come una vera sul tavolo (non più attorno al fondo)" },
   { version: "0.203", date: "15/11/2026 09:00", text: "Gira la bottiglia: quando si ferma, la pagina scorre da sola fino alla birra scelta, così la vedi senza scorrere" },
   { version: "0.202", date: "15/11/2026 08:50", text: "Quinto colore dell’app: il verde luppolo dell’etichetta. L’ordine è sempre giallo, ciano, magenta, viola, verde: lo stato Esaurita e il suo pulsante, la quinta tappa del batch, «Gira» nelle Utilità, la quinta birra e le quinte schede e riquadri" },

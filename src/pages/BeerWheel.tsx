@@ -37,7 +37,6 @@ function ding() {
     o.connect(g).connect(a.destination); o.start(a.currentTime + t); o.stop(a.currentTime + t + 0.65);
   });
 }
-const SPIN_MS = 5200;
 const KEY = "pastorizia-ruota-escluse";
 
 /** Ruota della birra: tra le birre prodotte che avete, sceglie lei cosa bere stasera. */
@@ -50,6 +49,8 @@ export function BeerWheel() {
   const [excluded, setExcludedRaw] = useState<Set<string>>(() => { try { return new Set(JSON.parse(localStorage.getItem(KEY) ?? "[]")); } catch { return new Set(); } });
   const setExcluded = (s: Set<string>) => { setExcludedRaw(s); try { localStorage.setItem(KEY, JSON.stringify([...s])); } catch { /* niente */ } };
   const [angle, setAngle] = useState(0);
+  // transizione in corso: lancio (rallenta per attrito) e piccolo assestamento finale
+  const [motion, setMotion] = useState("none");
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState<Row | null>(null);
   const [choosing, setChoosing] = useState(false);
@@ -157,19 +158,31 @@ export function BeerWheel() {
   const spin = () => {
     if (!n || spinning) return;
     const pick = Math.floor(Math.random() * n);
-    const jitter = (Math.random() - 0.5) * seg * 0.6;
-    const base = Math.ceil((angle + 360 * 5) / 360) * 360;
+    const heading = pick * seg + seg / 2 + (Math.random() - 0.5) * seg * 0.6;   // dove si fermerà il collo
+    // spinta diversa ogni volta: più giri = più tempo (attrito costante: tempo ∝ √giri)
+    const turns = 3 + Math.floor(Math.random() * 4);
+    const cur = ((angle % 360) + 360) % 360;
+    const final = angle + turns * 360 + ((heading - cur + 360) % 360);
+    const dur = Math.round(2100 * Math.sqrt(turns + 0.5));
+    const over = 3 + Math.random() * 5;                                           // va un filo oltre…
+    const settle = 700;
     setWinner(null); setSpinning(true);
     if (!muted) audio();   // sblocca l'audio col tocco (iPhone)
-    setAngle(base + pick * seg + seg / 2 + jitter);
-    follow(performance.now() + SPIN_MS);
+    // parte subito veloce e rallenta in modo costante, come una bottiglia spinta sul tavolo
+    setMotion(`transform ${dur}ms cubic-bezier(.22,.68,.36,1)`);
+    setAngle(final + over);
+    follow(performance.now() + dur + settle);
     timer.current = window.setTimeout(() => {
-      setSpinning(false); setWinner(beers[pick]);
-      // porta in vista il risultato sotto la bottiglia
-      window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
-      if (!muted) ding();
-      try { navigator.vibrate?.([60, 40, 120]); } catch { /* niente */ }
-    }, SPIN_MS + 100);
+      setMotion(`transform ${settle}ms cubic-bezier(.45,0,.3,1)`);                  // …e torna indietro assestandosi
+      setAngle(final);
+      timer.current = window.setTimeout(() => {
+        setSpinning(false); setMotion("none"); setWinner(beers[pick]);
+        // porta in vista il risultato sotto la bottiglia
+        window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
+        if (!muted) ding();
+        try { navigator.vibrate?.([60, 40, 120]); } catch { /* niente */ }
+      }, settle + 60);
+    }, dur);
   };
 
   if (all == null) return <p>Caricamento…</p>;
@@ -215,7 +228,7 @@ export function BeerWheel() {
             </svg>
             <button className="bottle-btn" onClick={spin} disabled={spinning || !n} aria-label="Gira la bottiglia">
               <svg ref={wheelRef} className="bottle" viewBox="-74 -74 148 148"
-                style={{ transform: `rotate(${angle}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(.12,.72,.1,1)` : "none" }}>
+                style={{ transform: `rotate(${angle}deg)`, transition: motion }}>
                 <defs>
                   <linearGradient id="glass" x1="0" x2="1" y1="0" y2="0">
                     <stop offset="0" stopColor="#3b1d06" />
