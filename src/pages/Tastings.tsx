@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Star } from "lucide-react";
+import { Star, Minus, Plus } from "lucide-react";
+import { CapDot } from "../components/CapColor";
 import { supabase, errMsg, date, type Row } from "../lib";
 import { useAuth } from "../auth";
 
@@ -44,7 +45,7 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
   }, [filter, reload]);
   useEffect(() => {
     // si degustano solo le birre imbottigliate
-    supabase.from("batches").select("id, code, status, bottling_date, bottles_count, recipes(name)").order("brew_date", { ascending: false, nullsFirst: false })
+    supabase.from("batches").select("id, code, status, bottling_date, bottles_count, cap_color, recipes(name, style)").order("brew_date", { ascending: false, nullsFirst: false })
       .then(({ data }) => setBatches((data ?? []).filter((b) => b.bottling_date || b.bottles_count || b.status === "imbottigliato" || b.status === "finito")));
   }, []);
 
@@ -63,7 +64,7 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
       {(() => {
         const ok = batchId ? batches.some((b) => b.id === batchId) : batches.length > 0;
         return ok ? (
-          <button className="btn primary btn-wide" onClick={() => setEditing({ batch_id: (filter && batches.some((b) => b.id === filter) ? filter : batches[0]?.id) || "", rating: 0, tasted_on: new Date().toISOString().slice(0, 10) })}>
+          <button className="btn primary btn-wide" onClick={() => setEditing({ batch_id: (filter && batches.some((b) => b.id === filter) ? filter : batches[0]?.id) || "", rating: 0, serving_temp_c: 4, tasted_on: new Date().toISOString().slice(0, 10) })}>
             <Star size={20} /> Nuova degustazione
           </button>
         ) : (
@@ -132,19 +133,49 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
   );
 }
 
+/** Caratteristiche a scelta rapida (3–4 opzioni, oppure «Altro» da scrivere). */
+const CHOICES: { key: string; label: string; options: string[] }[] = [
+  { key: "appearance", label: "Aspetto", options: ["Limpida", "Velata", "Torbida"] },
+  { key: "aroma", label: "Aroma", options: ["Luppolato", "Maltato", "Fruttato", "Speziato"] },
+  { key: "flavor", label: "Gusto", options: ["Secco", "Equilibrato", "Dolce", "Amaro"] },
+  { key: "body", label: "Corpo", options: ["Leggero", "Medio", "Pieno"] },
+  { key: "fizz", label: "Bollicine", options: ["Poche", "Giuste", "Tante"] },
+];
+
+function Choice({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
+  const other = value !== "" && !options.includes(value);
+  const [otherOn, setOtherOn] = useState(other);
+  return (
+    <div className="tc-choice">
+      <span className="nb-label">{label}</span>
+      <div className="tc-opts grid" style={{ ["--n" as string]: options.length }}>
+        {options.map((o) => <button key={o} type="button" className={"tc-opt" + (value === o ? " on" : "")} onClick={() => { setOtherOn(false); onChange(value === o ? "" : o); }}>{o}</button>)}
+      </div>
+      <button type="button" className={"tc-other-btn" + (otherOn || other ? " on" : "")} onClick={() => { setOtherOn(!otherOn); if (otherOn) onChange(""); }}>✎ altro…</button>
+      {(otherOn || other) && <input className="tc-other" autoFocus={otherOn && !other} value={other ? value : ""} placeholder="scrivi tu" onChange={(e) => onChange(e.target.value)} />}
+    </div>
+  );
+}
+
 function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initial: Row; batches: Row[]; lockBatch: boolean; onClose: () => void; onSaved: () => void }) {
-  const [t, setT] = useState<Row>(initial);
+  // corpo e bollicine sono salvati insieme in «mouthfeel» («Corpo medio · bollicine giuste»)
+  const mf = String(initial.mouthfeel ?? "");
+  const mBody = mf.match(/Corpo (\w+)/i)?.[1], mFizz = mf.match(/bollicine (\w+)/i)?.[1];
+  const cap = (x?: string) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : "");
+  const [t, setT] = useState<Row>({ serving_temp_c: 4, ...initial, body: cap(mBody) || (mf && !mBody ? mf : ""), fizz: cap(mFizz) });
   const [error, setError] = useState("");
   const set = (k: string, v: unknown) => setT((x) => ({ ...x, [k]: v }));
+  const temp = Number(t.serving_temp_c ?? 4);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); setError("");
-    if (!t.batch_id) return setError("Scegli il batch");
+    if (!t.batch_id) return setError("Scegli la birra");
     if (!t.rating) return setError("Dai un voto da 1 a 5 stelle");
+    const mouthfeel = [t.body && (CHOICES[3].options.includes(t.body) ? `Corpo ${t.body.toLowerCase()}` : t.body), t.fizz && (CHOICES[4].options.includes(t.fizz) ? `bollicine ${t.fizz.toLowerCase()}` : t.fizz)].filter(Boolean).join(" · ");
     const rec = {
-      batch_id: t.batch_id, tasted_on: t.tasted_on, rating: t.rating, serving_temp_c: t.serving_temp_c === "" || t.serving_temp_c == null ? null : Number(t.serving_temp_c),
+      batch_id: t.batch_id, tasted_on: t.tasted_on || new Date().toISOString().slice(0, 10), rating: t.rating, serving_temp_c: temp,
       would_brew_again: t.would_brew_again ?? null,
-      ...Object.fromEntries(FIELDS.map(([k]) => [k, t[k] || null])),
+      appearance: t.appearance || null, aroma: t.aroma || null, flavor: t.flavor || null, mouthfeel: mouthfeel || null, notes: t.notes || null,
     };
     const res = t.id ? await supabase.from("tastings").update(rec).eq("id", t.id) : await supabase.from("tastings").insert(rec);
     if (res.error) return setError(errMsg(res.error));
@@ -153,35 +184,49 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
 
   return (
     <div className="modal-backdrop">
-      <form className="modal" onSubmit={save}>
-        <h2>{t.id ? "Modifica degustazione" : "Nuova degustazione"}</h2>
-        <div className="form-grid">
-          <label className="wide"><span>Batch</span>
-            <select value={t.batch_id} disabled={lockBatch} onChange={(e) => set("batch_id", e.target.value)}>
-              {batches.map((b) => <option key={b.id} value={b.id}>{b.code} — {b.recipes?.name}</option>)}
-            </select>
-          </label>
-          <label><span>Data</span><input type="date" value={t.tasted_on ?? ""} onChange={(e) => set("tasted_on", e.target.value)} /></label>
-          <label><span>Temperatura di servizio °C</span><input type="number" step="0.5" value={t.serving_temp_c ?? ""} onChange={(e) => set("serving_temp_c", e.target.value)} /></label>
+      <form className="modal tc-form" onSubmit={save}>
+        <h2>{t.id ? "Modifica degustazione" : "⭐ Nuova degustazione"}</h2>
+
+        <span className="nb-label">Quale birra</span>
+        <div className="tc-beers">
+          {batches.filter((b) => !lockBatch || b.id === t.batch_id).map((b) => (
+            <button key={b.id} type="button" className={"tc-beer" + (t.batch_id === b.id ? " on" : "")} onClick={() => set("batch_id", b.id)}>
+              <CapDot color={b.cap_color} size={20} />
+              <span className="tc-beer-txt"><strong>{b.recipes?.name ?? b.code}</strong><span className="muted small">{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</span></span>
+              {t.batch_id === b.id && <span className="tc-check">✓</span>}
+            </button>
+          ))}
         </div>
-        <div className="rating-row">
-          <span>Voto complessivo</span>
-          <Stars value={t.rating ?? 0} onChange={(v) => set("rating", v)} size={30} />
+
+        <div className="tc-two">
+          <div className="big-field">
+            <div className="bf-head"><span>Temperatura</span></div>
+            <div className="bf-row">
+              <button type="button" className="bf-btn" onClick={() => set("serving_temp_c", Math.max(0, temp - 1))}><Minus size={22} /></button>
+              <div className="bf-input"><input inputMode="decimal" value={String(temp).replace(".", ",")} onChange={(e) => set("serving_temp_c", Number(e.target.value.replace(",", ".")) || 0)} /><span className="bf-unit">°C</span></div>
+              <button type="button" className="bf-btn" onClick={() => set("serving_temp_c", temp + 1)}><Plus size={22} /></button>
+            </div>
+          </div>
+          <label className="tc-date"><span className="nb-label">Data</span><input type="date" value={t.tasted_on ?? ""} onChange={(e) => set("tasted_on", e.target.value)} /></label>
         </div>
-        {FIELDS.map(([k, label, ph]) => (
-          <label key={k} className="block"><span>{label}</span>
-            <textarea rows={k === "notes" ? 3 : 2} placeholder={ph} value={t[k] ?? ""} onChange={(e) => set(k, e.target.value)} />
-          </label>
-        ))}
-        <div className="row-actions">
-          <span className="muted small">La rifaresti?</span>
-          <button type="button" className={"btn small" + (t.would_brew_again === true ? " primary" : "")} onClick={() => set("would_brew_again", t.would_brew_again === true ? null : true)}>👍 Sì</button>
-          <button type="button" className={"btn small" + (t.would_brew_again === false ? " primary" : "")} onClick={() => set("would_brew_again", t.would_brew_again === false ? null : false)}>👎 Cambierei qualcosa</button>
+
+        {CHOICES.map((c) => <Choice key={c.key} label={c.label} options={c.options} value={t[c.key] ?? ""} onChange={(v) => set(c.key, v)} />)}
+
+        <label className="block"><span className="nb-label">Note (facoltative)</span>
+          <textarea rows={2} placeholder="abbinamenti, cosa cambiare…" value={t.notes ?? ""} onChange={(e) => set("notes", e.target.value)} /></label>
+
+        <div className="tc-final">
+          <span className="nb-label">Valutazione</span>
+          <Stars value={t.rating ?? 0} onChange={(v) => set("rating", v)} size={36} />
+          <div className="tc-opts">
+            <button type="button" className={"tc-opt" + (t.would_brew_again === true ? " on" : "")} onClick={() => set("would_brew_again", t.would_brew_again === true ? null : true)}>👍 La rifarei così</button>
+            <button type="button" className={"tc-opt" + (t.would_brew_again === false ? " on" : "")} onClick={() => set("would_brew_again", t.would_brew_again === false ? null : false)}>✏️ Cambierei qualcosa</button>
+          </div>
         </div>
         {error && <p className="error">{error}</p>}
-        <div className="row-actions">
-          <button className="btn primary">Salva</button>
+        <div className="qe-sheet-btns">
           <button type="button" className="btn" onClick={onClose}>Annulla</button>
+          <button className="btn primary">Salva</button>
         </div>
       </form>
     </div>

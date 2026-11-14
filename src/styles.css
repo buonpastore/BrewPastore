@@ -1476,3 +1476,28 @@ a.tk-item:hover { color: var(--text); border-color: var(--line-strong); }
 .cap-row:hover { color: var(--text); background: var(--surface-2); }
 .cap-row strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cap-row-c { text-align: right; }
+
+/* degustazione rapida */
+.tc-form { max-width: 560px; }
+.tc-beers { display: flex; flex-direction: column; gap: 6px; max-height: 30vh; overflow-y: auto; margin: 6px 0 14px; }
+.tc-beers > * { flex-shrink: 0; }
+.tc-beer { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.tc-beer.on { border-color: var(--magenta); box-shadow: 0 0 0 1px var(--magenta) inset; }
+.tc-beer-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.tc-check { color: var(--magenta); font-weight: 800; }
+.tc-two { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; align-items: end; margin-bottom: 8px; }
+.tc-date input { width: 100%; min-height: 52px; }
+.tc-choice { margin: 10px 0; }
+.tc-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tc-opt { flex: 1 1 auto; min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font: 600 .92rem var(--sans); cursor: pointer; }
+.tc-opt.on { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 16%, var(--surface-2)); color: var(--gold); }
+.tc-other { width: 100%; margin-top: 6px; }
+.tc-final { margin: 16px 0 8px; padding: 14px; border-radius: var(--r); background: var(--surface-2); text-align: center; }
+.tc-final .stars { justify-content: center; margin: 6px 0 10px; }
+@media (max-width: 420px) { .tc-two { grid-template-columns: 1fr; } }
+.tc-final .stars { display: inline-flex; }
+
+.tc-opts.grid { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+.tc-opts.grid .tc-opt { padding: 8px 4px; font-size: .86rem; }
+.tc-other-btn { margin-top: 4px; padding: 4px 2px; border: 0; background: none; color: var(--muted); font: 600 .82rem var(--sans); cursor: pointer; }
+.tc-other-btn.on { color: var(--gold); }
