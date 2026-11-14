@@ -1414,3 +1414,17 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .avatar-gear { position: absolute; right: -3px; bottom: -3px; width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center;
   background: var(--gold); color: #1f1500; border: 2px solid var(--bg); }
 .avatar:hover .avatar-gear svg { transform: rotate(60deg); transition: transform .3s; }
+
+/* impostazioni → soci */
+.soci { display: flex; flex-direction: column; gap: 8px; }
+.socio { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--r); background: var(--surface-2); border: 1px solid var(--line); }
+.socio.me { border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.socio-av { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: var(--text);
+  background: var(--surface); box-shadow: 0 0 0 2px var(--teal) inset; }
+.socio.me .socio-av { box-shadow: 0 0 0 2px var(--gold) inset; }
+.socio-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.socio-admin { background: color-mix(in srgb, var(--gold) 16%, transparent); color: var(--gold); }
+.socio-view { background: var(--surface-3); color: var(--muted); }
+.socio-go { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--teal) 55%, transparent); background: color-mix(in srgb, var(--teal) 12%, transparent); color: var(--teal); }
+.socio-go:active { transform: scale(.94); }

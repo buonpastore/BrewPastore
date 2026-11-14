@@ -1,3 +1,4 @@
+import { LogIn } from "lucide-react";
 import { loginAs } from "../impersonate";
 import { Tabs } from "../components/Layout";
 import { CapColorsSettings } from "../components/CapColor";
@@ -299,20 +300,26 @@ export function Settings() {
       {tab === "utenti" && (
         <div className="panel">
           <h2>Soci</h2>
-          <table>
-            <thead><tr><th>Nome</th><th>Ruolo</th>{isAdmin && <th />}</tr></thead>
-            <tbody>{profiles.map((p) => (
-              <tr key={p.id}>
-                <td>{p.display_name}</td><td>{p.role === "admin" ? "Amministratore" : "Consultazione"}</td>
-                {isAdmin && <td className="nowrap">{p.id !== profile?.id && (
-                  <button className="btn small" onClick={async () => {
-                    if (!confirm(`Entrare nella app come ${p.display_name}? Vedrai e farai tutto come lui; per tornare tocca «Torna a ${profile?.display_name}» in alto.`)) return;
-                    try { await loginAs(p.id, profile?.display_name ?? "amministratore"); } catch (e) { alert(errMsg(e)); }
-                  }}>👤 Entra come</button>
-                )}</td>}
-              </tr>
-            ))}</tbody>
-          </table>
+          <div className="soci">
+            {profiles.map((p) => {
+              const me = p.id === profile?.id;
+              return (
+                <div key={p.id} className={"socio" + (me ? " me" : "")}>
+                  <span className="socio-av">{(p.display_name ?? "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</span>
+                  <span className="socio-txt">
+                    <strong>{p.display_name}{me && <span className="muted"> (tu)</span>}</strong>
+                    <span className={"badge " + (p.role === "admin" ? "socio-admin" : "socio-view")}>{p.role === "admin" ? "Amministratore" : "Consultazione"}</span>
+                  </span>
+                  {isAdmin && !me && (
+                    <button className="socio-go" title={`Entra nell'app come ${p.display_name}`} aria-label={`Entra come ${p.display_name}`} onClick={async () => {
+                      if (!confirm(`Entrare nella app come ${p.display_name}? Vedrai e farai tutto come lui; per tornare tocca «Torna a ${profile?.display_name}» in alto.`)) return;
+                      try { await loginAs(p.id, profile?.display_name ?? "amministratore"); } catch (e) { alert(errMsg(e)); }
+                    }}><LogIn size={20} /></button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
       {tab === "app" && (
