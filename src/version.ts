@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.212", date: "15/11/2026 11:15", text: "Carbonazione più comoda: carbonazione voluta, temperatura e litri si cambiano con − e + ai lati, come nella correzione della densità" },
   { version: "0.211", date: "15/11/2026 10:55", text: "Nuova utilità «Correzione densità» (accanto al pH): con litri nel fermentatore, densità misurata e densità voluta (partono dal batch in corso, si cambiano con − e +) ti dice quanti grammi di zucchero, destrosio, estratto di malto o miele aggiungere; se la densità è più alta, va bene così (e ti dice quanta acqua servirebbe per scendere)" },
   { version: "0.210", date: "15/11/2026 10:40", text: "Costi birre: la spiegazione «come li calcolo» in fondo è chiusa sotto la voce «Info», si apre toccandola" },
   { version: "0.209", date: "15/11/2026 10:30", text: "Gira la bottiglia davvero a caso: ogni spinta ha una forza casuale (da 3 a 7 giri) e la birra è semplicemente quella dove si ferma il collo. Mentre gira puoi toccarla di nuovo per darle un’altra spinta, anche più volte" },

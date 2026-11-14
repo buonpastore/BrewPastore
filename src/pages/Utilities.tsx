@@ -119,9 +119,9 @@ function Carbonation() {
   const styles = useMemo(() => Object.keys(STYLE_CO2).sort((a, b) => a.localeCompare(b, "it")), []);
   const [style, setStyle] = useState("");
   const [co2, setCo2] = useState<number | null>(null);
-  const [temp, setTemp] = useState("20");
+  const [temp, setTemp] = useState(20);
   const [sugar, setSugar] = useState("saccarosio");
-  const [liters, setLiters] = useState("");
+  const [liters, setLiters] = useState<number | null>(null);
   useEffect(() => {
     if (style || !current) return;
     const st = findStyle(current.recipes?.style);
@@ -129,9 +129,9 @@ function Carbonation() {
   }, [current, style]);
   const range = STYLE_CO2[style] ?? [2.2, 2.8];
   const vol = co2 ?? Math.round(((range[0] + range[1]) / 2) * 10) / 10;
-  const t = Number(temp.replace(",", ".")) || 20;
+  const t = temp;
   const perL = Math.max(0, vol - residualCo2(t)) * (PRIMING_FACTORS[sugar] ?? PRIMING_FACTORS.saccarosio);
-  const L = Number(liters.replace(",", ".")) || Number(current?.volume_bottled_l ?? current?.volume_fermenter_l ?? 0);
+  const L = liters ?? Number(current?.volume_bottled_l ?? current?.volume_fermenter_l ?? 20);
 
   return (
     <div>
@@ -151,13 +151,11 @@ function Carbonation() {
             <option value="dme">Estratto di malto secco</option>
           </select>
         </label>
-        <label><span>Temperatura massima della birra in fermentazione (°C)</span><input inputMode="decimal" value={temp} onChange={(e) => setTemp(e.target.value)} /></label>
-        <label><span>Litri da imbottigliare (facoltativo)</span><input inputMode="decimal" value={liters} placeholder={L ? num(L, 1) : "es. 20"} onChange={(e) => setLiters(e.target.value)} /></label>
       </div>
-      <div className="ut-co2">
-        <div className="ut-co2-head"><span>Carbonazione voluta</span><strong>{num(vol, 1)} vol</strong></div>
-        <input type="range" min={Math.max(1, range[0] - 0.4)} max={range[1] + 0.4} step={0.1} value={vol} onChange={(e) => setCo2(Number(e.target.value))} />
-        <div className="ut-co2-range"><span>più piatta</span><span className="muted small">tipico dello stile {num(range[0], 1)}–{num(range[1], 1)}</span><span>più frizzante</span></div>
+      <div className="ut-steppers">
+        <Stepper label={`Carbonazione voluta (tipico dello stile ${num(range[0], 1)}–${num(range[1], 1)} vol)`} value={vol} step={0.1} digits={1} onChange={setCo2} unit="vol" />
+        <Stepper label="Temperatura massima della birra in fermentazione" value={t} step={1} digits={0} onChange={setTemp} unit="°C" />
+        <Stepper label="Litri da imbottigliare" value={L} step={0.5} digits={1} onChange={setLiters} unit="L" />
       </div>
       <div className="ut-result">
         <div><small>Bottiglia da 33 cl</small><strong>{num(perL * 0.33, 1)} g</strong></div>
