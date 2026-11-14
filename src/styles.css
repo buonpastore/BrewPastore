@@ -1846,7 +1846,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ring-text { font-family: var(--sans); font-weight: 700; fill: var(--text); }
 .ring-win .ring-band { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
 .ring-win .ring-text { font-weight: 900; fill: var(--gold-2); }
-.bottle-btn { position: absolute; top: 50%; left: 50%; width: 62%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; background: none; padding: 0; cursor: pointer; border-radius: 50%; }
+.bottle-btn { position: absolute; top: 50%; left: 50%; width: 54%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; background: none; padding: 0; cursor: pointer; border-radius: 50%; }
 .bottle-btn:disabled { cursor: default; }
 .bottle { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); }
 .bottle-glass { stroke: color-mix(in srgb, var(--gold) 70%, #000); stroke-width: .9; stroke-linejoin: round; }
@@ -1880,3 +1880,6 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .kpis > .kpi:nth-child(4n+4)::after { background: var(--violet); }
 /* ricette: colore fisso della birra (anche filtrando l'elenco) */
 .cards > .card.rc-card::before { background: var(--rc); }
+.seal { fill: var(--gold); }
+.seal-ring { fill: var(--bg); stroke: var(--gold); stroke-width: 1; }
+.seal-text { fill: #1f1500; font-family: var(--sans); font-weight: 800; letter-spacing: .04em; }
