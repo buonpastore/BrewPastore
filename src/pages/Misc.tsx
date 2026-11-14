@@ -85,7 +85,8 @@ export function Dashboard() {
           const k = b.recipe_id ?? b.id;
           if (!latest[k] || key(b) > key(latest[k])) latest[k] = b;
         }
-        setActive(Object.values(latest).sort((a, b) => key(b).localeCompare(key(a))));
+        // batch in corso: i terminati (finiti) non si mostrano
+        setActive(Object.values(latest).filter((b) => b.status !== "finito").sort((a, b) => key(b).localeCompare(key(a))));
       });
     supabase.from("messages").select("*").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecent(data ?? []));
     if (profile) {
@@ -151,7 +152,7 @@ export function Dashboard() {
             </Link>
           );
         })}
-        {!active.length && <p className="muted">Nessun batch ancora. <Link to="/ricette">Scegli una ricetta</Link> e cotta!</p>}
+        {!active.length && <p className="muted">Nessun batch in corso. <Link to="/batch">Fai un nuovo batch</Link> e cotta!</p>}
       </div>
 
       <CapGallery />
