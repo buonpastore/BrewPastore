@@ -1659,3 +1659,24 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 
 /* niente pecora sullo sfondo dell’app (resta solo lo sfondo a raggi) */
 .app::before { display: none; }
+
+/* confronto: valutazione scritta */
+.cmp-eval { margin: 14px 0 6px; padding: 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--line)); }
+.cmp-eval h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.cmp-verdict { margin: 0 0 12px; font-size: 1.02rem; font-weight: 700; color: var(--gold-2); line-height: 1.4; }
+.cmp-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.cmp-points li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.45; font-size: .92rem; }
+.cmp-points li > svg { flex: none; margin-top: 2px; }
+.tone-good > svg { color: var(--teal); }
+.tone-bad > svg { color: var(--magenta); }
+.tone-warn > svg { color: var(--gold); }
+.tone-info > svg { color: var(--muted); }
+.cmp-advice { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 0; padding: 12px; border-radius: 12px; background: rgba(237, 165, 18, .1); font-weight: 600; line-height: 1.45; }
+.cmp-advice > svg { flex: none; color: var(--gold); margin-top: 2px; }
+.cmp-miss { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 12px 0; }
+.cmp-miss-box { padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--magenta) 35%, var(--line)); background: var(--surface); }
+.cmp-miss-box h4 { margin: 0 0 6px; font-size: .92rem; color: var(--magenta); }
+.cmp-miss-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: .9rem; }
+.cmp-miss-row small { display: block; color: var(--muted); font-size: .74rem; }
+.cmp-miss-row strong { flex: none; font-variant-numeric: tabular-nums; }
+.cmp-more > summary { cursor: pointer; font-weight: 700; padding: 10px 0; }

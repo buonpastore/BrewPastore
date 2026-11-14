@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight, Circle, CircleCheck, ShoppingCart } from "lucide-react";
+import { ChevronRight, Circle, CircleAlert, CircleCheck, Info, Lightbulb, ShoppingCart, TriangleAlert } from "lucide-react";
+import { analyze, insights, type CmpItem } from "../quoteCompare";
 import readXlsxFile, { readSheetNames } from "read-excel-file";
 import { supabase, uploadFile, parseQuote, openFile, errMsg, eur, date, num, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -228,14 +229,17 @@ function QuoteCompare({ quotes, soci }: { quotes: Row[]; soci: number }) {
     supabase.from("equipment_quote_items").select("*").in("quote_id", [a, b]).order("sort_order").then(({ data }) => setItems(data ?? []));
   }, [a, b]);
   const qa = quotes.find((q) => q.id === a), qb = quotes.find((q) => q.id === b);
+  const nA = qa?.supplier ?? "A", nB = qb?.supplier ?? "B";
   const A = items.filter((i) => i.quote_id === a), B = items.filter((i) => i.quote_id === b);
   const tot = (rs: Row[]) => rs.reduce((t, i) => t + lineTotal(i), 0);
   const ta = tot(A), tb = tot(B), d = tb - ta;
   const catOf = (i: Row) => (i.category ?? "").trim() || "Senza categoria";
   const cats = [...new Set([...A, ...B].map(catOf))].sort((x, y) => (x === "Senza categoria" ? 1 : y === "Senza categoria" ? -1 : x.localeCompare(y)));
   const delta = (v: number) => <span className={"cmp-d" + (Math.abs(v) < 0.005 ? "" : v < 0 ? " less" : " more")}>{Math.abs(v) < 0.005 ? "=" : (v > 0 ? "+" : "−") + eur(Math.abs(v))}</span>;
-  const onlyA = A.filter((i) => !B.some((j) => keyOfItem(j) === keyOfItem(i))).length;
-  const onlyB = B.filter((i) => !A.some((j) => keyOfItem(j) === keyOfItem(i))).length;
+  const r = analyze(A as CmpItem[], B as CmpItem[]);
+  const ev = insights(r, nA, nB, soci);
+  const TONE = { good: <CircleCheck size={18} />, bad: <CircleAlert size={18} />, warn: <TriangleAlert size={18} />, info: <Info size={18} /> };
+  const short = (n: string) => (n.length > 12 ? n.slice(0, 11) + "…" : n);
 
   return (
     <div className="panel cmp">
@@ -246,16 +250,33 @@ function QuoteCompare({ quotes, soci }: { quotes: Row[]; soci: number }) {
       {a === b ? <p className="muted">Scegli due preventivi diversi.</p> : (
         <>
           <div className="cmp-sum">
-            <div><span>{qa?.supplier}</span><strong>{eur(ta)}</strong><small>{eur(ta / soci)} a testa</small></div>
-            <div><span>{qb?.supplier}</span><strong>{eur(tb)}</strong><small>{eur(tb / soci)} a testa</small></div>
-            <div className="cmp-diff"><span>Differenza B − A</span><strong>{delta(d)}</strong><small>{delta(d / soci)} a testa</small></div>
+            <div><span>{nA}</span><strong>{eur(ta)}</strong><small>{eur(ta / soci)} a testa</small></div>
+            <div><span>{nB}</span><strong>{eur(tb)}</strong><small>{eur(tb / soci)} a testa</small></div>
+            <div className="cmp-diff"><span>Differenza</span><strong>{delta(d)}</strong><small>{delta(d / soci)} a testa</small></div>
           </div>
-          <p className="muted small">
-            {Math.abs(d) < 0.005 ? "Costano uguale." : `«${d < 0 ? qb?.supplier : qa?.supplier}» costa ${eur(Math.abs(d))} in meno (${Math.round(Math.abs(d) / Math.max(ta, tb) * 100)}%).`}
-            {onlyA ? ` ${onlyA} ${onlyA === 1 ? "oggetto" : "oggetti"} solo in A.` : ""}{onlyB ? ` ${onlyB} ${onlyB === 1 ? "oggetto" : "oggetti"} solo in B.` : ""} Tocca una tipologia per vedere gli oggetti.
-          </p>
+
+          <div className="cmp-eval">
+            <h3>Valutazione</h3>
+            <p className="cmp-verdict">{ev.verdict}</p>
+            <ul className="cmp-points">
+              {ev.points.map((p, i) => <li key={i} className={"tone-" + p.tone}>{TONE[p.tone]}<span>{p.text}</span></li>)}
+            </ul>
+            <p className="cmp-advice"><Lightbulb size={18} /><span>{ev.advice}</span></p>
+          </div>
+          {(r.onlyA.length > 0 || r.onlyB.length > 0) && (
+            <div className="cmp-miss">
+              {[[nB, r.onlyA, "a"], [nA, r.onlyB, "b"]].map(([who, ps, k]) => (ps as typeof r.onlyA).length > 0 && (
+                <div key={k as string} className="cmp-miss-box">
+                  <h4>Mancano in «{who as string}»</h4>
+                  {(ps as typeof r.onlyA).map((p) => <div key={p.name} className="cmp-miss-row"><span>{p.name}<small>{p.category}</small></span><strong>{eur(p.a.total || p.b.total)}</strong></div>)}
+                </div>
+              ))}
+            </div>
+          )}
+          <details className="cmp-more">
+            <summary>Dettaglio per tipologia e oggetto</summary>
           <div className="cmp-table">
-            <div className="cmp-row cmp-h"><span>Tipologia</span><span>A</span><span>B</span><span>B − A</span></div>
+            <div className="cmp-row cmp-h"><span>Tipologia</span><span>{short(nA)}</span><span>{short(nB)}</span><span>Diff.</span></div>
             {cats.map((c) => {
               const ca = A.filter((i) => catOf(i) === c), cb = B.filter((i) => catOf(i) === c);
               const keys = [...new Set([...ca, ...cb].map(keyOfItem))];
@@ -286,6 +307,7 @@ function QuoteCompare({ quotes, soci }: { quotes: Row[]; soci: number }) {
             })}
             <div className="cmp-row cmp-h cmp-f"><span>Totale</span><span>{eur(ta)}</span><span>{eur(tb)}</span>{delta(d)}</div>
           </div>
+          </details>
         </>
       )}
     </div>
