@@ -1,3 +1,4 @@
+import { adminBackup, backToAdmin } from "../impersonate";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import {
@@ -127,6 +128,12 @@ export function Layout() {
 
       <main className="content">
         <UpdateBanner />
+        {adminBackup() && (
+          <div className="impersonate-bar">
+            👤 Stai usando l'app come <strong>{profile?.display_name}</strong>
+            <button className="btn small" onClick={() => backToAdmin()}>Torna a {adminBackup()?.name}</button>
+          </div>
+        )}
         {current.tabs && (
           <>
             <div className="section-title">{current.label}</div>

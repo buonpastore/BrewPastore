@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.134", date: "14/11/2026 02:30", text: "Impostazioni → Soci: l'amministratore può entrare nell'app come un altro utente e poi tornare a sé (serve la funzione «impersonate» su Supabase)" },
   { version: "0.133", date: "14/11/2026 02:10", text: "Nuovo menu Utilità (in basso a destra): conta bottiglie, carbonazione, correzione del pH e timer dei luppoli. Le impostazioni si aprono toccando il proprio nome in alto e sono divise in sezioni. Da eseguire: 0012_conta_bottiglie.sql" },
   { version: "0.132", date: "14/11/2026 01:40", text: "Lista ricette: tolta la descrizione, resta solo quante cotte avete fatto; icone su alcol e IBU" },
   { version: "0.131", date: "14/11/2026 01:30", text: "Costi birre: in ogni birra si contano sempre 5 g di Irish moss, anche se non sono scritti nella ricetta" },

@@ -1,3 +1,4 @@
+import { loginAs } from "../impersonate";
 import { Tabs } from "../components/Layout";
 import { CapColorsSettings } from "../components/CapColor";
 import { CapGallery, CapDot } from "../components/CapColor";
@@ -298,9 +299,20 @@ export function Settings() {
         <div className="panel">
           <h2>Soci</h2>
           <table>
-            <thead><tr><th>Nome</th><th>Ruolo</th></tr></thead>
-            <tbody>{profiles.map((p) => <tr key={p.id}><td>{p.display_name}</td><td>{p.role === "admin" ? "Amministratore" : "Consultazione"}</td></tr>)}</tbody>
+            <thead><tr><th>Nome</th><th>Ruolo</th>{isAdmin && <th />}</tr></thead>
+            <tbody>{profiles.map((p) => (
+              <tr key={p.id}>
+                <td>{p.display_name}</td><td>{p.role === "admin" ? "Amministratore" : "Consultazione"}</td>
+                {isAdmin && <td className="nowrap">{p.id !== profile?.id && (
+                  <button className="btn small" onClick={async () => {
+                    if (!confirm(`Entrare nella app come ${p.display_name}? Vedrai e farai tutto come lui; per tornare tocca «Torna a ${profile?.display_name}» in alto.`)) return;
+                    try { await loginAs(p.id, profile?.display_name ?? "amministratore"); } catch (e) { alert(errMsg(e)); }
+                  }}>👤 Entra come</button>
+                )}</td>}
+              </tr>
+            ))}</tbody>
           </table>
+          {isAdmin && <p className="muted small">«Entra come» usa la funzione <code>impersonate</code> di Supabase: va installata una volta (Edge Functions → Deploy a new function → Via editor, nome <code>impersonate</code>, incolla il file <code>supabase/functions/impersonate/index.ts</code>).</p>}
           <p className="muted small">Gli utenti si aggiungono da Supabase → Authentication → Users. Il ruolo si cambia dalla tabella <code>profiles</code>.</p>
         </div>
       )}
