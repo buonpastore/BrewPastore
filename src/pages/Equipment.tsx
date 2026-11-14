@@ -443,7 +443,6 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
   });
   const setView = (v: typeof view) => { setViewRaw(v); try { localStorage.setItem("pastorizia-quote-view", v); } catch { /* niente */ } };
   const [openSup, setOpenSup] = useState<Set<string>>(new Set());
-  const [openCat, setOpenCat] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
   const [edit, setEdit] = useState<Row | null>(null);
 
@@ -498,21 +497,19 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
   );
 
   const supOf = (i: Row) => (i.supplier ?? "").trim() || "Fornitore non indicato";
-  const tree = new Map<string, Map<string, Row[]>>();
-  for (const i of items) {
-    const sm = tree.get(supOf(i)) ?? new Map<string, Row[]>();
-    sm.set(catOf(i), [...(sm.get(catOf(i)) ?? []), i]);
-    tree.set(supOf(i), sm);
-  }
-  const last = (a: string, b: string, tail: string) => (a === tail ? 1 : b === tail ? -1 : a.localeCompare(b));
-  const sups = [...tree.keys()].sort((a, b) => last(a, b, "Fornitore non indicato"));
+  // un solo livello: per tipologia oppure per fornitore
+  const groupOf = view === "fornitore" ? supOf : catOf;
+  const groupMap = new Map<string, Row[]>();
+  for (const i of items) groupMap.set(groupOf(i), [...(groupMap.get(groupOf(i)) ?? []), i]);
+  const rank = (g: string) => view === "fornitore" ? (g === "Fornitore non indicato" ? 99 : 50)
+    : /^(boil|cott|bollit)/i.test(g) ? 0 : /^ferm/i.test(g) ? 1 : /^(bott|imbott)/i.test(g) ? 2 : /^(tool|attrezz|utensil)/i.test(g) ? 3 : g === "Senza categoria" ? 99 : 50;
+  const groups = [...groupMap.keys()].sort((x, y) => rank(x) - rank(y) || sum(groupMap.get(y)!) - sum(groupMap.get(x)!));
   const toggle = (set: Set<string>, k: string, fn: (s: Set<string>) => void) => { const n = new Set(set); n.has(k) ? n.delete(k) : n.add(k); fn(n); };
-  const allCats = sups.flatMap((sp) => [...tree.get(sp)!.keys()].map((c) => sp + "|" + c));
-  const allOpen = openSup.size === sups.length && (view === "fornitore" || allCats.every((k) => openCat.has(k)));
+  const allOpen = groups.length > 0 && groups.every((g) => openSup.has(view + "|" + g));
 
   const itemRow = (i: Row) => {
     const isOpen = open === i.id;
-    const sub = [view === "lista" ? i.supplier : null, i.brand, i.model].filter(Boolean).join(" · ");
+    const sub = [view !== "fornitore" ? i.supplier : null, i.brand, i.model].filter(Boolean).join(" · ");
     return (
       <div key={i.id} className={"qi" + (isOpen ? " open" : "") + (Number(i.unit_price) ? "" : " zero") + (i.confirmed ? " conf" : "")}>
         <div className="qi-line">
@@ -550,14 +547,13 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
         <h2>Oggetti</h2>
         {items.length > 0 && (
           <button className="btn small" style={view === "lista" ? { visibility: "hidden" } : undefined} tabIndex={view === "lista" ? -1 : undefined} onClick={() => {
-            if (allOpen) { setOpenSup(new Set()); setOpenCat(new Set()); }
-            else { setOpenSup(new Set(sups)); setOpenCat(new Set(allCats)); }
+            setOpenSup(allOpen ? new Set() : new Set(groups.map((g) => view + "|" + g)));
           }}>{allOpen ? "Chiudi tutto" : "Espandi tutto"}</button>
         )}
       </div>
       {items.length > 0 && (
         <div className="pv-views">
-          {([["lista", "Tutti"], ["fornitore", "Per fornitore"], ["tipologia", "Fornitore e tipologia"]] as const).map(([k, l]) => (
+          {([["lista", "Tutti"], ["tipologia", "Per tipologia"], ["fornitore", "Per fornitore"]] as const).map(([k, l]) => (
             <button key={k} className={"pv-view" + (view === k ? " on" : "")} onClick={() => setView(k)}>{l}</button>
           ))}
         </div>
@@ -571,47 +567,31 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
         </div>
       )}
       {view !== "lista" && <div className="pv">
-        {sups.map((sp) => {
-          const cm = tree.get(sp)!;
-          const its = [...cm.values()].flat();
-          const so = openSup.has(sp);
+        {groups.map((g) => {
+          const its = groupMap.get(g)!;
+          const k = view + "|" + g;
+          const so = openSup.has(k);
+          const all = its.every((i) => i.confirmed);
           return (
-            <div key={sp} className={"pv-sup" + (so ? " open" : "")}>
+            <div key={k} className={"pv-sup" + (so ? " open" : "")}>
               <div className="pv-line">
-              <button className={"qi-check pv-check" + (its.every((i) => i.confirmed) ? " on" : "")} disabled={!canEdit}
-                title={its.every((i) => i.confirmed) ? "Tutto confermato: tocca per rimettere in valutazione" : `Conferma tutto ${sp}`}
-                onClick={() => its.every((i) => i.confirmed) ? setConfirmed(its, false) : setConfirmed(its.filter((i) => !i.confirmed), true)}>
-                {its.every((i) => i.confirmed) ? <CircleCheck size={24} /> : <Circle size={24} />}
-              </button>
-              <button className="pv-row lvl1" onClick={() => toggle(openSup, sp, setOpenSup)}>
-                <ChevronRight size={18} className="pv-chev" />
-                <span className="pv-name">{sp}
-                  {its.every((i) => i.confirmed)
-                    ? <small className="pv-ready"><ShoppingCart size={13} /> pronto da acquistare</small>
-                    : <small className="pv-wait">{its.filter((i) => i.confirmed).length}/{its.length} confermati</small>}
-                </span>
-                <span className="pv-n">{its.length}</span>
-                <span className="pv-tot">{eur(sum(its))}<small>{eur(sum(its) / soci)} a testa</small></span>
-              </button>
+                <button className={"qi-check pv-check" + (all ? " on" : "")} disabled={!canEdit}
+                  title={all ? "Tutto confermato: tocca per rimettere in valutazione" : `Conferma tutto ${g}`}
+                  onClick={() => all ? setConfirmed(its, false) : setConfirmed(its.filter((i) => !i.confirmed), true)}>
+                  {all ? <CircleCheck size={24} /> : <Circle size={24} />}
+                </button>
+                <button className="pv-row lvl1" onClick={() => toggle(openSup, k, setOpenSup)}>
+                  <ChevronRight size={18} className="pv-chev" />
+                  <span className="pv-name">{g}
+                    {all
+                      ? <small className="pv-ready"><ShoppingCart size={13} /> {view === "fornitore" ? "pronto da acquistare" : "tutto confermato"}</small>
+                      : <small className="pv-wait">{its.filter((i) => i.confirmed).length}/{its.length} confermati</small>}
+                  </span>
+                  <span className="pv-n">{its.length}</span>
+                  <span className="pv-tot">{eur(sum(its))}<small>{eur(sum(its) / soci)} a testa</small></span>
+                </button>
               </div>
-
-              {so && view === "fornitore" && <div className="pv-items">{its.map(itemRow)}</div>}
-              {so && view === "tipologia" && [...cm.keys()].sort((a, b) => last(a, b, "Senza categoria")).map((c) => {
-                const k = sp + "|" + c;
-                const ci = cm.get(c)!;
-                const co = openCat.has(k);
-                return (
-                  <div key={k} className={"pv-cat" + (co ? " open" : "")}>
-                    <button className="pv-row lvl2" onClick={() => toggle(openCat, k, setOpenCat)}>
-                      <ChevronRight size={16} className="pv-chev" />
-                      <span className="pv-name">{c}</span>
-                      <span className={"pv-n" + (ci.every((i) => i.confirmed) ? " all" : "")}>{ci.filter((i) => i.confirmed).length}/{ci.length}</span>
-                      <span className="pv-tot">{eur(sum(ci))}<small>{eur(sum(ci) / soci)} a testa</small></span>
-                    </button>
-                    {co && <div className="pv-items">{ci.map(itemRow)}</div>}
-                  </div>
-                );
-              })}
+              {so && <div className="pv-items">{its.map(itemRow)}</div>}
             </div>
           );
         })}
