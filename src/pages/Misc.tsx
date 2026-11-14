@@ -311,8 +311,6 @@ export function Settings() {
               </tr>
             ))}</tbody>
           </table>
-          {isAdmin && <p className="muted small">«Entra come» usa la funzione <code>impersonate</code> di Supabase: va installata una volta (Edge Functions → Deploy a new function → Via editor, nome <code>impersonate</code>, incolla il file <code>supabase/functions/impersonate/index.ts</code>).</p>}
-          <p className="muted small">Gli utenti si aggiungono da Supabase → Authentication → Users. Il ruolo si cambia dalla tabella <code>profiles</code>.</p>
         </div>
       )}
       {tab === "app" && (

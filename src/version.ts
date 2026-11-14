@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.139", date: "14/11/2026 15:05", text: "Impostazioni: tolte le note tecniche su Supabase dai Soci; colori dei tappi ordinati su due colonne" },
   { version: "0.138", date: "14/11/2026 14:50", text: "Spese condivise rifatte e semplici: inserisci la spesa (ordine materie prime, bottiglie o altro) con importo; gli altri vedono la loro quota e toccano «Ho saldato»; quando tutti hanno saldato la spesa va nello storico. Tolti «Ho mandato soldi» e i rimborsi" },
   { version: "0.137", date: "14/11/2026 14:30", text: "«Entra come»: funziona anche se la funzione su Supabase si chiama «Impersonate» con la maiuscola" },
   { version: "0.136", date: "14/11/2026 14:20", text: "Tolto il pulsante per copiare il codice della funzione dalle Impostazioni" },

@@ -1248,8 +1248,9 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 /* barra laterale della ricetta col colore del tappo */
 .card.has-cap::before { background: var(--cap) !important; width: 6px; }
 /* impostazioni: colori dei tappi */
-.cap-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.cap-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); }
+.cap-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.cap-chip { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); min-width: 0; }
+.cap-chip .icon { margin-left: auto; }
 .cap-add input[type="color"] { width: 56px; height: 44px; padding: 2px; }
 /* divisione delle bottiglie tra i soci */
 .split { margin: 14px 0 4px; }
@@ -1368,3 +1369,4 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .xp-people { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 8px; }
 .xp-person { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 99px; border: 1px solid var(--line-strong); background: var(--surface-2); cursor: pointer; }
 .xp-person.on { border-color: var(--gold); }
+.cap-chip > button:last-child { margin-left: auto; }

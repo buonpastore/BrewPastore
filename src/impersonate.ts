@@ -21,7 +21,7 @@ export async function loginAs(userId: string, adminName: string) {
     let msg = "";
     try { msg = ctx ? (await ctx.json()).error : ""; } catch { /* niente */ }
     if ((error as { name?: string }).name === "FunctionsFetchError" || ctx?.status === 404 || /not found|404/i.test(String(error.message) + msg))
-      throw new Error("La funzione «impersonate» non è ancora installata su Supabase (vedi le istruzioni in Impostazioni → Soci).");
+      throw new Error("La funzione «impersonate» non è ancora installata su Supabase .");
     throw new Error(msg || error.message);
   }
   if (!data?.token_hash) throw new Error(data?.error ?? "Risposta non valida");
