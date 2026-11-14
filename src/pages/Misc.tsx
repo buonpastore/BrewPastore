@@ -1,3 +1,4 @@
+import { whoOf } from "./Tasks";
 import { LogIn, Minus, Plus } from "lucide-react";
 import { loginAs } from "../impersonate";
 import { Tabs } from "../components/Layout";
@@ -126,6 +127,8 @@ export function Dashboard() {
           )}
         </div>
       ) : null}
+
+      <MyTasks />
 
       {recent.length > 0 && (
         <>
@@ -368,6 +371,34 @@ function PriceField({ label, value, step, decimals, unit, disabled, onSave }: { 
         <button type="button" className="bf-btn" disabled={disabled} onClick={() => bump(1)}><Plus size={22} /></button>
       </div>
     </div>
+  );
+}
+
+/** In Home: le task assegnate a me ancora da fare. */
+function MyTasks() {
+  const { session, nameOf } = useAuth();
+  const me = session?.user.id;
+  const [list, setList] = useState<Row[]>([]);
+  useEffect(() => {
+    supabase.from("tasks").select("*").neq("status", "terminata").order("created_at", { ascending: false })
+      .then(({ data }) => setList((data ?? []).filter((t) => me && whoOf(t).includes(me))));
+  }, [me]);
+  if (!list.length) return null;
+  return (
+    <>
+      <h2>📋 Le tue task</h2>
+      <div className="tk-list">
+        {list.map((t) => (
+          <Link key={t.id} to="/task" className={"tk-item " + (t.status === "in_corso" ? "ts-doing" : "ts-new")}>
+            <span className="tk-body">
+              <strong>{t.title}</strong>
+              <span className="muted small">da {nameOf(t.created_by)}{t.due_date ? ` · entro il ${date(t.due_date)}` : ""}</span>
+            </span>
+            <span className={"tk-badge " + (t.status === "in_corso" ? "ts-doing" : "ts-new")}>{t.status === "in_corso" ? "In corso" : "Inserita"}</span>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }
 

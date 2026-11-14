@@ -12,6 +12,8 @@ const STATES: { key: string; label: string; icon: typeof CircleDot; cls: string 
   { key: "terminata", label: "Terminata", icon: CheckCircle2, cls: "ts-done" },
 ];
 const stateOf = (k: string) => STATES.find((s) => s.key === k) ?? STATES[0];
+/** Persone a cui è assegnata (più persone; per le task vecchie il solo «assignee»). */
+export const whoOf = (t: Row): string[] => (Array.isArray(t.assignees) && t.assignees.length ? t.assignees : t.assignee ? [t.assignee] : []);
 
 export function Tasks() {
   const { session, profiles, nameOf } = useAuth();
@@ -38,7 +40,7 @@ export function Tasks() {
     });
   }, [reload]);
 
-  const list = (tasks ?? []).filter((t) => !onlyMine || t.assignee === me || t.created_by === me);
+  const list = (tasks ?? []).filter((t) => !onlyMine || whoOf(t).includes(me) || t.created_by === me);
   const active = list.filter((t) => t.status !== "terminata").sort((a, b) => Number(b.status === "in_corso") - Number(a.status === "in_corso"));
   const done = list.filter((t) => t.status === "terminata").sort((a, b) => String(b.done_at ?? b.updated_at).localeCompare(String(a.done_at ?? a.updated_at)));
   const open = (tasks ?? []).find((t) => t.id === openId) ?? null;
@@ -51,7 +53,7 @@ export function Tasks() {
         <span className="tk-body">
           <strong>{t.title}</strong>
           <span className="muted small">
-            {t.assignee ? <>per <b>{nameOf(t.assignee)}{t.assignee === me ? " (tu)" : ""}</b></> : "da assegnare"}
+            {whoOf(t).length ? <>per <b>{whoOf(t).map((id) => (id === me ? "te" : nameOf(id))).join(", ")}</b></> : "da assegnare"}
             {t.due_date && <> · entro il {date(t.due_date)}</>}
             {notesCount[t.id] ? <> · {notesCount[t.id]} note</> : null}
           </span>
@@ -64,7 +66,7 @@ export function Tasks() {
   return (
     <div>
       <div className="page-head"><h1>Task</h1></div>
-      <button className="btn primary btn-wide" onClick={() => setEditing({ title: "", description: "", assignee: me, status: "inserita", due_date: null })}>
+      <button className="btn primary btn-wide" onClick={() => setEditing({ title: "", description: "", assignees: [me], status: "inserita", due_date: null })}>
         <ClipboardList size={20} /> Nuova task
       </button>
       {err && <p className="error">{err}</p>}
@@ -95,15 +97,23 @@ export function Tasks() {
 }
 
 function TaskForm({ initial, profiles, onClose, onSaved }: { initial: Row; profiles: Row[]; onClose: () => void; onSaved: () => void }) {
-  const [t, setT] = useState<Row>(initial);
+  const [t, setT] = useState<Row>({ ...initial, assignees: whoOf(initial) });
+  const who: string[] = t.assignees ?? [];
+  const toggle = (id: string) => setT({ ...t, assignees: who.includes(id) ? who.filter((x) => x !== id) : [...who, id] });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); setError("");
     if (!String(t.title ?? "").trim()) return setError("Scrivi cosa c'è da fare");
     setBusy(true);
-    const row = { title: t.title.trim(), description: t.description || null, assignee: t.assignee || null, due_date: t.due_date || null, updated_at: new Date().toISOString() };
-    const { error } = t.id ? await supabase.from("tasks").update(row).eq("id", t.id) : await supabase.from("tasks").insert(row);
+    const row: Row = { title: t.title.trim(), description: t.description || null, assignee: who[0] ?? null, assignees: who, due_date: t.due_date || null, updated_at: new Date().toISOString() };
+    const write = (x: Row) => (t.id ? supabase.from("tasks").update(x).eq("id", t.id) : supabase.from("tasks").insert(x));
+    let { error } = await write(row);
+    if (error && /assignees/i.test(error.message)) {   // database non ancora aggiornato (0014): salvo solo la prima persona
+      const { assignees: _a, ...old } = row;
+      ({ error } = await write(old));
+      if (!error && who.length > 1) alert("Salvata solo per la prima persona: per assegnarla a più persone esegui su Supabase il file 0014_task_piu_persone.sql.");
+    }
     setBusy(false);
     if (error) return setError(/tasks|relation|schema cache/i.test(error.message) ? "Manca un aggiornamento del database: esegui su Supabase il file 0013_task.sql." : errMsg(error));
     onSaved(); onClose();
@@ -114,10 +124,10 @@ function TaskForm({ initial, profiles, onClose, onSaved }: { initial: Row; profi
         <h2>{t.id ? "Modifica task" : "📋 Nuova task"}</h2>
         <label className="block"><span>Cosa c'è da fare</span><input autoFocus value={t.title ?? ""} onChange={(e) => setT({ ...t, title: e.target.value })} placeholder="es. Ordinare il lievito per la Weiss" /></label>
         <label className="block"><span>Dettagli (facoltativi)</span><textarea rows={3} value={t.description ?? ""} onChange={(e) => setT({ ...t, description: e.target.value })} /></label>
-        <span className="nb-label">Chi la deve fare</span>
+        <span className="nb-label">Chi la deve fare (anche più persone)</span>
         <div className="tk-who">
           {profiles.map((p) => (
-            <button key={p.id} type="button" className={"pay-method" + (t.assignee === p.id ? " on" : "")} onClick={() => setT({ ...t, assignee: p.id })}>{p.display_name}</button>
+            <button key={p.id} type="button" className={"pay-method" + (who.includes(p.id) ? " on" : "")} onClick={() => toggle(p.id)}>{who.includes(p.id) ? "✓ " : ""}{p.display_name}</button>
           ))}
         </div>
         <label className="block"><span>Entro il (facoltativo)</span><input type="date" value={t.due_date ?? ""} onChange={(e) => setT({ ...t, due_date: e.target.value || null })} /></label>
@@ -180,7 +190,7 @@ function TaskDetail({ task, me, onClose, onChanged, onEdit }: { task: Row; me: s
           <button className="icon" onClick={onClose} aria-label="Chiudi"><X size={22} /></button>
         </div>
         <p className="muted small">
-          {task.assignee ? <>Per <b>{nameOf(task.assignee)}</b></> : "Da assegnare"} · creata da {nameOf(task.created_by)} il {date(task.created_at)}
+          {whoOf(task).length ? <>Per <b>{whoOf(task).map(nameOf).join(", ")}</b></> : "Da assegnare"} · creata da {nameOf(task.created_by)} il {date(task.created_at)}
           {task.due_date && <> · entro il {date(task.due_date)}</>}
         </p>
         {task.description && <p className="tk-desc">{task.description}</p>}

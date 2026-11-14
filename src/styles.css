@@ -1467,3 +1467,4 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .tk-add textarea { width: 100%; }
 .tk-add-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; }
 .tk-add-row label.mini-btn { cursor: pointer; }
+a.tk-item:hover { color: var(--text); border-color: var(--line-strong); }
