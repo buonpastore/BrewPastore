@@ -1610,3 +1610,16 @@ body::before {
 .pv-n.all { color: var(--teal); border-color: color-mix(in srgb, var(--teal) 50%, transparent); }
 .pv-acts { padding: 0 14px 12px 42px; }
 .pv-acts .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* progetto impianto: elenco dei preventivi */
+.eqp-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 4px 0 14px; }
+.eqp-actions .btn:last-child { grid-column: 1 / -1; }
+.eqq-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.eqq { display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.eqq-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; color: var(--text); text-decoration: none; }
+.eqq-name { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
+.eqq-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .8rem; color: var(--muted); }
+.eqq-tot { flex: none; color: var(--gold-2); font-variant-numeric: tabular-nums; }
+.eqq-acts { flex: none; display: flex; gap: 2px; }
+.qv-rename { font-size: 1rem; vertical-align: middle; margin-left: 6px; }
+.eqp-actions .btn { min-width: 0; padding-left: 8px; padding-right: 8px; white-space: normal; }

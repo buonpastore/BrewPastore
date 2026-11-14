@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.171", date: "15/11/2026 00:05", text: "Preventivi del progetto più semplici: elenco a schede, tocchi il nome per aprirlo, ✏️ per rinominarlo e 🗑️ per eliminarlo. Tolti spunte, versioni e confronto: ogni import è un preventivo a sé" },
   { version: "0.170", date: "14/11/2026 23:40", text: "Preventivi: tre stati (Inserito, In valutazione, Confermato) da scegliere in alto. Ogni oggetto si conferma col cerchietto a sinistra; per ogni fornitore vedi quanti sono confermati e, quando lo sono tutti, «pronto da acquistare». C’è anche «Conferma tutto» per fornitore. Da eseguire: 0017_preventivi_stati_conferma.sql" },
   { version: "0.169", date: "14/11/2026 23:15", text: "Preventivo: in alto solo nome, numero di oggetti e totale (niente trasporto). Gli oggetti sono a scalare: fornitore → tipologia → oggetti, ognuno col suo totale, con «Espandi tutto»; tocchi un oggetto per note, marca e modello. Dati del preventivo, file importati e storico sono in fondo, chiusi" },
   { version: "0.168", date: "14/11/2026 22:50", text: "Preventivi: prezzi sempre IVA inclusa, tolti IVA e sconto. Nuova vista degli oggetti compatta (oggetto, quantità, prezzo) con filtro per categoria: tocchi un oggetto e vedi note, marca, modello e fornitore, e lo puoi modificare. Le note del foglio Excel vanno nelle note dell’oggetto" },

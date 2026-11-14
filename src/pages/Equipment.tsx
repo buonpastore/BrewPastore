@@ -6,7 +6,6 @@ import { supabase, uploadFile, parseQuote, openFile, errMsg, eur, date, num, typ
 import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
 import { HistoryList } from "../components/HistoryList";
-import { Tabs } from "../components/Layout";
 import { FilePicker } from "../components/FilePicker";
 import { PickedList } from "./ImportRecipe";
 import { textOf } from "../ocr";
@@ -15,7 +14,7 @@ import { parseQuoteText, parseCsv } from "../quoteParser";
 const PROJECT_STATUS: Record<string, string> = { in_valutazione: "In valutazione", approvato: "Approvato", acquistato: "Acquistato", scartato: "Scartato" };
 /** Stati del preventivo: i primi tre sono quelli che si scelgono. */
 const STATES: [string, string][] = [["inserito", "Inserito"], ["in_valutazione", "In valutazione"], ["confermato", "Confermato"]];
-const QUOTE_STATUS: Record<string, string> = { ...Object.fromEntries(STATES), scartato: "Scartato", superato: "Superato da nuova versione",
+const QUOTE_STATUS: Record<string, string> = { ...Object.fromEntries(STATES), scartato: "Scartato", superato: "Superato",
   ricevuto: "Inserito", in_trattativa: "In valutazione", scelto: "Confermato" };   // vecchi nomi, prima di 0017
 const NEED_0017 = "Per gli stati e la conferma degli oggetti esegui prima 0017_preventivi_stati_conferma.sql su Supabase";
 
@@ -43,6 +42,20 @@ async function deleteQuote(q: Row) {
   if (q.source_path) await supabase.storage.from("documents").remove([q.source_path]);
   const { data: rest } = await supabase.from("equipment_quotes").select("id, status, version").eq("project_id", q.project_id).eq("supplier", q.supplier).order("version", { ascending: false });
   if (rest?.length && rest.every((r) => r.status === "superato")) await supabase.from("equipment_quotes").update({ status: "inserito" }).eq("id", rest[0].id);
+}
+
+/** Rinomina un preventivo (se il nome esiste già nel progetto gli dà un numero interno diverso). */
+async function renameQuote(q: Row): Promise<Row | null> {
+  const name = prompt("Nome del preventivo", q.supplier)?.trim();
+  if (!name || name === q.supplier) return null;
+  let { data, error } = await supabase.from("equipment_quotes").update({ supplier: name }).eq("id", q.id).select().single();
+  if (error?.code === "23505") {
+    const { data: same } = await supabase.from("equipment_quotes").select("version").eq("project_id", q.project_id).eq("supplier", name);
+    const version = 1 + Math.max(0, ...(same ?? []).map((x) => x.version));
+    ({ data, error } = await supabase.from("equipment_quotes").update({ supplier: name, version }).eq("id", q.id).select().single());
+  }
+  if (error) { alert(errMsg(error)); return null; }
+  return data;
 }
 
 // ------------------------------------------------------------------ elenco progetti
@@ -103,20 +116,17 @@ export function EquipmentProject() {
   const [quotes, setQuotes] = useState<Row[]>([]);
   const [totals, setTotals] = useState<Record<string, Row>>({});
   const [importMode, setImportMode] = useState<"excel" | "ai" | null>(null);
-  const [compare, setCompare] = useState<string[]>([]);
-  const [showOld, setShowOld] = useState(false);
-  const [tab, setTab] = useState("preventivi");
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
     supabase.from("equipment_projects").select("*").eq("id", id!).single().then(({ data }) => setProject(data));
-    supabase.from("equipment_quotes").select("*").eq("project_id", id!).order("supplier").order("version", { ascending: false })
+    supabase.from("equipment_quotes").select("*").eq("project_id", id!).order("created_at", { ascending: false })
       .then(({ data }) => setQuotes(data ?? []));
     loadTotals(id!).then((data) => setTotals(Object.fromEntries(data.map((t) => [t.quote_id, t]))));
   }, [id, reload]);
 
   const newManual = async () => {
-    const supplier = prompt("Fornitore");
+    const supplier = prompt("Nome del preventivo")?.trim();
     if (!supplier) return;
     const version = 1 + Math.max(0, ...quotes.filter((q) => q.supplier.toLowerCase() === supplier.toLowerCase()).map((q) => q.version));
     const { error } = await supabase.from("equipment_quotes").insert({ project_id: id, supplier, version });
@@ -125,125 +135,68 @@ export function EquipmentProject() {
   };
 
   if (!project) return <p>Caricamento…</p>;
-  const visible = quotes.filter((q) => showOld || q.status !== "superato");
-  const bySupplier = visible.reduce<Record<string, Row[]>>((acc, q) => ((acc[q.supplier] ??= []).push(q), acc), {});
 
   return (
     <div>
-      <div className="page-head">
-        <div>
-          <Link to="/impianto" className="muted small">← Preventivi impianto</Link>
-          <h1>{project.name}</h1>
+      <Link to="/impianto" className="muted small">← Preventivi impianto</Link>
+      <h1 className="qv-title">{project.name}</h1>
+      {isAdmin && (
+        <div className="eqp-actions">
+          <button className="btn primary" onClick={() => setImportMode("excel")}>📊 Da Excel / Fogli Google</button>
+          <button className="btn primary" onClick={() => setImportMode("ai")}>📸 Da screenshot</button>
+          <button className="btn" onClick={newManual}>+ A mano</button>
         </div>
-        {isAdmin && (
-          <div className="row-actions">
-            <button className="btn primary" onClick={() => setImportMode("excel")}>📊 Importa da Excel / Fogli Google</button>
-            <button className="btn primary" onClick={() => setImportMode("ai")}>📸 Importa da screenshot</button>
-            <button className="btn" onClick={newManual}>+ Manuale</button>
-          </div>
-        )}
-      </div>
+      )}
       {importMode && <ImportQuote projectId={project.id} quotes={quotes} mode={importMode} onClose={() => setImportMode(null)} onDone={() => setReload((x) => x + 1)} />}
 
-      <Tabs active={tab} onChange={setTab} tabs={[["preventivi", "Preventivi"], ["confronto", `Confronto (${compare.length})`], ["scheda", "Scheda progetto"], ["storico", "Storico versioni"]]} />
-      <div className="panel">
-        {tab === "preventivi" && (
-          <>
-            <div className="toolbar">
-              <label className="check"><input type="checkbox" checked={showOld} onChange={(e) => setShowOld(e.target.checked)} /> mostra anche le versioni superate</label>
-              <span className="muted small">Spunta 2 o più preventivi per confrontarli.</span>
+      <div className="eqq-list">
+        {quotes.map((q) => {
+          const t = totals[q.id];
+          return (
+            <div key={q.id} className="eqq">
+              <Link to={`/impianto/preventivo/${q.id}`} className="eqq-main">
+                <span className="eqq-name">{q.supplier}</span>
+                <span className="eqq-meta">
+                  <span className={"badge qs-" + q.status}>{QUOTE_STATUS[q.status] ?? q.status}</span>
+                  <span>{num(t?.items_count ?? 0)} oggetti</span>
+                  <span>{date(q.quote_date ?? q.created_at)}</span>
+                </span>
+              </Link>
+              <strong className="eqq-tot">{eur(t?.total_with_vat ?? 0)}</strong>
+              {isAdmin && (
+                <span className="eqq-acts">
+                  <button className="icon" title="Rinomina" onClick={async () => { if (await renameQuote(q)) setReload((x) => x + 1); }}>✏️</button>
+                  <button className="icon" title="Elimina preventivo" onClick={async () => {
+                    if (!confirm(`Eliminare il preventivo «${q.supplier}» con tutti gli oggetti e il file?`)) return;
+                    try { await deleteQuote(q); setReload((x) => x + 1); } catch (e) { alert(errMsg(e)); }
+                  }}>🗑️</button>
+                </span>
+              )}
             </div>
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th /><th>Preventivo</th><th>Versione</th><th>Data</th><th>Valido fino</th><th>Righe</th><th>Totale</th><th>Stato</th>{isAdmin && <th />}</tr></thead>
-                <tbody>
-                  {Object.entries(bySupplier).map(([sup, qs]) => qs.map((q, i) => {
-                    const t = totals[q.id];
-                    const prev = qs[i + 1] ? totals[qs[i + 1].id] : null;
-                    const delta = t && prev ? Number(t.total_with_vat) - Number(prev.total_with_vat) : null;
-                    return (
-                      <tr key={q.id} className={q.status === "superato" ? "muted" : ""}>
-                        <td><input type="checkbox" checked={compare.includes(q.id)} onChange={(e) => setCompare(e.target.checked ? [...compare, q.id] : compare.filter((x) => x !== q.id))} /></td>
-                        <td>{i === 0 ? <strong>{sup}</strong> : ""}</td>
-                        <td><Link to={`/impianto/preventivo/${q.id}`}>v{q.version}</Link></td>
-                        <td>{date(q.quote_date)}</td>
-                        <td>{date(q.valid_until)}</td>
-                        <td>{t?.items_count ?? 0}</td>
-                        <td><strong>{eur(t?.total_with_vat)}</strong>{delta != null && Math.abs(delta) > 0.005 && <span className={delta < 0 ? "ok small" : "warn small"}> {delta < 0 ? "▼" : "▲"} {eur(Math.abs(delta))} vs v{qs[i + 1].version}</span>}</td>
-                        <td><span className={"badge qs-" + q.status}>{QUOTE_STATUS[q.status] ?? q.status}</span></td>
-                        {isAdmin && <td><button className="icon" title="Elimina preventivo" onClick={async () => {
-                          if (!confirm(`Eliminare il preventivo ${q.supplier} v${q.version} con tutte le righe e il file?`)) return;
-                          try { await deleteQuote(q); setReload((x) => x + 1); } catch (e) { alert(errMsg(e)); }
-                        }}>🗑️</button></td>}
-                      </tr>
-                    );
-                  }))}
-                  {!visible.length && <tr><td colSpan={9} className="muted">Nessun preventivo. Importane uno da Excel o da screenshot.</td></tr>}
-                </tbody>
-              </table>
-            </div>
-            {project.budget && <p className="muted">Budget del progetto: <strong>{eur(project.budget)}</strong></p>}
-          </>
-        )}
-        {tab === "confronto" && <QuoteComparison ids={compare} quotes={quotes} />}
-        {tab === "scheda" && (
-          <RecordForm table="equipment_projects" row={project} canEdit={isAdmin} onSaved={setProject} sections={[{ fields: [
-            { key: "name", label: "Nome", required: true },
-            { key: "status", label: "Stato", type: "select", required: true, options: Object.entries(PROJECT_STATUS).map(([value, label]) => ({ value, label })) },
-            { key: "budget", label: "Budget €", type: "number", render: (v) => eur(v as number) },
-            { key: "description", label: "Obiettivi / requisiti", type: "textarea" },
-          ] }]} />
-        )}
-        {tab === "scheda" && isAdmin && (
-          <button className="btn danger" style={{ width: "100%", marginTop: 16 }} onClick={async () => {
-            if (!confirm(`Eliminare tutto il progetto «${project.name}» con i suoi ${quotes.length} preventivi e i file?`)) return;
-            const files = quotes.map((q) => q.source_path).filter(Boolean);
-            const { error } = await supabase.from("equipment_projects").delete().eq("id", project.id);
-            if (error) return alert(errMsg(error));
-            if (files.length) await supabase.storage.from("documents").remove(files);
-            nav("/impianto");
-          }}>🗑️ Elimina progetto</button>
-        )}
-        {tab === "storico" && <HistoryList recordIds={[project.id, ...quotes.map((q) => q.id)]} />}
+          );
+        })}
+        {!quotes.length && <p className="muted">Nessun preventivo. Importane uno da Excel o da screenshot.</p>}
       </div>
-    </div>
-  );
-}
 
-function QuoteComparison({ ids, quotes }: { ids: string[]; quotes: Row[] }) {
-  const [items, setItems] = useState<Row[]>([]);
-  useEffect(() => {
-    if (!ids.length) return setItems([]);
-    supabase.from("equipment_quote_items").select("*").in("quote_id", ids).order("sort_order").then(({ data }) => setItems(data ?? []));
-  }, [ids.join(",")]);
-  const qs = ids.map((id) => quotes.find((q) => q.id === id)!).filter(Boolean);
-  if (qs.length < 2) return <p className="muted">Seleziona almeno 2 preventivi nella scheda "Preventivi".</p>;
-
-  // raggruppa per categoria (o descrizione) per affiancare le voci
-  const keyOf = (i: Row) => (i.category || i.description).toLowerCase().trim();
-  const keys = [...new Set(items.map(keyOf))];
-  const totalOf = (q: Row) => items.filter((i) => i.quote_id === q.id).reduce((s, i) => s + lineTotal(i), 0);
-  const best = Math.min(...qs.map(totalOf));
-
-  return (
-    <div className="table-wrap">
-      <table>
-        <thead><tr><th>Voce / categoria</th>{qs.map((q) => <th key={q.id}>{q.supplier} v{q.version}</th>)}</tr></thead>
-        <tbody>
-          {keys.map((k) => (
-            <tr key={k}>
-              <td>{k}</td>
-              {qs.map((q) => {
-                const its = items.filter((i) => i.quote_id === q.id && keyOf(i) === k);
-                return <td key={q.id} className="small">{its.length ? its.map((i) => <div key={i.id}>{i.description}{i.quantity != 1 ? ` ×${num(i.quantity)}` : ""} — <strong>{eur(lineTotal(i))}</strong></div>) : <span className="muted">—</span>}</td>;
-              })}
-            </tr>
-          ))}
-          <tr><td><strong>Totale</strong></td>{qs.map((q) => <td key={q.id}><strong className={totalOf(q) === best ? "ok" : ""}>{eur(totalOf(q))}{totalOf(q) === best ? " ★" : ""}</strong></td>)}</tr>
-          <tr><td>Note</td>{qs.map((q) => <td key={q.id} className="small pre">{q.notes ?? "—"}</td>)}</tr>
-        </tbody>
-      </table>
-      <p className="muted small">Le voci sono affiancate per categoria: assegna la stessa categoria (es. "pentola", "fermentatore") alle righe equivalenti per un confronto più preciso.</p>
+      <details className="panel qv-more">
+        <summary>Dati del progetto</summary>
+        <RecordForm table="equipment_projects" row={project} canEdit={isAdmin} onSaved={setProject} sections={[{ fields: [
+          { key: "name", label: "Nome", required: true },
+          { key: "status", label: "Stato", type: "select", required: true, options: Object.entries(PROJECT_STATUS).map(([value, label]) => ({ value, label })) },
+          { key: "budget", label: "Budget €", type: "number", render: (v) => eur(v as number) },
+          { key: "description", label: "Obiettivi / requisiti", type: "textarea" },
+        ] }]} />
+      </details>
+      {isAdmin && (
+        <button className="btn danger" style={{ width: "100%", marginTop: 4 }} onClick={async () => {
+          if (!confirm(`Eliminare tutto il progetto «${project.name}» con i suoi ${quotes.length} preventivi e i file?`)) return;
+          const files = quotes.map((q) => q.source_path).filter(Boolean);
+          const { error } = await supabase.from("equipment_projects").delete().eq("id", project.id);
+          if (error) return alert(errMsg(error));
+          if (files.length) await supabase.storage.from("documents").remove(files);
+          nav("/impianto");
+        }}>🗑️ Elimina progetto</button>
+      )}
     </div>
   );
 }
@@ -255,31 +208,13 @@ export function EquipmentQuote() {
   const nav = useNavigate();
   const [q, setQ] = useState<Row | null>(null);
   const [items, setItems] = useState<Row[]>([]);
-  const [siblings, setSiblings] = useState<Row[]>([]);
 
   useEffect(() => {
-    supabase.from("equipment_quotes").select("*").eq("id", id!).single().then(({ data }) => {
-      setQ(data);
-      if (data) supabase.from("equipment_quotes").select("id, version, status, source_path, created_at").eq("project_id", data.project_id).eq("supplier", data.supplier)
-        .order("version").then(({ data: s }) => setSiblings(s ?? []));
-    });
+    supabase.from("equipment_quotes").select("*").eq("id", id!).single().then(({ data }) => setQ(data));
   }, [id]);
 
-  const newVersion = async () => {
-    if (!q) return;
-    const version = Math.max(...siblings.map((s) => s.version)) + 1;
-    if (!confirm(`Creare la versione v${version} partendo da questa? La versione attuale verrà segnata come "superata".`)) return;
-    const { id: _i, created_at, updated_at, ...rest } = q;
-    void _i; void created_at; void updated_at;
-    const { data: nq, error } = await supabase.from("equipment_quotes").insert({ ...rest, version, status: "inserito", quote_date: new Date().toISOString().slice(0, 10) }).select().single();
-    if (error) return alert(errMsg(error));
-    if (items.length) await supabase.from("equipment_quote_items").insert(items.map(({ id: _x, ...i }) => ({ ...i, quote_id: nq.id })));
-    await supabase.from("equipment_quotes").update({ status: "superato" }).eq("id", q.id);
-    nav(`/impianto/preventivo/${nq.id}`);
-  };
-
   const remove = async () => {
-    if (!q || !confirm(`Eliminare il preventivo ${q.supplier} v${q.version} con tutte le righe${q.source_path ? " e il file" : ""}?`)) return;
+    if (!q || !confirm(`Eliminare il preventivo «${q.supplier}» con tutte le righe${q.source_path ? " e il file" : ""}?`)) return;
     try { await deleteQuote(q); nav(`/impianto/${q.project_id}`); } catch (e) { alert(errMsg(e)); }
   };
   const removeFile = async (x: Row) => {
@@ -287,23 +222,19 @@ export function EquipmentQuote() {
     await supabase.storage.from("documents").remove([x.source_path]);
     const { error } = await supabase.from("equipment_quotes").update({ source_path: null }).eq("id", x.id);
     if (error) return alert(errMsg(error));
-    setSiblings(siblings.map((y) => (y.id === x.id ? { ...y, source_path: null } : y)));
-    if (x.id === q?.id) setQ({ ...q, source_path: null });
+    if (q) setQ({ ...q, source_path: null });
   };
 
   if (!q) return <p>Caricamento…</p>;
   const goods = items.reduce((s, i) => s + lineTotal(i), 0);
 
-  const files = siblings.filter((x) => x.source_path);
+  const files = q.source_path ? [q] : [];
   return (
     <div>
       <Link to={`/impianto/${q.project_id}`} className="muted small">← Progetto</Link>
-      <h1 className="qv-title">{q.supplier}</h1>
-      {siblings.length > 1 && (
-        <div className="row-actions" style={{ marginBottom: 10 }}>
-          {siblings.map((x) => <Link key={x.id} to={`/impianto/preventivo/${x.id}`} className={"badge" + (x.id === q.id ? " admin" : "")}>v{x.version}</Link>)}
-        </div>
-      )}
+      <h1 className="qv-title">{q.supplier}
+        {isAdmin && <button className="icon qv-rename" title="Rinomina" onClick={async () => { const d = await renameQuote(q); if (d) setQ(d); }}>✏️</button>}
+      </h1>
       <div className="qv-states">
         {STATES.map(([k, l]) => {
           const on = (QUOTE_STATUS[q.status] ?? "") === l;
@@ -314,7 +245,6 @@ export function EquipmentQuote() {
           }}>{l}</button>;
         })}
       </div>
-      {q.status === "superato" && <p className="note small">Questa è una versione vecchia: è stata superata da una più recente.</p>}
       <div className="kpis qv-kpis">
         <div className="kpi"><span>Oggetti</span><strong>{num(items.reduce((t, i) => t + Number(i.quantity), 0))}</strong></div>
         <div className="kpi main"><span>Totale</span><strong>{eur(goods)}</strong>
@@ -326,11 +256,9 @@ export function EquipmentQuote() {
       <details className="panel qv-more">
         <summary>Dati del preventivo</summary>
         <RecordForm table="equipment_quotes" row={q} canEdit={isAdmin} onSaved={setQ} sections={[{ fields: [
-          { key: "supplier", label: "Nome del preventivo", required: true },
           { key: "quote_date", label: "Data", type: "date" },
           { key: "notes", label: "Note", type: "textarea" },
         ] }]} />
-        {isAdmin && <button className="btn" style={{ marginTop: 12 }} onClick={newVersion}>⧉ Crea una nuova versione</button>}
       </details>
       <details className="panel qv-more">
         <summary>File importati ({files.length})</summary>
@@ -340,7 +268,7 @@ export function EquipmentQuote() {
             <div key={x.id} className="qv-file">
               <button className="qv-file-name" onClick={() => openFile(x.source_path).catch((e) => alert(errMsg(e)))}>
                 📎 {String(x.source_path).split("/").pop()?.replace(/^\d+[-_]/, "")}
-                <small>v{x.version} · {date(x.created_at)}</small>
+                <small>importato il {date(x.created_at)}</small>
               </button>
               {isAdmin && <button className="icon" title="Togli file" onClick={() => removeFile(x)}>🗑️</button>}
             </div>
@@ -713,7 +641,6 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
         if (e2) throw e2;
         if (missingCols) alert("Preventivo salvato, ma Fornitore, Marca e Modello non hanno ancora le loro colonne nel database: li ho messi nella descrizione. Esegui 0016_preventivi_marca_modello.sql su Supabase e reimporta.");
       }
-      if (same.length) await supabase.from("equipment_quotes").update({ status: "superato" }).in("id", same.filter((s) => s.status !== "scartato").map((s) => s.id));
       onDone(); onClose();
       nav(`/impianto/preventivo/${q.id}`);
     } catch (e) { setError(errMsg(e)); setStep("review"); }
@@ -722,7 +649,6 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
   const header = grid[headerRow] ?? [];
   const colLabel = (i: number) => `${String.fromCharCode(65 + (i % 26))}${i >= 26 ? Math.floor(i / 26) : ""}: ${String(header[i] ?? "").slice(0, 25)}`;
   const rowLabel = (i: number) => `${i + 1}: ${(grid[i] ?? []).filter((c) => c != null && c !== "").slice(0, 3).join(" | ").slice(0, 45)}`;
-  const isNewVersion = suppliers.some((s) => s.toLowerCase() === supplier.trim().toLowerCase());
 
   return (
     <div className="modal-backdrop">
@@ -807,7 +733,6 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
               <label><span>Data</span><input type="date" value={quoteDate} onChange={(e) => setQuoteDate(e.target.value)} /></label>
               <label><span>Valido fino al</span><input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></label>
             </div>
-            {isNewVersion && <p className="note">Esiste già un preventivo di "{supplier}": questo verrà salvato come <strong>nuova versione</strong> e quella precedente segnata come superata.</p>}
             <div className="table-wrap">
               <table>
                 <thead><tr><th>Codice</th><th>Descrizione</th><th>Fornitore</th><th>Marca</th><th>Modello</th><th>Categoria</th><th>Note</th><th>Q.tà</th><th>Prezzo unit.</th><th>Totale</th><th /></tr></thead>
