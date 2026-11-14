@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import readXlsxFile, { readSheetNames } from "read-excel-file";
 import { supabase, uploadFile, parseQuote, openFile, errMsg, eur, date, num, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -17,9 +18,9 @@ const QUOTE_STATUS: Record<string, string> = { ricevuto: "Ricevuto", in_trattati
 /** I prezzi dei preventivi sono sempre IVA inclusa, senza sconti: riga = quantità × prezzo. */
 const lineTotal = (i: Row) => Number(i.quantity) * Number(i.unit_price);
 
-/** Totali dei preventivi calcolati qui (quantità × prezzo + trasporto), stessa forma della vista equipment_quote_totals. */
+/** Totali dei preventivi calcolati qui (quantità × prezzo, il trasporto non conta), stessa forma della vista equipment_quote_totals. */
 async function loadTotals(projectId?: string): Promise<Row[]> {
-  let qq = supabase.from("equipment_quotes").select("id, project_id, supplier, version, status, shipping_cost");
+  let qq = supabase.from("equipment_quotes").select("id, project_id, supplier, version, status");
   if (projectId) qq = qq.eq("project_id", projectId);
   const { data: qs } = await qq;
   if (!qs?.length) return [];
@@ -27,7 +28,7 @@ async function loadTotals(projectId?: string): Promise<Row[]> {
   return qs.map((q) => {
     const mine = (its ?? []).filter((i) => i.quote_id === q.id);
     return { quote_id: q.id, project_id: q.project_id, supplier: q.supplier, version: q.version, status: q.status, items_count: mine.length,
-      total_with_vat: mine.reduce((t, i) => t + lineTotal(i), 0) + Number(q.shipping_cost || 0) };
+      total_with_vat: mine.reduce((t, i) => t + lineTotal(i), 0) };
   });
 }
 
@@ -150,7 +151,7 @@ export function EquipmentProject() {
             </div>
             <div className="table-wrap">
               <table>
-                <thead><tr><th /><th>Fornitore</th><th>Versione</th><th>Data</th><th>Valido fino</th><th>Righe</th><th>Totale</th><th>Stato</th>{isAdmin && <th />}</tr></thead>
+                <thead><tr><th /><th>Preventivo</th><th>Versione</th><th>Data</th><th>Valido fino</th><th>Righe</th><th>Totale</th><th>Stato</th>{isAdmin && <th />}</tr></thead>
                 <tbody>
                   {Object.entries(bySupplier).map(([sup, qs]) => qs.map((q, i) => {
                     const t = totals[q.id];
@@ -217,7 +218,7 @@ function QuoteComparison({ ids, quotes }: { ids: string[]; quotes: Row[] }) {
   // raggruppa per categoria (o descrizione) per affiancare le voci
   const keyOf = (i: Row) => (i.category || i.description).toLowerCase().trim();
   const keys = [...new Set(items.map(keyOf))];
-  const totalOf = (q: Row) => items.filter((i) => i.quote_id === q.id).reduce((s, i) => s + lineTotal(i), 0) + Number(q.shipping_cost);
+  const totalOf = (q: Row) => items.filter((i) => i.quote_id === q.id).reduce((s, i) => s + lineTotal(i), 0);
   const best = Math.min(...qs.map(totalOf));
 
   return (
@@ -234,7 +235,6 @@ function QuoteComparison({ ids, quotes }: { ids: string[]; quotes: Row[] }) {
               })}
             </tr>
           ))}
-          <tr><td>Trasporto / extra</td>{qs.map((q) => <td key={q.id}>{eur(q.shipping_cost)}</td>)}</tr>
           <tr><td><strong>Totale</strong></td>{qs.map((q) => <td key={q.id}><strong className={totalOf(q) === best ? "ok" : ""}>{eur(totalOf(q))}{totalOf(q) === best ? " ★" : ""}</strong></td>)}</tr>
           <tr><td>Note</td>{qs.map((q) => <td key={q.id} className="small pre">{q.notes ?? "—"}</td>)}</tr>
         </tbody>
@@ -256,7 +256,7 @@ export function EquipmentQuote() {
   useEffect(() => {
     supabase.from("equipment_quotes").select("*").eq("id", id!).single().then(({ data }) => {
       setQ(data);
-      if (data) supabase.from("equipment_quotes").select("id, version, status").eq("project_id", data.project_id).eq("supplier", data.supplier)
+      if (data) supabase.from("equipment_quotes").select("id, version, status, source_path, created_at").eq("project_id", data.project_id).eq("supplier", data.supplier)
         .order("version").then(({ data: s }) => setSiblings(s ?? []));
     });
   }, [id]);
@@ -278,56 +278,64 @@ export function EquipmentQuote() {
     if (!q || !confirm(`Eliminare il preventivo ${q.supplier} v${q.version} con tutte le righe${q.source_path ? " e il file" : ""}?`)) return;
     try { await deleteQuote(q); nav(`/impianto/${q.project_id}`); } catch (e) { alert(errMsg(e)); }
   };
-  const removeFile = async () => {
-    if (!q?.source_path || !confirm("Togliere il file originale? Il preventivo e le righe restano.")) return;
-    await supabase.storage.from("documents").remove([q.source_path]);
-    const { data, error } = await supabase.from("equipment_quotes").update({ source_path: null }).eq("id", q.id).select().single();
+  const removeFile = async (x: Row) => {
+    if (!x.source_path || !confirm("Togliere questo file? Il preventivo e gli oggetti restano.")) return;
+    await supabase.storage.from("documents").remove([x.source_path]);
+    const { error } = await supabase.from("equipment_quotes").update({ source_path: null }).eq("id", x.id);
     if (error) return alert(errMsg(error));
-    setQ(data);
+    setSiblings(siblings.map((y) => (y.id === x.id ? { ...y, source_path: null } : y)));
+    if (x.id === q?.id) setQ({ ...q, source_path: null });
   };
 
   if (!q) return <p>Caricamento…</p>;
   const goods = items.reduce((s, i) => s + lineTotal(i), 0);
-  const total = items.reduce((s, i) => s + lineTotal(i), 0) + Number(q.shipping_cost);
 
+  const files = siblings.filter((x) => x.source_path);
   return (
     <div>
-      <div className="page-head">
-        <div>
-          <Link to={`/impianto/${q.project_id}`} className="muted small">← Progetto</Link>
-          <h1>{q.supplier} <span className="badge">v{q.version}</span> <span className="badge">{QUOTE_STATUS[q.status]}</span></h1>
-          <div className="row-actions">
-            {siblings.map((s) => <Link key={s.id} to={`/impianto/preventivo/${s.id}`} className={"badge" + (s.id === q.id ? " admin" : "")}>v{s.version}</Link>)}
-          </div>
+      <Link to={`/impianto/${q.project_id}`} className="muted small">← Progetto</Link>
+      <h1 className="qv-title">{q.supplier}</h1>
+      {siblings.length > 1 && (
+        <div className="row-actions" style={{ marginBottom: 10 }}>
+          {siblings.map((x) => <Link key={x.id} to={`/impianto/preventivo/${x.id}`} className={"badge" + (x.id === q.id ? " admin" : "")}>v{x.version}</Link>)}
         </div>
-        <div className="row-actions">
-          {q.source_path && <button className="btn" onClick={() => openFile(q.source_path).catch((e) => alert(errMsg(e)))}>📎 File originale</button>}
-          {q.source_path && isAdmin && <button className="btn" onClick={removeFile}>🗑️ Togli file</button>}
-          {isAdmin && <button className="btn primary" onClick={newVersion}>⧉ Nuova versione</button>}
-        </div>
-      </div>
-      <div className="kpis">
-        <div className="kpi"><span>Pezzi</span><strong>{num(items.reduce((t, i) => t + Number(i.quantity), 0))}</strong></div>
-        <div className="kpi"><span>Oggetti</span><strong>{eur(goods)}</strong></div>
-        <div className="kpi"><span>Trasporto / extra</span><strong>{eur(q.shipping_cost)}</strong></div>
-        <div className="kpi main"><span>Totale</span><strong>{eur(total)}</strong></div>
-      </div>
-      <div className="panel">
-        <RecordForm table="equipment_quotes" row={q} canEdit={isAdmin} onSaved={setQ} sections={[{ fields: [
-          { key: "supplier", label: "Fornitore", required: true },
-          { key: "status", label: "Stato", type: "select", required: true, options: Object.entries(QUOTE_STATUS).map(([value, label]) => ({ value, label })) },
-          { key: "quote_date", label: "Data", type: "date" },
-          { key: "valid_until", label: "Valido fino al", type: "date" },
-          { key: "shipping_cost", label: "Trasporto / extra €", type: "number", render: (v) => eur(v as number) },
-          { key: "notes", label: "Note / condizioni", type: "textarea" },
-        ] }]} />
+      )}
+      <div className="kpis qv-kpis">
+        <div className="kpi"><span>Oggetti</span><strong>{num(items.reduce((t, i) => t + Number(i.quantity), 0))}</strong></div>
+        <div className="kpi main"><span>Totale</span><strong>{eur(goods)}</strong></div>
       </div>
       <QuoteItems quoteId={q.id} canEdit={isAdmin} onChange={setItems} />
-      {isAdmin && <button className="btn danger" style={{ width: "100%", margin: "4px 0 16px" }} onClick={remove}>🗑️ Elimina preventivo</button>}
-      <div className="panel">
-        <h2>Storico versioni di questo preventivo</h2>
+
+      <details className="panel qv-more">
+        <summary>Dati del preventivo</summary>
+        <RecordForm table="equipment_quotes" row={q} canEdit={isAdmin} onSaved={setQ} sections={[{ fields: [
+          { key: "supplier", label: "Nome del preventivo", required: true },
+          { key: "status", label: "Stato", type: "select", required: true, options: Object.entries(QUOTE_STATUS).map(([value, label]) => ({ value, label })) },
+          { key: "quote_date", label: "Data", type: "date" },
+          { key: "notes", label: "Note", type: "textarea" },
+        ] }]} />
+        {isAdmin && <button className="btn" style={{ marginTop: 12 }} onClick={newVersion}>⧉ Crea una nuova versione</button>}
+      </details>
+      <details className="panel qv-more">
+        <summary>File importati ({files.length})</summary>
+        {!files.length && <p className="muted small">Nessun file: questo preventivo è stato scritto a mano o il file è stato tolto.</p>}
+        <div className="qv-files">
+          {files.map((x) => (
+            <div key={x.id} className="qv-file">
+              <button className="qv-file-name" onClick={() => openFile(x.source_path).catch((e) => alert(errMsg(e)))}>
+                📎 {String(x.source_path).split("/").pop()?.replace(/^\d+[-_]/, "")}
+                <small>v{x.version} · {date(x.created_at)}</small>
+              </button>
+              {isAdmin && <button className="icon" title="Togli file" onClick={() => removeFile(x)}>🗑️</button>}
+            </div>
+          ))}
+        </div>
+      </details>
+      <details className="panel qv-more">
+        <summary>Storico modifiche</summary>
         <HistoryList relatedTo={{ id: q.id, key: "quote_id" }} />
-      </div>
+      </details>
+      {isAdmin && <button className="btn danger" style={{ width: "100%", margin: "4px 0 16px" }} onClick={remove}>🗑️ Elimina preventivo</button>}
     </div>
   );
 }
@@ -337,7 +345,8 @@ const ITEM_FIELDS: [string, string][] = [["category", "Categoria"], ["supplier",
 
 function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: boolean; onChange: (r: Row[]) => void }) {
   const [items, setItems] = useState<Row[]>([]);
-  const [cat, setCat] = useState<string | null>(null);
+  const [openSup, setOpenSup] = useState<Set<string>>(new Set());
+  const [openCat, setOpenCat] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
   const [edit, setEdit] = useState<Row | null>(null);
 
@@ -347,7 +356,6 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
 
   const catOf = (i: Row) => (i.category ?? "").trim() || "Senza categoria";
   const cats = [...new Set(items.map(catOf))].sort((a, b) => (a === "Senza categoria" ? 1 : b === "Senza categoria" ? -1 : a.localeCompare(b)));
-  const shown = cat ? items.filter((i) => catOf(i) === cat) : items;
   const sum = (rs: Row[]) => rs.reduce((t, i) => t + lineTotal(i), 0);
 
   const save = async () => {
@@ -387,51 +395,94 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
     </div>
   );
 
+  const supOf = (i: Row) => (i.supplier ?? "").trim() || "Fornitore non indicato";
+  const tree = new Map<string, Map<string, Row[]>>();
+  for (const i of items) {
+    const sm = tree.get(supOf(i)) ?? new Map<string, Row[]>();
+    sm.set(catOf(i), [...(sm.get(catOf(i)) ?? []), i]);
+    tree.set(supOf(i), sm);
+  }
+  const last = (a: string, b: string, tail: string) => (a === tail ? 1 : b === tail ? -1 : a.localeCompare(b));
+  const sups = [...tree.keys()].sort((a, b) => last(a, b, "Fornitore non indicato"));
+  const toggle = (set: Set<string>, k: string, fn: (s: Set<string>) => void) => { const n = new Set(set); n.has(k) ? n.delete(k) : n.add(k); fn(n); };
+  const allCats = sups.flatMap((sp) => [...tree.get(sp)!.keys()].map((c) => sp + "|" + c));
+  const allOpen = openSup.size === sups.length && allCats.every((k) => openCat.has(k));
+
+  const itemRow = (i: Row) => {
+    const isOpen = open === i.id;
+    const sub = [i.brand, i.model].filter(Boolean).join(" · ");
+    return (
+      <div key={i.id} className={"qi" + (isOpen ? " open" : "") + (Number(i.unit_price) ? "" : " zero")}>
+        <button className="qi-row" onClick={() => { setOpen(isOpen ? null : i.id); setEdit(null); }}>
+          <span className="qi-name">{i.description}{sub && <small>{sub}</small>}</span>
+          <span className="qi-qty">×{num(i.quantity)}</span>
+          <span className="qi-price">{Number(i.unit_price) ? eur(lineTotal(i)) : "—"}</span>
+        </button>
+        {isOpen && (edit?.id === i.id ? form : (
+          <div className="qi-detail">
+            <dl>
+              <dt>Prezzo cad.</dt><dd>{eur(i.unit_price)}</dd>
+              {ITEM_FIELDS.map(([k, l]) => i[k] ? <Fragment key={k}><dt>{l}</dt><dd>{i[k]}</dd></Fragment> : null)}
+              {i.notes && <><dt>Note</dt><dd className="pre">{i.notes}</dd></>}
+            </dl>
+            {canEdit && (
+              <div className="row-actions">
+                <button className="btn" onClick={() => setEdit({ ...i })}>✏️ Modifica</button>
+                <button className="btn danger" onClick={() => remove(i)}>🗑️ Togli</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="panel">
-      <h2>Oggetti</h2>
-      {cats.length > 1 && (
-        <div className="qi-cats">
-          <button className={"nb-chip" + (cat == null ? " on" : "")} onClick={() => setCat(null)}>Tutti · {items.length}</button>
-          {cats.map((c) => {
-            const n = items.filter((i) => catOf(i) === c).length;
-            return <button key={c} className={"nb-chip" + (cat === c ? " on" : "")} onClick={() => setCat(cat === c ? null : c)}>{c} · {n}</button>;
-          })}
-        </div>
-      )}
-      <div className="qi-list">
-        {shown.map((i) => {
-          const isOpen = open === i.id;
-          const sub = [i.brand, i.model].filter(Boolean).join(" · ");
+      <div className="pv-head">
+        <h2>Oggetti</h2>
+        {items.length > 0 && (
+          <button className="btn small" onClick={() => {
+            if (allOpen) { setOpenSup(new Set()); setOpenCat(new Set()); }
+            else { setOpenSup(new Set(sups)); setOpenCat(new Set(allCats)); }
+          }}>{allOpen ? "Chiudi tutto" : "Espandi tutto"}</button>
+        )}
+      </div>
+      <div className="pv">
+        {sups.map((sp) => {
+          const cm = tree.get(sp)!;
+          const its = [...cm.values()].flat();
+          const so = openSup.has(sp);
           return (
-            <div key={i.id} className={"qi" + (isOpen ? " open" : "") + (Number(i.unit_price) ? "" : " zero")}>
-              <button className="qi-row" onClick={() => { setOpen(isOpen ? null : i.id); setEdit(null); }}>
-                <span className="qi-name">{i.description}{sub && <small>{sub}</small>}</span>
-                <span className="qi-qty">×{num(i.quantity)}</span>
-                <span className="qi-price">{Number(i.unit_price) ? eur(lineTotal(i)) : "—"}</span>
+            <div key={sp} className={"pv-sup" + (so ? " open" : "")}>
+              <button className="pv-row lvl1" onClick={() => toggle(openSup, sp, setOpenSup)}>
+                <ChevronRight size={18} className="pv-chev" />
+                <span className="pv-name">{sp}</span>
+                <span className="pv-n">{its.length}</span>
+                <span className="pv-tot">{eur(sum(its))}</span>
               </button>
-              {isOpen && (edit?.id === i.id ? form : (
-                <div className="qi-detail">
-                  <dl>
-                    <dt>Prezzo cad.</dt><dd>{eur(i.unit_price)}</dd>
-                    {ITEM_FIELDS.map(([k, l]) => i[k] ? <Fragment key={k}><dt>{l}</dt><dd>{i[k]}</dd></Fragment> : null)}
-                    {i.notes && <><dt>Note</dt><dd className="pre">{i.notes}</dd></>}
-                  </dl>
-                  {canEdit && (
-                    <div className="row-actions">
-                      <button className="btn" onClick={() => setEdit({ ...i })}>✏️ Modifica</button>
-                      <button className="btn danger" onClick={() => remove(i)}>🗑️ Togli</button>
-                    </div>
-                  )}
-                </div>
-              ))}
+              {so && [...cm.keys()].sort((a, b) => last(a, b, "Senza categoria")).map((c) => {
+                const k = sp + "|" + c;
+                const ci = cm.get(c)!;
+                const co = openCat.has(k);
+                return (
+                  <div key={k} className={"pv-cat" + (co ? " open" : "")}>
+                    <button className="pv-row lvl2" onClick={() => toggle(openCat, k, setOpenCat)}>
+                      <ChevronRight size={16} className="pv-chev" />
+                      <span className="pv-name">{c}</span>
+                      <span className="pv-n">{ci.length}</span>
+                      <span className="pv-tot">{eur(sum(ci))}</span>
+                    </button>
+                    {co && <div className="pv-items">{ci.map(itemRow)}</div>}
+                  </div>
+                );
+              })}
             </div>
           );
         })}
         {!items.length && <p className="muted">Nessun oggetto.</p>}
       </div>
-      <div className="qi-total"><span>{cat ? `Totale ${cat}` : "Totale oggetti"}</span><strong>{eur(sum(shown))}</strong></div>
-      {canEdit && (edit && !edit.id ? form : <button className="btn full-w" onClick={() => { setOpen(null); setEdit({ quantity: 1, unit_price: 0, category: cat && cat !== "Senza categoria" ? cat : "" }); }}>+ Aggiungi oggetto</button>)}
+      {canEdit && (edit && !edit.id ? form : <button className="btn full-w" style={{ marginTop: 12 }} onClick={() => { setOpen(null); setEdit({ quantity: 1, unit_price: 0 }); }}>+ Aggiungi oggetto</button>)}
     </div>
   );
 }
@@ -477,7 +528,6 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
   const [supplier, setSupplier] = useState("");
   const [quoteDate, setQuoteDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState("");
-  const [shipping, setShipping] = useState(0);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [aiPath, setAiPath] = useState<string | null>(null);
@@ -542,17 +592,19 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
           // screenshot o testo: lettura sul telefono, senza AI
           const r = parseQuoteText(text);
           setReadText(text); setSkipped(r.skipped);
-          setItems(r.items.map((i) => ({ code: "", description: i.description, category: "", supplier: "", brand: "", model: "", notes: "", quantity: i.quantity, unit_price: Math.round(i.unit_price * (1 - i.discount_pct / 100) * 100) / 100 }))); setShipping(r.shipping);
+          setItems(r.items.map((i) => ({ code: "", description: i.description, category: "", supplier: "", brand: "", model: "", notes: "", quantity: i.quantity, unit_price: Math.round(i.unit_price * (1 - i.discount_pct / 100) * 100) / 100 })).concat(
+            r.shipping ? [{ code: "", description: "Spedizione", category: "Spedizione", supplier: "", brand: "", model: "", notes: "", quantity: 1, unit_price: r.shipping }] : []));
           setStep("review");
           return;
         }
         const r = await parseQuote(ps);
         setSupplier(r.supplier ?? ""); setQuoteDate(r.date ?? quoteDate); setValidUntil(r.valid_until ?? "");
-        setShipping(r.shipping_cost ?? 0); setNotes(r.notes ?? "");
+        setNotes(r.notes ?? "");
         // prezzi sempre IVA inclusa e già scontati
         const gross = (i: { unit_price: number; discount_pct?: number | null; vat_pct?: number | null }) =>
           Math.round(i.unit_price * (1 - (i.discount_pct ?? 0) / 100) * (r.prices_include_vat ? 1 : 1 + (i.vat_pct ?? 22) / 100) * 100) / 100;
-        setItems(r.items.map((i) => ({ code: i.code ?? "", description: i.description, category: i.category ?? "", supplier: "", brand: "", model: "", notes: "", quantity: i.quantity, unit_price: gross(i) })));
+        setItems(r.items.map((i) => ({ code: i.code ?? "", description: i.description, category: i.category ?? "", supplier: "", brand: "", model: "", notes: "", quantity: i.quantity, unit_price: gross(i) })).concat(
+          r.shipping_cost ? [{ code: "", description: "Spedizione", category: "Spedizione", supplier: r.supplier ?? "", brand: "", model: "", notes: "", quantity: 1, unit_price: r.shipping_cost }] : []));
         setStep("review");
       } catch (e) { setError(errMsg(e)); setStep("upload"); }
     }
@@ -588,17 +640,14 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
       });
     }
     void grandTotal;
-    // trasporto / spedizione come riga del foglio → campo trasporto
-    const ship = out.filter((i) => /(spedizion|trasport|consegna|corriere)/i.test(i.description));
-    if (ship.length) setShipping(ship.reduce((t, i) => t + i.quantity * i.unit_price, 0));
-    setItems(out.filter((i) => !ship.includes(i))); setStep("review");
+    setItems(out); setStep("review");
   };
 
   const setItem = (i: number, patch: Partial<DraftItem>) => setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
-  const total = items.reduce((s, i) => s + lineTotal(i), 0) + Number(shipping || 0);
+  const total = items.reduce((s, i) => s + lineTotal(i), 0);
 
   const save = async () => {
-    if (!supplier.trim()) return setError("Indica il fornitore");
+    if (!supplier.trim()) return setError("Dai un nome al preventivo (es. Impianto 70)");
     setStep("saving"); setError("");
     try {
       let source_path: string | null = aiPath;
@@ -607,7 +656,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
       const version = 1 + Math.max(0, ...same.map((q) => q.version));
       const { data: q, error } = await supabase.from("equipment_quotes").insert({
         project_id: projectId, supplier: same[0]?.supplier ?? supplier.trim(), version, quote_date: quoteDate || null, valid_until: validUntil || null,
-        prices_include_vat: true, shipping_cost: Number(shipping || 0), notes: notes || null, source_path,
+        prices_include_vat: true, shipping_cost: 0, notes: notes || null, source_path,
       }).select().single();
       if (error) throw error;
       if (items.length) {
@@ -714,13 +763,12 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
         {(step === "review" || step === "saving") && (
           <>
             <div className="form-grid">
-              <label><span>Fornitore</span>
+              <label><span>Nome del preventivo</span>
                 <input list="eq-suppliers" value={supplier} onChange={(e) => setSupplier(e.target.value)} />
                 <datalist id="eq-suppliers">{suppliers.map((s) => <option key={s} value={s} />)}</datalist>
               </label>
               <label><span>Data</span><input type="date" value={quoteDate} onChange={(e) => setQuoteDate(e.target.value)} /></label>
               <label><span>Valido fino al</span><input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></label>
-              <label><span>Trasporto / extra €</span><input type="number" step="any" value={shipping} onChange={(e) => setShipping(Number(e.target.value))} /></label>
             </div>
             {isNewVersion && <p className="note">Esiste già un preventivo di "{supplier}": questo verrà salvato come <strong>nuova versione</strong> e quella precedente segnata come superata.</p>}
             <div className="table-wrap">

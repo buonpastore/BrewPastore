@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.169", date: "14/11/2026 23:15", text: "Preventivo: in alto solo nome, numero di oggetti e totale (niente trasporto). Gli oggetti sono a scalare: fornitore → tipologia → oggetti, ognuno col suo totale, con «Espandi tutto»; tocchi un oggetto per note, marca e modello. Dati del preventivo, file importati e storico sono in fondo, chiusi" },
   { version: "0.168", date: "14/11/2026 22:50", text: "Preventivi: prezzi sempre IVA inclusa, tolti IVA e sconto. Nuova vista degli oggetti compatta (oggetto, quantità, prezzo) con filtro per categoria: tocchi un oggetto e vedi note, marca, modello e fornitore, e lo puoi modificare. Le note del foglio Excel vanno nelle note dell’oggetto" },
   { version: "0.167", date: "14/11/2026 22:20", text: "Preventivi: ogni riga ha anche Fornitore, Marca e Modello; importando da Excel scegli da quale a quale riga leggere; si può eliminare un preventivo (anche dall’elenco col cestino), togliere solo il file originale o eliminare tutto il progetto. Da eseguire: 0016_preventivi_marca_modello.sql" },
   { version: "0.166", date: "14/11/2026 21:55", text: "Preventivi: letti bene anche gli screenshot dei Fogli Google col tema scuro e le celle colorate. Riconosciute le colonne Nr, Oggetto, Marca, Modello, Note e Prezzo finale (se compilato vale lui); se il totale del foglio è la somma delle righe, i prezzi sono presi IVA inclusa" },
