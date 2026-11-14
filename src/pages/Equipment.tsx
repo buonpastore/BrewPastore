@@ -123,6 +123,7 @@ export function EquipmentProject() {
   const [quotes, setQuotes] = useState<Row[]>([]);
   const [totals, setTotals] = useState<Record<string, Row>>({});
   const [importMode, setImportMode] = useState<"excel" | "ai" | null>(null);
+  const [comparing, setComparing] = useState(false);
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
@@ -184,6 +185,12 @@ export function EquipmentProject() {
         })}
         {!quotes.length && <p className="muted">Nessun preventivo. Importane uno da Excel o da screenshot.</p>}
       </div>
+      {quotes.length >= 2 && (
+        <button className={"btn full-w" + (comparing ? "" : " primary")} style={{ marginBottom: 14 }} onClick={() => setComparing(!comparing)}>
+          {comparing ? "Chiudi il confronto" : "⚖️ Confronta due preventivi"}
+        </button>
+      )}
+      {comparing && quotes.length >= 2 && <QuoteCompare quotes={quotes} soci={soci} />}
 
       <details className="panel qv-more">
         <summary>Dati del progetto</summary>
@@ -203,6 +210,83 @@ export function EquipmentProject() {
           if (files.length) await supabase.storage.from("documents").remove(files);
           nav("/impianto");
         }}>🗑️ Elimina progetto</button>
+      )}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ confronto fra due preventivi
+const keyOfItem = (i: Row) => [i.description, i.model].filter(Boolean).join(" ").toLowerCase().replace(/[^a-z0-9à-ú]+/g, " ").trim();
+
+function QuoteCompare({ quotes, soci }: { quotes: Row[]; soci: number }) {
+  const [a, setA] = useState(quotes[1]?.id ?? "");
+  const [b, setB] = useState(quotes[0]?.id ?? "");
+  const [items, setItems] = useState<Row[]>([]);
+  const [open, setOpen] = useState<string | null>(null);
+  useEffect(() => {
+    if (!a || !b) return;
+    supabase.from("equipment_quote_items").select("*").in("quote_id", [a, b]).order("sort_order").then(({ data }) => setItems(data ?? []));
+  }, [a, b]);
+  const qa = quotes.find((q) => q.id === a), qb = quotes.find((q) => q.id === b);
+  const A = items.filter((i) => i.quote_id === a), B = items.filter((i) => i.quote_id === b);
+  const tot = (rs: Row[]) => rs.reduce((t, i) => t + lineTotal(i), 0);
+  const ta = tot(A), tb = tot(B), d = tb - ta;
+  const catOf = (i: Row) => (i.category ?? "").trim() || "Senza categoria";
+  const cats = [...new Set([...A, ...B].map(catOf))].sort((x, y) => (x === "Senza categoria" ? 1 : y === "Senza categoria" ? -1 : x.localeCompare(y)));
+  const delta = (v: number) => <span className={"cmp-d" + (Math.abs(v) < 0.005 ? "" : v < 0 ? " less" : " more")}>{Math.abs(v) < 0.005 ? "=" : (v > 0 ? "+" : "−") + eur(Math.abs(v))}</span>;
+  const onlyA = A.filter((i) => !B.some((j) => keyOfItem(j) === keyOfItem(i))).length;
+  const onlyB = B.filter((i) => !A.some((j) => keyOfItem(j) === keyOfItem(i))).length;
+
+  return (
+    <div className="panel cmp">
+      <div className="cmp-pick">
+        <label><span>Preventivo A</span><select value={a} onChange={(e) => setA(e.target.value)}>{quotes.map((q) => <option key={q.id} value={q.id}>{q.supplier}</option>)}</select></label>
+        <label><span>Preventivo B</span><select value={b} onChange={(e) => setB(e.target.value)}>{quotes.map((q) => <option key={q.id} value={q.id}>{q.supplier}</option>)}</select></label>
+      </div>
+      {a === b ? <p className="muted">Scegli due preventivi diversi.</p> : (
+        <>
+          <div className="cmp-sum">
+            <div><span>{qa?.supplier}</span><strong>{eur(ta)}</strong><small>{eur(ta / soci)} a testa</small></div>
+            <div><span>{qb?.supplier}</span><strong>{eur(tb)}</strong><small>{eur(tb / soci)} a testa</small></div>
+            <div className="cmp-diff"><span>Differenza B − A</span><strong>{delta(d)}</strong><small>{delta(d / soci)} a testa</small></div>
+          </div>
+          <p className="muted small">
+            {Math.abs(d) < 0.005 ? "Costano uguale." : `«${d < 0 ? qb?.supplier : qa?.supplier}» costa ${eur(Math.abs(d))} in meno (${Math.round(Math.abs(d) / Math.max(ta, tb) * 100)}%).`}
+            {onlyA ? ` ${onlyA} ${onlyA === 1 ? "oggetto" : "oggetti"} solo in A.` : ""}{onlyB ? ` ${onlyB} ${onlyB === 1 ? "oggetto" : "oggetti"} solo in B.` : ""} Tocca una tipologia per vedere gli oggetti.
+          </p>
+          <div className="cmp-table">
+            <div className="cmp-row cmp-h"><span>Tipologia</span><span>A</span><span>B</span><span>B − A</span></div>
+            {cats.map((c) => {
+              const ca = A.filter((i) => catOf(i) === c), cb = B.filter((i) => catOf(i) === c);
+              const keys = [...new Set([...ca, ...cb].map(keyOfItem))];
+              const isOpen = open === c;
+              return (
+                <div key={c} className={"cmp-cat" + (isOpen ? " open" : "")}>
+                  <button className="cmp-row" onClick={() => setOpen(isOpen ? null : c)}>
+                    <span className="cmp-name"><ChevronRight size={15} className="pv-chev" /><span>{c}</span></span>
+                    <span>{ca.length ? eur(tot(ca)) : "—"}</span>
+                    <span>{cb.length ? eur(tot(cb)) : "—"}</span>
+                    {delta(tot(cb) - tot(ca))}
+                  </button>
+                  {isOpen && keys.map((k) => {
+                    const ia = ca.filter((i) => keyOfItem(i) === k), ib = cb.filter((i) => keyOfItem(i) === k);
+                    const it = ia[0] ?? ib[0];
+                    const qty = (rs: Row[]) => rs.reduce((t, i) => t + Number(i.quantity), 0);
+                    return (
+                      <div key={k} className="cmp-row cmp-item">
+                        <span className="cmp-name">{it.description}{it.model ? <small> {it.model}</small> : null}{(qty(ia) > 1 || qty(ib) > 1) && <small> ×{num(qty(ia) || qty(ib))}</small>}</span>
+                        <span>{ia.length ? eur(tot(ia)) : <em className="muted">manca</em>}</span>
+                        <span>{ib.length ? eur(tot(ib)) : <em className="muted">manca</em>}</span>
+                        {delta(tot(ib) - tot(ia))}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+            <div className="cmp-row cmp-h cmp-f"><span>Totale</span><span>{eur(ta)}</span><span>{eur(tb)}</span>{delta(d)}</div>
+          </div>
+        </>
       )}
     </div>
   );

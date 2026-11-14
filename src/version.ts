@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.173", date: "15/11/2026 00:35", text: "Preventivi: tornato il confronto. Con almeno due preventivi c’è «Confronta due preventivi»: scegli A e B, vedi i due totali, la differenza (anche a testa), le tipologie affiancate e, toccandole, oggetto per oggetto cosa costa di più, di meno o manca" },
   { version: "0.172", date: "15/11/2026 00:15", text: "Preventivi: accanto a ogni totale (preventivo, fornitore, tipologia, parte confermata) c’è anche la quota a testa, cioè il totale diviso per i soci" },
   { version: "0.171", date: "15/11/2026 00:05", text: "Preventivi del progetto più semplici: elenco a schede, tocchi il nome per aprirlo, ✏️ per rinominarlo e 🗑️ per eliminarlo. Tolti spunte, versioni e confronto: ogni import è un preventivo a sé" },
   { version: "0.170", date: "14/11/2026 23:40", text: "Preventivi: tre stati (Inserito, In valutazione, Confermato) da scegliere in alto. Ogni oggetto si conferma col cerchietto a sinistra; per ogni fornitore vedi quanti sono confermati e, quando lo sono tutti, «pronto da acquistare». C’è anche «Conferma tutto» per fornitore. Da eseguire: 0017_preventivi_stati_conferma.sql" },
