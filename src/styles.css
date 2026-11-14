@@ -1949,3 +1949,4 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .poll-new-opt input { flex: 1; min-width: 0; }
 .poll-modal label.block, .poll-modal label.block input { width: 100%; }
 .poll-modal label.block { display: flex; flex-direction: column; gap: 6px; }
+.ut-more { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin: 4px 0 14px; padding: 10px; border-radius: 12px; border: 1px dashed var(--line-strong); background: none; color: var(--muted); font: 600 .88rem var(--sans); cursor: pointer; }

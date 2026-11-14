@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.216", date: "15/11/2026 12:20", text: "Conta bottiglie più corto: di partenza solo le bottiglie da 66 cl; sotto c’è «Mostra anche le bottiglie da 33 cl» per aprirle (l’app ricorda la scelta)" },
   { version: "0.215", date: "15/11/2026 12:05", text: "Carbonazione e correzione del pH: la carbonazione voluta e il pH che vuoi si scelgono di nuovo trascinando il pallino sulla barra; litri, temperatura e pH misurato restano con − e +" },
   { version: "0.214", date: "15/11/2026 11:55", text: "Correzione del pH più comoda: litri, pH misurato e pH voluto si cambiano con − e + ai lati (partono dal batch in corso); restano i pulsanti rapidi 5,2–5,5" },
   { version: "0.213", date: "15/11/2026 11:45", text: "Chat: con la fotocamera accanto al messaggio mandi una foto (rimpicciolita per non pesare, si apre toccandola), con l’icona del grafico crei un sondaggio. Tutti votano toccando l’opzione (una o più risposte), vedono barre, numeri e chi ha votato, e possono aggiungere le proprie opzioni. Da eseguire: 0021_chat_foto_sondaggi.sql" },
