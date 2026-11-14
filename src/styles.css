@@ -1511,3 +1511,18 @@ a.tk-item:hover { color: var(--text); border-color: var(--line-strong); }
 .tc-pair { margin-top: 14px; }
 .tc-pair input { width: 100%; }
 .ut-reset { margin-top: 6px; border-color: color-mix(in srgb, var(--magenta) 50%, transparent); color: var(--magenta); }
+
+/* ---------------- sfondo a raggi (giallo/ciano) dietro tutta l'app ---------------- */
+html { background: var(--bg); }
+body { background: transparent !important; }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(rgba(18, 17, 15, .86), rgba(18, 17, 15, .9)),
+    url("./assets/sfondo.webp") center / cover no-repeat;
+}
+:root[data-theme="light"] body::before {
+  background:
+    linear-gradient(rgba(245, 239, 227, .86), rgba(245, 239, 227, .9)),
+    url("./assets/sfondo.webp") center / cover no-repeat;
+}

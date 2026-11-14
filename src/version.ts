@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.162", date: "14/11/2026 20:45", text: "Nuovo sfondo dell'app: i raggi giallo e ciano dell'etichetta, scuriti (o schiariti col tema chiaro) per leggere bene" },
   { version: "0.161", date: "14/11/2026 20:30", text: "Nuovo logo: la pecora con gli occhiali (senza sfondo) nell'app, nella schermata di accesso e come icona dell'app" },
   { version: "0.160", date: "14/11/2026 20:15", text: "Conta bottiglie: pulsante in fondo per azzerare tutti i contatori" },
   { version: "0.159", date: "14/11/2026 20:05", text: "Task e spese: togliendo una persona (o una scelta) il bottone non resta più evidenziato sul telefono" },
