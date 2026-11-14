@@ -44,6 +44,12 @@ async function deleteQuote(q: Row) {
   if (rest?.length && rest.every((r) => r.status === "superato")) await supabase.from("equipment_quotes").update({ status: "inserito" }).eq("id", rest[0].id);
 }
 
+/** Numero dei soci (chi è registrato nell'app): i totali si dividono per loro. */
+function useSoci() {
+  const { profiles } = useAuth();
+  return Math.max(1, profiles.length || 3);
+}
+
 /** Rinomina un preventivo (se il nome esiste già nel progetto gli dà un numero interno diverso). */
 async function renameQuote(q: Row): Promise<Row | null> {
   const name = prompt("Nome del preventivo", q.supplier)?.trim();
@@ -111,6 +117,7 @@ export function EquipmentProjects() {
 export function EquipmentProject() {
   const { id } = useParams();
   const { isAdmin } = useAuth();
+  const soci = useSoci();
   const nav = useNavigate();
   const [project, setProject] = useState<Row | null>(null);
   const [quotes, setQuotes] = useState<Row[]>([]);
@@ -162,7 +169,7 @@ export function EquipmentProject() {
                   <span>{date(q.quote_date ?? q.created_at)}</span>
                 </span>
               </Link>
-              <strong className="eqq-tot">{eur(t?.total_with_vat ?? 0)}</strong>
+              <strong className="eqq-tot">{eur(t?.total_with_vat ?? 0)}<small>{eur((t?.total_with_vat ?? 0) / soci)} a testa</small></strong>
               {isAdmin && (
                 <span className="eqq-acts">
                   <button className="icon" title="Rinomina" onClick={async () => { if (await renameQuote(q)) setReload((x) => x + 1); }}>✏️</button>
@@ -205,6 +212,7 @@ export function EquipmentProject() {
 export function EquipmentQuote() {
   const { id } = useParams();
   const { isAdmin } = useAuth();
+  const soci = useSoci();
   const nav = useNavigate();
   const [q, setQ] = useState<Row | null>(null);
   const [items, setItems] = useState<Row[]>([]);
@@ -248,7 +256,8 @@ export function EquipmentQuote() {
       <div className="kpis qv-kpis">
         <div className="kpi"><span>Oggetti</span><strong>{num(items.reduce((t, i) => t + Number(i.quantity), 0))}</strong></div>
         <div className="kpi main"><span>Totale</span><strong>{eur(goods)}</strong>
-          {items.some((i) => i.confirmed) && <small className="qv-conf">confermato {eur(items.filter((i) => i.confirmed).reduce((t, i) => t + lineTotal(i), 0))}</small>}
+          <small className="qv-each">{eur(goods / soci)} a testa ({soci} soci)</small>
+          {items.some((i) => i.confirmed) && <small className="qv-conf">confermato {eur(items.filter((i) => i.confirmed).reduce((t, i) => t + lineTotal(i), 0))} · {eur(items.filter((i) => i.confirmed).reduce((t, i) => t + lineTotal(i), 0) / soci)} a testa</small>}
         </div>
       </div>
       <QuoteItems quoteId={q.id} canEdit={isAdmin} onChange={setItems} />
@@ -288,6 +297,7 @@ export function EquipmentQuote() {
 const ITEM_FIELDS: [string, string][] = [["category", "Categoria"], ["supplier", "Fornitore"], ["brand", "Marca"], ["model", "Modello"], ["code", "Codice"]];
 
 function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: boolean; onChange: (r: Row[]) => void }) {
+  const soci = useSoci();
   const [items, setItems] = useState<Row[]>([]);
   const [openSup, setOpenSup] = useState<Set<string>>(new Set());
   const [openCat, setOpenCat] = useState<Set<string>>(new Set());
@@ -417,7 +427,7 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
                     : <small className="pv-wait">{its.filter((i) => i.confirmed).length}/{its.length} confermati</small>}
                 </span>
                 <span className="pv-n">{its.length}</span>
-                <span className="pv-tot">{eur(sum(its))}</span>
+                <span className="pv-tot">{eur(sum(its))}<small>{eur(sum(its) / soci)} a testa</small></span>
               </button>
               {so && canEdit && (
                 <div className="pv-acts">
@@ -436,7 +446,7 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
                       <ChevronRight size={16} className="pv-chev" />
                       <span className="pv-name">{c}</span>
                       <span className={"pv-n" + (ci.every((i) => i.confirmed) ? " all" : "")}>{ci.filter((i) => i.confirmed).length}/{ci.length}</span>
-                      <span className="pv-tot">{eur(sum(ci))}</span>
+                      <span className="pv-tot">{eur(sum(ci))}<small>{eur(sum(ci) / soci)} a testa</small></span>
                     </button>
                     {co && <div className="pv-items">{ci.map(itemRow)}</div>}
                   </div>

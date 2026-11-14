@@ -1623,3 +1623,6 @@ body::before {
 .eqq-acts { flex: none; display: flex; gap: 2px; }
 .qv-rename { font-size: 1rem; vertical-align: middle; margin-left: 6px; }
 .eqp-actions .btn { min-width: 0; padding-left: 8px; padding-right: 8px; white-space: normal; }
+.pv-tot small, .eqq-tot small { display: block; font-size: .72rem; font-weight: 500; color: var(--muted); margin-top: 1px; }
+.eqq-tot { text-align: right; }
+.qv-each { display: block; color: var(--text); font-size: .85rem; margin-top: 2px; }
