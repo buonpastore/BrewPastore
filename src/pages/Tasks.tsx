@@ -41,8 +41,12 @@ export function Tasks() {
   }, [reload]);
 
   const list = (tasks ?? []).filter((t) => !onlyMine || whoOf(t).includes(me) || t.created_by === me);
-  const active = list.filter((t) => t.status !== "terminata").sort((a, b) => Number(b.status === "in_corso") - Number(a.status === "in_corso"));
-  const done = list.filter((t) => t.status === "terminata").sort((a, b) => String(b.done_at ?? b.updated_at).localeCompare(String(a.done_at ?? a.updated_at)));
+  // le terminate restano nell'elenco per una settimana (si vedono come terminate), poi vanno nello storico
+  const WEEK = 7 * 24 * 3600 * 1000;
+  const old = (t: Row) => t.status === "terminata" && Date.now() - new Date(t.done_at ?? t.updated_at ?? t.created_at).getTime() > WEEK;
+  const rank = (t: Row) => (t.status === "in_corso" ? 0 : t.status === "inserita" ? 1 : 2);
+  const active = list.filter((t) => !old(t)).sort((a, b) => rank(a) - rank(b));
+  const done = list.filter(old).sort((a, b) => String(b.done_at ?? b.updated_at).localeCompare(String(a.done_at ?? a.updated_at)));
   const open = (tasks ?? []).find((t) => t.id === openId) ?? null;
 
   const Item = ({ t }: { t: Row }) => {
@@ -82,7 +86,7 @@ export function Tasks() {
           {done.length > 0 && (
             <>
               <button className="xp-hist-btn" onClick={() => setShowHistory(!showHistory)}>
-                {showHistory ? <ChevronDown size={18} /> : <ChevronRight size={18} />} Storico ({done.length} terminate)
+                {showHistory ? <ChevronDown size={18} /> : <ChevronRight size={18} />} Storico ({done.length} terminate da più di una settimana)
               </button>
               {showHistory && <div className="tk-list">{done.map((t) => <Item key={t.id} t={t} />)}</div>}
             </>
