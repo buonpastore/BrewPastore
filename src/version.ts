@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.156", date: "14/11/2026 19:35", text: "Task: «Le mie» mostra solo quelle assegnate a te, non quelle che hai creato per altri" },
   { version: "0.155", date: "14/11/2026 19:20", text: "Degustazione: titoli più grandi, «altro» più comodo, nuove voci Schiuma, Amaro e Finale, e il campo «Abbinata a» per il cibo" },
   { version: "0.154", date: "14/11/2026 19:00", text: "Materie prime: gli ingredienti delle ricette si abbinano da soli ai prodotti acquistati per parole chiave (Fuggles = Luppolo Fuggles, coriandolo schiacciato = coriandolo in semi, gusci = lolla di riso) e c'è «Collega agli acquisti» per sistemare quelli già creati" },
   { version: "0.153", date: "14/11/2026 18:40", text: "Degustazione rapida: scegli la birra da un elenco con il tappo, temperatura con − e + (parte da 4 °C), data di oggi già messa, caratteristiche a scelta (o «Altro») e in fondo la valutazione" },

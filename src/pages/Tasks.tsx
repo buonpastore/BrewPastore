@@ -40,7 +40,7 @@ export function Tasks() {
     });
   }, [reload]);
 
-  const list = (tasks ?? []).filter((t) => !onlyMine || whoOf(t).includes(me) || t.created_by === me);
+  const list = (tasks ?? []).filter((t) => !onlyMine || whoOf(t).includes(me));   // «Le mie» = solo quelle assegnate a me
   // le terminate restano nell'elenco per una settimana (si vedono come terminate), poi vanno nello storico
   const WEEK = 7 * 24 * 3600 * 1000;
   const old = (t: Row) => t.status === "terminata" && Date.now() - new Date(t.done_at ?? t.updated_at ?? t.created_at).getTime() > WEEK;
