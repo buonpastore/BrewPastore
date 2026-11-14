@@ -6,7 +6,7 @@ import { catColor, nameColor } from "../categories";
 type SortKey = "name" | "category" | "qty" | "spent" | "avg" | "last" | "count";
 const CAT_ORDER = ["malto", "luppolo", "lievito", "sali_acqua", "additivo", "bottiglie", "tappi", "etichette", "detergenti", "altro"];
 import { useAuth } from "../auth";
-import { isCore, pieceSizes, perPiece, piecesOfLine } from "../costs";
+import { isCore, pieceSizes, perPiece, piecesOfLine, matchPurchased } from "../costs";
 
 export function Materials({ embedded = false }: { embedded?: boolean }) {
   const { isAdmin } = useAuth();
@@ -136,6 +136,24 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
       {children}{sort.key === k ? (sort.dir === "asc" ? " ▲" : " ▼") : ""}
     </th>
   );
+  const linkEmpty = async () => {
+    try {
+      const { data: all } = await supabase.from("material_costs").select("*");
+      const rows = all ?? [];
+      const done: string[] = [], left: string[] = [];
+      for (const m of rows.filter((x) => Number(x.purchases_count) === 0)) {
+        const hit = matchPurchased(m.name, m.category, m.base_unit, rows);
+        if (!hit) { left.push(m.name); continue; }
+        for (const tb of ["recipe_ingredients", "batch_ingredients", "batch_costs"]) {
+          await supabase.from(tb).update({ material_id: hit.material_id }).eq("material_id", m.material_id);
+        }
+        const { error } = await supabase.from("materials").delete().eq("id", m.material_id);
+        if (!error) done.push(`${m.name} → ${hit.name}`);
+      }
+      alert(`${done.length ? `Collegati ${done.length}:\n${done.join("\n")}` : "Nessun collegamento trovato."}${left.length ? `\n\nRestano senza acquisti (${left.length}): ${left.join(", ")}` : ""}`);
+      setReload((x) => x + 1);
+    } catch (e) { alert(errMsg(e)); }
+  };
   const cleanEmpty = async () => {
     if (!confirm(`Eliminare le ${empty.length} materie prime senza nessun acquisto?\nSono quelle create importando le ricette o rimaste da import sbagliati. Nelle ricette gli ingredienti restano.`)) return;
     try { await deleteMaterialsWithoutPurchases(); setReload((x) => x + 1); } catch (e) { alert(errMsg(e)); }
@@ -260,6 +278,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
           <p><strong>{empty.length}</strong> {empty.length === 1 ? "materia prima senza acquisti" : "materie prime senza acquisti"} {showEmpty ? (empty.length === 1 ? "mostrata nella lista" : "mostrate nella lista") : (empty.length === 1 ? "nascosta" : "nascoste")}</p>
           <div className={"mat-empty-btns" + (isAdmin ? "" : " one")}>
             <button className="btn" onClick={() => setShowEmpty(!showEmpty)}>{showEmpty ? "🙈 Nascondi" : "👁️ Mostra"}</button>
+            {isAdmin && <button className="btn primary" onClick={linkEmpty}>🔗 Collega agli acquisti</button>}
             {isAdmin && <button className="btn danger" onClick={cleanEmpty}>🗑️ Elimina</button>}
           </div>
         </div>

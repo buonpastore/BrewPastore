@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.154", date: "14/11/2026 19:00", text: "Materie prime: gli ingredienti delle ricette si abbinano da soli ai prodotti acquistati per parole chiave (Fuggles = Luppolo Fuggles, coriandolo schiacciato = coriandolo in semi, gusci = lolla di riso) e c'è «Collega agli acquisti» per sistemare quelli già creati" },
   { version: "0.153", date: "14/11/2026 18:40", text: "Degustazione rapida: scegli la birra da un elenco con il tappo, temperatura con − e + (parte da 4 °C), data di oggi già messa, caratteristiche a scelta (o «Altro») e in fondo la valutazione" },
   { version: "0.152", date: "14/11/2026 18:15", text: "Home: «Riconosci le birre dal tappo» è un elenco compatto delle ultime 5 birre imbottigliate, con il tappo piccolo come nel resto dell'app" },
   { version: "0.151", date: "14/11/2026 18:00", text: "Task: quelle terminate restano nell'elenco (segnate come terminate) per una settimana, poi passano nello storico" },

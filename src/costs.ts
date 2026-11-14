@@ -9,7 +9,10 @@ import { toBase, type Row } from "./lib";
    ------------------------------------------------------------------ */
 
 const STOP = new Set(["malto", "malti", "luppolo", "luppoli", "lievito", "lieviti", "pellet", "pellets", "secco", "liquido", "di", "d", "del", "della",
-  "in", "da", "per", "e", "con", "the", "gr", "g", "kg", "ml", "l", "pz", "conf", "confezione", "busta", "bustina", "sacco", "x", "fiocchi"]);
+  "in", "da", "per", "e", "con", "the", "gr", "g", "kg", "ml", "l", "pz", "conf", "confezione", "busta", "bustina", "sacco", "x", "fiocchi",
+  // descrizioni della forma o della lavorazione: non cambiano il prodotto
+  "schiacciato", "schiacciata", "schiacciati", "leggermente", "macinato", "macinata", "intero", "intera", "interi", "semi", "seme",
+  "fresco", "fresca", "essiccato", "essiccata", "secca", "polvere", "grani", "chicchi", "tritato", "tritata", "pezzi", "scaglie", "q", "b", "qb"]);
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   .replace(/\b([a-z]{1,3})[-\s](\d{2,3})\b/g, "$1$2")   // "US-05" = "US 05" = "US05", "BE-134" = "BE134"
   .replace(/[^a-z0-9]+/g, " ").trim();
@@ -48,7 +51,9 @@ export function matchMaterial(ing: Row, mats: Row[]): Row | null {
     if (ing.category && m.category && ing.category !== m.category && isCoreCat(ing.category) && isCoreCat(m.category)) continue;
     const mt = new Set(tokens(m.name));
     const shared = it.filter((t) => mt.has(t) || [...mt].some((x) => x.length >= 4 && t.length >= 4 && (x.startsWith(t) || t.startsWith(x))));
-    const score = shared.length / it.length - (mt.size - shared.length) * 0.01;
+    // conta quante parole dell'ingrediente ci sono nel prodotto, ma anche il contrario
+    // (es. «Coriandolo leggermente schiacciato» ↔ «Coriandolo in semi», «Fuggles» ↔ «Luppolo Fuggles 100 g»)
+    const score = Math.max(shared.length / it.length, mt.size ? shared.length / mt.size : 0) - (mt.size - shared.length) * 0.01;
     if (shared.length === it.length) full.push(m);
     if (shared.length && score > bestScore) { best = m; bestScore = score; }
   }
@@ -310,4 +315,9 @@ export function estimateBrew(b: Row, recipe?: Row): { kwh: number | null; waterL
   // acqua usata: quella della birra + raffreddamento e pulizie (stima: altri 2 litri per litro di birra)
   const waterL = waterIn + (vol ? vol * 2 : waterIn);
   return { kwh: Math.round(kwh * 10) / 10, waterL: Math.round(waterL) };
+}
+
+/** Prodotto acquistato che corrisponde a un nome (per l'import delle ricette e per collegare quelli già creati). */
+export function matchPurchased(name: string, category: string, unit: string, mats: Row[]): Row | null {
+  return matchMaterial({ name, category, unit, quantity: 1 }, mats.filter((m) => Number(m.purchases_count ?? 0) > 0 || Number(m.avg_unit_cost) > 0));
 }

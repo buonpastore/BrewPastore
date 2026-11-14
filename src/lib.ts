@@ -198,6 +198,11 @@ export async function findOrCreateMaterial(name: string, category: string, unit:
   const clean = name.trim();
   const { data: found } = await supabase.from("materials").select("id").ilike("name", clean).limit(1);
   if (found?.length) return found[0].id;
+  // stesso prodotto scritto in modo diverso (es. «Fuggles» ↔ «Luppolo Fuggles», «Gusci di riso» ↔ «Lolla di riso»)
+  const { data: costs } = await supabase.from("material_costs").select("*");
+  const { matchPurchased } = await import("./costs");
+  const hit = matchPurchased(clean, category, unit, costs ?? []);
+  if (hit) return hit.material_id;
   const cat = MATERIAL_CATEGORIES.includes(category) ? category : "altro";
   const { data, error } = await supabase.from("materials")
     .insert({ name: clean, category: cat, base_unit: baseUnitFor(unit) }).select("id").single();

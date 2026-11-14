@@ -1501,3 +1501,5 @@ a.tk-item:hover { color: var(--text); border-color: var(--line-strong); }
 .tc-opts.grid .tc-opt { padding: 8px 4px; font-size: .86rem; }
 .tc-other-btn { margin-top: 4px; padding: 4px 2px; border: 0; background: none; color: var(--muted); font: 600 .82rem var(--sans); cursor: pointer; }
 .tc-other-btn.on { color: var(--gold); }
+.mat-empty-btns { grid-template-columns: 1fr 1fr; }
+.mat-empty-btns .primary { grid-column: 1 / -1; }
