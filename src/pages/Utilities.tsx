@@ -83,6 +83,11 @@ function BottleCount() {
             : <>✓ Bottiglie sufficienti, ne avanzano per {num(covered - liters, 1)} L.</>}
         </div>
       </div>
+      <button className="btn btn-wide ut-reset" onClick={async () => {
+        const who = isAdmin ? profiles.map((p) => p.id) : profile ? [profile.id] : [];
+        if (!confirm(isAdmin ? "Azzerare i contatori delle bottiglie di tutti?" : "Azzerare i tuoi contatori delle bottiglie?")) return;
+        for (const id of who) await save(id, { b33: 0, b66: 0 });
+      }}><RotateCcw size={18} /> {isAdmin ? "Azzera tutti i contatori" : "Azzera i miei contatori"}</button>
     </div>
   );
 }

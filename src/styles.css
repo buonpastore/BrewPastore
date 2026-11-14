@@ -1510,3 +1510,4 @@ a.tk-item:hover { color: var(--text); border-color: var(--line-strong); }
 .tc-other-btn.on { border-color: var(--gold); }
 .tc-pair { margin-top: 14px; }
 .tc-pair input { width: 100%; }
+.ut-reset { margin-top: 6px; border-color: color-mix(in srgb, var(--magenta) 50%, transparent); color: var(--magenta); }
