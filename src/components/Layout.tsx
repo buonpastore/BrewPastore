@@ -26,7 +26,7 @@ export const GROUPS: Group[] = [
       { to: "/ricette", label: "Ricette", icon: BookOpen, color: "var(--gold)" },
       { to: "/batch", label: "Batch", icon: Beer, color: "var(--teal)" },
       { to: "/degustazioni", label: "Degustazioni", icon: Star, color: "var(--magenta)" },
-      { to: "/cantina", label: "Cantina", icon: Warehouse, color: "var(--gold)" },
+      { to: "/cantina", label: "Cantina", icon: Warehouse, color: "var(--violet)" },
     ],
   },
   {
@@ -35,7 +35,7 @@ export const GROUPS: Group[] = [
       { to: "/costi", label: "Costi birre", short: "Costi", icon: Calculator, color: "var(--gold)" },
       { to: "/materie-prime", label: "Materie prime", short: "Materie", icon: Wheat, color: "var(--teal)", also: ["/acquisti"] },
       { to: "/spese", label: "Spese condivise", short: "Spese", icon: Wallet, color: "var(--magenta)" },
-      { to: "/impianto", label: "Preventivi impianto", short: "Preventivi", icon: Wrench, color: "var(--gold)" },
+      { to: "/impianto", label: "Preventivi impianto", short: "Preventivi", icon: Wrench, color: "var(--violet)" },
     ],
   },
   {
@@ -46,13 +46,13 @@ export const GROUPS: Group[] = [
     ],
   },
   {
-    key: "utilita", label: "Utilità", icon: LayoutGrid, to: "/utilita/bottiglie", color: "var(--gold)",
+    key: "utilita", label: "Utilità", icon: LayoutGrid, to: "/utilita/bottiglie", color: "var(--violet)",
     tabs: [
       { to: "/utilita/bottiglie", label: "Conta bottiglie", short: "Bottiglie", icon: Milk, color: "var(--gold)" },
       { to: "/utilita/carbonazione", label: "Carbonazione", short: "CO₂", icon: Sparkles, color: "var(--teal)" },
       { to: "/utilita/ph", label: "Correzione pH", short: "pH", icon: FlaskConical, color: "var(--magenta)" },
-      { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--gold)" },
-      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--magenta)" },
+      { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--violet)" },
+      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--gold)" },
     ],
   },
 ];

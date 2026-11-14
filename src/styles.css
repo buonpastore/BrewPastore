@@ -19,6 +19,7 @@
   --teal: #12a081;          /* verde acqua etichetta #027b5d, schiarito per testi e icone */
   --teal-deep: #027b5d;     /* verde acqua esatto dell'etichetta */
   --magenta: #dc3b5a;       /* magenta etichetta #c82b48 */
+  --violet: #9d82f2;        /* quarto accento: viola lavanda, complementare al giallo */
   --hop: #a9bd1c;           /* verde luppolo etichetta #95a602 */
   --orange: #e07a1f;
 
@@ -1059,6 +1060,7 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
   --gold-2: #cf8d00;
   --teal: #0b7c63;
   --magenta: #c12848;
+  --violet: #6a4fd0;
   --hop: #6b7a00;
   --orange: #c15f0c;
   --ok: #4c8611;
@@ -1852,3 +1854,10 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .bottle-cap { fill: var(--gold); }
 .bottle-shine { stroke: rgba(255, 255, 255, .25); stroke-width: 2.2; stroke-linecap: round; fill: none; }
 .bottle-hint { margin: -6px 0 0; text-align: center; min-height: 1.2em; }
+/* quarto accento (viola) nelle serie di 4 */
+.badge.st-degustato { background: color-mix(in srgb, var(--violet) 16%, transparent); color: var(--violet); }
+.nb-chip.on.st-degustato { background: var(--violet); color: #fff; }
+.timeline > div.done:nth-child(1)::before { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 4px rgba(237, 165, 18, .18); }
+.timeline > div.done:nth-child(2)::before { background: var(--teal); border-color: var(--teal); box-shadow: 0 0 0 4px rgba(18, 160, 129, .18); }
+.timeline > div.done:nth-child(3)::before { background: var(--magenta); border-color: var(--magenta); box-shadow: 0 0 0 4px rgba(220, 59, 90, .18); }
+.timeline > div.done:nth-child(4)::before { background: var(--violet); border-color: var(--violet); box-shadow: 0 0 0 4px color-mix(in srgb, var(--violet) 20%, transparent); }

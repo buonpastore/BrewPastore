@@ -31,7 +31,7 @@ const PHASES: Phase[] = [
     { key: "original_gravity", label: "OG (post-bollitura)", kind: "sg" },
     { key: "volume_fermenter_l", label: "Litri in fermentatore", kind: "l" },
   ] },
-  { title: "Consumi della cotta", color: "var(--teal)", icon: <Zap size={20} />, fields: [
+  { title: "Consumi della cotta", color: "var(--violet)", icon: <Zap size={20} />, fields: [
     { key: "energy_kwh", label: "Energia elettrica", kind: "kwh" },
     { key: "water_used_l", label: "Acqua totale usata", kind: "l" },
   ] },

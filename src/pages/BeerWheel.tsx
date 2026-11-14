@@ -7,7 +7,7 @@ import { CapDot, CapIcon, capInfo, useCapColors } from "../components/CapColor";
 import { loadCellar, loadProduced } from "../cellar";
 
 // colori delle fette: quelli del sito e delle etichette, usati tenui come nei chip dell'app
-const SITE = ["var(--gold)", "var(--teal)", "var(--magenta)", "var(--orange)", "var(--hop)", "var(--cat-lievito, #e5483d)"];
+const SITE = ["var(--gold)", "var(--teal)", "var(--magenta)", "var(--violet)", "var(--orange)", "var(--hop)"];
 const MUTE_KEY = "pastorizia-ruota-muta";
 
 /** Suoni della ruota (Web Audio, niente file): tic a ogni fetta e un «ding» alla fine. */
