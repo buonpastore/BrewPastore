@@ -111,7 +111,7 @@ export function BeerWheel() {
         const v = m && m !== "none" ? m.match(/matrix\(([^)]+)\)/)?.[1].split(",").map(Number) : null;
         if (v) {
           const deg = (Math.atan2(v[1], v[0]) * 180 / Math.PI + 360) % 360;
-          const idx = Math.floor(((360 - deg) % 360) / seg);
+          const idx = Math.floor(deg / seg);
           if (last >= 0 && idx !== last) tick();
           last = idx;
         }
@@ -119,6 +119,21 @@ export function BeerWheel() {
       if (performance.now() < until) raf.current = requestAnimationFrame(step);
     };
     raf.current = requestAnimationFrame(step);
+  };
+
+  // spicchio della corona tra due raggi
+  const band = (i: number, r0: number, r1: number) => {
+    if (n === 1) return `M 0 ${-r1} A ${r1} ${r1} 0 1 1 -0.01 ${-r1} Z M 0 ${-r0} A ${r0} ${r0} 0 1 0 0.01 ${-r0} Z`;
+    const a0 = (i * seg - 90) * Math.PI / 180, a1 = ((i + 1) * seg - 90) * Math.PI / 180, L = seg > 180 ? 1 : 0;
+    const p = (r: number, a: number) => `${(r * Math.cos(a)).toFixed(2)} ${(r * Math.sin(a)).toFixed(2)}`;
+    return `M ${p(r1, a0)} A ${r1} ${r1} 0 ${L} 1 ${p(r1, a1)} L ${p(r0, a1)} A ${r0} ${r0} 0 ${L} 0 ${p(r0, a0)} Z`;
+  };
+  // colore della birra = colore del suo tappo (schiarito se è troppo scuro per il fondo nero)
+  const colorOf = (b: Row, i: number) => {
+    const hex = capInfo(b.cap_color)?.hex;
+    if (!hex) return accents[i];
+    const v = parseInt(hex.replace("#", ""), 16), lum = ((v >> 16) * 299 + ((v >> 8) & 255) * 587 + (v & 255) * 114) / 1000;
+    return lum < 90 ? `color-mix(in srgb, ${hex} 60%, #fff)` : hex;
   };
 
   // fascetta colorata sul bordo di ogni fetta
@@ -148,7 +163,7 @@ export function BeerWheel() {
     const base = Math.ceil((angle + 360 * 5) / 360) * 360;
     setWinner(null); setSpinning(true);
     if (!muted) audio();   // sblocca l'audio col tocco (iPhone)
-    setAngle(base + (360 - (pick * seg + seg / 2)) + jitter);
+    setAngle(base + pick * seg + seg / 2 + jitter);
     follow(performance.now() + SPIN_MS);
     timer.current = window.setTimeout(() => {
       setSpinning(false); setWinner(beers[pick]);
@@ -160,48 +175,48 @@ export function BeerWheel() {
   if (all == null) return <p>Caricamento…</p>;
   return (
     <div>
-      <div className="wheel-title"><h1>Ruota della birra</h1>
+      <div className="wheel-title"><h1>Gira la bottiglia</h1>
         <button className="icon-btn" title={muted ? "Suono spento" : "Suono acceso"} aria-label={muted ? "Accendi il suono" : "Spegni il suono"} onClick={() => setMuted(!muted)}>{muted ? <VolumeX size={20} /> : <Volume2 size={20} />}</button>
       </div>
-      {!all.length ? <p className="note">Non c'è ancora nessuna birra imbottigliata da mettere sulla ruota.</p> : (
+      {!all.length ? <p className="note">Non c'è ancora nessuna birra imbottigliata da mettere intorno alla bottiglia.</p> : (
         <div className="wheel-wrap">
-          <div className="wheel-stage">
-            <svg className="wheel-pointer" viewBox="0 0 24 20" aria-hidden><path d="M12 19 L2 2 H22 Z" /></svg>
-            <div className="wheel-disc">
-              <svg ref={wheelRef} className="wheel" viewBox="-102 -102 204 204" role="img" aria-label="Ruota delle birre"
-                style={{ transform: `rotate(${angle}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(.12,.72,.1,1)` : "none" }}>
-                <circle r="100" className="wheel-base" />
-                {slices.map(({ b, i, d }) => (
-                  <g key={b.id}>
-                    <path d={d} className="wheel-slice" />
-                    {n > 1 && <path d={arc(i)} className="wheel-band" style={{ stroke: accents[i] }} />}
-                  </g>
-                ))}
-                {n === 1 && <circle r="96.5" className="wheel-band" style={{ stroke: accents[0] }} />}
-                {/* nomi sempre dritti: ogni etichetta gira al contrario della ruota */}
-                {slices.map(({ b, i, mid }) => {
-                  const a = (mid - 90) * Math.PI / 180, R = n === 1 ? 0 : n <= 3 ? 56 : 60;
-                  const lines = splitName(nameOf(b));
-                  const fs = n <= 4 ? 11 : n <= 6 ? 9.5 : n <= 8 ? 8.2 : 7;
-                  const cap = capInfo(b.cap_color)?.hex;
-                  const h = lines.length * fs * 1.1;
-                  return (
-                    <g key={b.id + "-l"} transform={`translate(${R * Math.cos(a)} ${R * Math.sin(a) + (n === 1 ? -45 : 0)})`}>
-                      <g className="wheel-label" style={{ transform: `rotate(${-angle}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(.12,.72,.1,1)` : "none" }}>
-                        {cap && <g transform={`translate(${-fs * 0.7} ${-h / 2 - fs * 1.55})`}><CapIcon hex={cap} size={fs * 1.4} /></g>}
-                        <text textAnchor="middle" fontSize={fs} className="wheel-text" style={{ fill: accents[i] }}>
-                          {lines.map((l, k) => <tspan key={k} x="0" y={-h / 2 + fs * 0.85 + k * fs * 1.1}>{l}</tspan>)}
-                        </text>
-                      </g>
+          <div className="bottle-stage">
+            <svg className="bottle-ring" viewBox="-110 -110 220 220" role="img" aria-label="Birre intorno alla bottiglia">
+              <circle r="104" className="ring-base" />
+              {slices.map(({ b, i, mid }) => {
+                const c = colorOf(b, i);
+                const win = winner?.id === b.id;
+                const a = (mid - 90) * Math.PI / 180;
+                const R = 80;
+                const lines = splitName(nameOf(b));
+                const fs = n <= 4 ? 10 : n <= 6 ? 8.8 : n <= 8 ? 7.8 : 6.8;
+                const h = lines.length * fs * 1.1;
+                return (
+                  <g key={b.id} className={win ? "ring-win" : ""} style={{ color: c }}>
+                    <path d={band(i, 92, 104)} style={{ fill: c }} className="ring-band" />
+                    {n > 1 && <line x1={0} y1={-58} x2={0} y2={-104} transform={`rotate(${i * seg})`} className="ring-sep" />}
+                    <g transform={`translate(${R * Math.cos(a)} ${R * Math.sin(a)})`}>
+                      <text textAnchor="middle" fontSize={fs} className="ring-text" style={{ fill: c }}>
+                        {lines.map((l, k) => <tspan key={k} x="0" y={-h / 2 + fs * 0.85 + k * fs * 1.1}>{l}</tspan>)}
+                      </text>
                     </g>
-                  );
-                })}
-                <circle r="22" className="wheel-hub" />
+                  </g>
+                );
+              })}
+              <circle r="58" className="ring-inner" />
+            </svg>
+            <button className="bottle-btn" onClick={spin} disabled={spinning || !n} aria-label="Gira la bottiglia">
+              <svg ref={wheelRef} className="bottle" viewBox="-60 -60 120 120"
+                style={{ transform: `rotate(${angle}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(.12,.72,.1,1)` : "none" }}>
+                {/* bottiglietta col collo in alto */}
+                <path className="bottle-glass" d="M -5 -52 H 5 V -40 C 5 -32 14 -28 14 -18 V 42 C 14 47 11 50 6 50 H -6 C -11 50 -14 47 -14 42 V -18 C -14 -28 -5 -32 -5 -40 Z" />
+                <rect className="bottle-label" x="-14" y="2" width="28" height="22" rx="2" />
+                <rect className="bottle-cap" x="-6.5" y="-56" width="13" height="6" rx="1.5" />
+                <path className="bottle-shine" d="M -9 -14 V 36" />
               </svg>
-            </div>
-            <button className="wheel-spin" onClick={spin} disabled={spinning || !n}>{spinning ? "…" : "Gira"}</button>
+            </button>
           </div>
-
+          <p className="muted small bottle-hint">{spinning ? "" : "Tocca la bottiglia per farla girare"}</p>
           <div className={"wheel-result" + (winner ? " show" : "")} aria-live="polite">
             {winner ? (
               <>
@@ -210,12 +225,12 @@ export function BeerWheel() {
                 {winner.recipes?.style && <span className="muted">{winner.recipes.style}</span>}
                 <span className="wheel-links"><Link to={`/batch/${winner.id}`}>Apri il batch</Link><Link to="/degustazioni">Fai la degustazione</Link></span>
               </>
-            ) : <span className="muted">{spinning ? "Gira, gira…" : n ? `${n} ${n === 1 ? "birra" : "birre"} sulla ruota` : "Scegli almeno una birra qui sotto"}</span>}
+            ) : <span className="muted">{spinning ? "Gira, gira…" : n ? `${n} ${n === 1 ? "birra" : "birre"} in gioco` : "Scegli almeno una birra qui sotto"}</span>}
           </div>
 
           <div className="wheel-choose">
             <button className="wheel-choose-head" onClick={() => setChoosing(!choosing)}>
-              <span>Birre sulla ruota <b>{n}/{all.length}</b></span><span className="muted small">{choosing ? "chiudi" : "cambia"}</span>
+              <span>Birre in gioco <b>{n}/{all.length}</b></span><span className="muted small">{choosing ? "chiudi" : "cambia"}</span>
             </button>
             {choosing && (
               <>

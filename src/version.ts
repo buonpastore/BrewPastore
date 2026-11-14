@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.196", date: "15/11/2026 07:05", text: "Utilità «Gira la bottiglia» (al posto della ruota): le birre stanno intorno in una corona di spicchi col colore del loro tappo, i nomi sempre dritti; tocchi la bottiglietta al centro, gira col tic e dove si ferma il collo c’è la birra di stasera" },
   { version: "0.195", date: "15/11/2026 06:40", text: "Ruota della birra nera e minimal: bordino colorato per ogni spicchio, nome della birra nel suo colore e sempre dritto, anche mentre gira. Batch: dove c’era ancora «finito» ora c’è «Degustata», la data si chiama «Prima degustazione» e la linea del tempo arriva fino a «Esaurita»" },
   { version: "0.194", date: "15/11/2026 06:15", text: "Ruota della birra: fette tenui di sei colori (giallo, ciano, magenta, arancio, verde luppolo, rosso) con una fascetta colorata sul bordo, come i chip dell’app. In Attività prima i Task e poi la Chat" },
   { version: "0.193", date: "15/11/2026 06:00", text: "Nuovi stati del batch: Cotta → Fermentata → Imbottigliata → Degustata → Esaurita. Una birra degustata resta in giro (ruota, cantina, degustazioni, batch in corso); il ciclo finisce solo quando è esaurita. «In maturazione» diventa Fermentata e «Finito» diventa Degustata. Da eseguire: 0020_stati_batch.sql" },
