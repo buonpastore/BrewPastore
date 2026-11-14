@@ -1821,3 +1821,10 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .section-tabs.two-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; max-width: 640px; }
 .section-tabs.two-cols a { justify-content: center; }
 .section-tabs.two-cols.odd a:last-child { grid-column: 1 / -1; }
+/* stati del batch */
+.badge.st-pianificato { background: var(--surface-3, var(--surface-2)); color: var(--muted); }
+.badge.st-cotta { background: rgba(237, 165, 18, .15); color: var(--gold); }
+.badge.st-fermentazione { background: rgba(18, 160, 129, .15); color: var(--teal); }
+.badge.st-imbottigliato { background: color-mix(in srgb, var(--magenta) 15%, transparent); color: var(--magenta); }
+.badge.st-degustato { background: rgba(237, 165, 18, .22); color: var(--gold-2); }
+.nb-chip.on.st-degustato { background: var(--gold); }

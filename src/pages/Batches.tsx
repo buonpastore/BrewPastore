@@ -2,7 +2,7 @@ import { Beer } from "lucide-react";
 import { CapDot } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase, date, sg, eur, errMsg, STATUS_LABELS, isEnded, type Row } from "../lib";
+import { supabase, date, sg, eur, errMsg, STATUS_LABELS, isEnded, normStatus, statusLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { deleteBatches } from "../deleteHelpers";
 import { createBatchFromRecipe } from "../newBatch";
@@ -48,7 +48,7 @@ export function Batches() {
       setCosts(Object.fromEntries((data ?? []).map((c) => [c.batch_id, c]))));
   }, []);
 
-  const list = rows.filter((r) => !status || r.status === status);
+  const list = rows.filter((r) => !status || normStatus(r.status) === status);
   return (
     <div>
       <div className="page-head">
@@ -78,7 +78,7 @@ export function Batches() {
                     <Link to={`/batch/${b.id}`}><strong>{b.code}</strong></Link> <CapDot color={b.cap_color} size={14} />
                     {b.recipes?.name && <div className="muted small">{b.recipes.name}</div>}
                   </td>
-                  <td><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span></td>
+                  <td><span className={"badge st-" + normStatus(b.status)}>{statusLabel(b.status)}</span></td>
                   {full ? (
                     <>
                       <td className="nowrap">{date(b.brew_date)}</td>
@@ -111,7 +111,7 @@ export function Batches() {
                   {/* solo i batch ancora in corso: quelli finiti non servono */}
                   {((r.batches ?? []) as Row[]).filter((b) => !isEnded(b.status)).map((b) => (
                     <div key={b.id} className="rp-batch">
-                      <span className={"badge st-" + b.status}>{STATUS_LABELS[b.status] ?? b.status}</span>
+                      <span className={"badge st-" + normStatus(b.status)}>{statusLabel(b.status)}</span>
                       <span className="small">{b.code}</span>
                       <span className="muted small">{lastStep(b)}</span>
                     </div>

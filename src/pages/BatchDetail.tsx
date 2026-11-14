@@ -2,7 +2,7 @@ import { DedupeButton } from "../components/DedupeButton";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
-  supabase, errMsg, sg, eur, num, date, STATUS_LABELS, MATERIAL_CATEGORIES, UNITS, loadMaterials,
+  supabase, errMsg, sg, eur, num, date, STATUS_LABELS, STATUS_STEPS, normStatus, statusLabel, MATERIAL_CATEGORIES, UNITS, loadMaterials,
   primingGrams, residualCo2, PRIMING_FACTORS, fmtUnitPrice, type Row,
 } from "../lib";
 import { useAuth } from "../auth";
@@ -26,7 +26,7 @@ const sgField = (key: string, label: string): FieldDef => ({ key, label, type: "
 const SECTIONS: { title?: string; fields: FieldDef[] }[] = [
   { title: "Date", fields: [
     { key: "code", label: "Nome batch", required: true },
-    { key: "status", label: "Stato", type: "select", required: true, options: Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })) },
+    { key: "status", label: "Stato", type: "select", required: true, options: ["pianificato", ...STATUS_STEPS].map((value) => ({ value, label: STATUS_LABELS[value] })) },
     { key: "brew_date", label: "Data cotta", type: "date" },
     { key: "fermentation_start", label: "Inizio fermentazione", type: "date" },
     { key: "bottling_date", label: "Imbottigliamento", type: "date" },
@@ -74,7 +74,7 @@ const QUICK: { status: string; field: string; label: string; color: string }[] =
   { status: "cotta", field: "brew_date", label: "🔥 Cotta oggi", color: "var(--gold)" },
   { status: "fermentazione", field: "fermentation_start", label: "🫧 Fermentata oggi", color: "var(--teal)" },
   { status: "imbottigliato", field: "bottling_date", label: "🍾 Imbottigliata oggi", color: "var(--magenta)" },
-  { status: "finito", field: "first_tasting_date", label: "🍻 Bevuta oggi", color: "var(--gold)" },
+  { status: "degustato", field: "first_tasting_date", label: "🍻 Degustata oggi", color: "var(--gold)" },
 ];
 
 function PrimingCalc({ batch }: { batch: Row }) {
@@ -132,8 +132,8 @@ function NewBatchCard({ batch, onSaved, onDone }: { batch: Row; onSaved: (b: Row
       </label>
       <div className="block"><span className="nb-label">Stato</span>
         <div className="nb-status">
-          {Object.entries(STATUS_LABELS).map(([k, v]) => (
-            <button key={k} className={"nb-chip st-" + k + (batch.status === k ? " on" : "")} onClick={() => save({ status: k })}>{v}</button>
+          {STATUS_STEPS.map((k) => [k, STATUS_LABELS[k]] as const).map(([k, v]) => (
+            <button key={k} className={"nb-chip st-" + k + (normStatus(batch.status) === k ? " on" : "")} onClick={() => save({ status: k })}>{v}</button>
           ))}
         </div>
       </div>
@@ -230,7 +230,7 @@ export function BatchDetail() {
     if (error) return alert(errMsg(error));
     setBatch(data);
     setTab("dati"); setFocusStatus(q.status); setFocusKey((k) => k + 1);   // apri solo la fase interessante
-    await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${STATUS_LABELS[q.status]}` });
+    await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${statusLabel(q.status)}` });
   };
 
   if (!batch) return <p>Caricamento…</p>;
@@ -241,7 +241,7 @@ export function BatchDetail() {
       <div className="page-head">
         <div>
           <Link to="/batch" className="muted small">← Batch</Link>
-          <h1>{batch.code} <span className={"badge st-" + batch.status}>{STATUS_LABELS[batch.status]}</span></h1>
+          <h1>{batch.code} <span className={"badge st-" + batch.status}>{statusLabel(batch.status)}</span></h1>
           {recipe && <div className="muted">Ricetta: <Link to={`/ricette/${recipe.id}`}>{recipe.name}</Link> · obiettivo OG {sg(recipe.target_og)} / FG {sg(recipe.target_fg)}</div>}
         </div>
         {isAdmin && <button className="mini-btn" onClick={() => setDeleting(true)}>🗑️ <span>Elimina batch</span></button>}

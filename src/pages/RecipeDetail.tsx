@@ -2,7 +2,7 @@ import { DedupeButton } from "../components/DedupeButton";
 import { Beer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { supabase, errMsg, date, sg, STATUS_LABELS, MATERIAL_CATEGORIES, UNITS, loadMaterials, isEnded, type Row } from "../lib";
+import { supabase, errMsg, date, sg, MATERIAL_CATEGORIES, UNITS, loadMaterials, normStatus, statusLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
 import { RowsEditor } from "../components/RowsEditor";
@@ -181,7 +181,7 @@ export function RecipeDetail() {
                 {batches.map((b) => (
                   <tr key={b.id}>
                     <td className="bl-name"><Link to={`/batch/${b.id}`}><strong>{b.code}</strong></Link><div className="muted small">{date(stepDate(b))}</div></td>
-                    <td><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span></td>
+                    <td><span className={"badge st-" + b.status}>{statusLabel(b.status)}</span></td>
                     <td className="small">
                       <div className="nowrap">OG {sg(b.original_gravity)}</div><div className="nowrap">FG {sg(b.final_gravity)}</div>
                       {b.abv != null && <div className="muted nowrap">{b.abv}% alc.</div>}
@@ -220,10 +220,10 @@ function RecipeBrewDay({ recipe }: { recipe: Row }) {
 }
 
 /** Ordine del processo: cotta → fermentazione → maturazione → imbottigliamento → bevuta. */
-const STAGE = ["pianificato", "cotta", "fermentazione", "maturazione", "imbottigliato", "finito", "esaurito"];
-const stepDate = (b: Row) => (isEnded(b.status) ? b.first_tasting_date : b.status === "imbottigliato" ? b.bottling_date
+const STAGE = ["pianificato", "cotta", "fermentazione", "imbottigliato", "degustato", "esaurito"];
+const stepDate = (b: Row) => (["degustato", "esaurito"].includes(normStatus(b.status)) ? b.first_tasting_date : b.status === "imbottigliato" ? b.bottling_date
   : b.status === "fermentazione" || b.status === "maturazione" ? b.fermentation_start : b.brew_date) ?? b.brew_date ?? null;
 function sortByProcess(rows: Row[]): Row[] {
-  const rank = (b: Row) => { const i = STAGE.indexOf(b.status); return i < 0 ? 0 : i; };
+  const rank = (b: Row) => { const i = STAGE.indexOf(normStatus(b.status)); return i < 0 ? 0 : i; };
   return [...rows].sort((a, b) => rank(a) - rank(b) || String(stepDate(a) ?? a.created_at ?? "").localeCompare(String(stepDate(b) ?? b.created_at ?? "")));
 }

@@ -23,16 +23,20 @@ export interface Profile {
 }
 
 export const STATUS_LABELS: Record<string, string> = {
-  pianificato: "Pianificato",
-  cotta: "In cotta",
-  fermentazione: "In fermentazione",
-  maturazione: "In maturazione",
-  imbottigliato: "Imbottigliato",
-  finito: "Finito",
+  pianificato: "Da cuocere",
+  cotta: "Cotta",
+  fermentazione: "Fermentata",
+  imbottigliato: "Imbottigliata",
+  degustato: "Degustata",
   esaurito: "Esaurita",
 };
-/** Batch chiuso: ciclo finito o birra esaurita. */
-export const isEnded = (s?: string | null) => s === "finito" || s === "esaurito";
+/** Stati che si scelgono nel batch (il ciclo finisce quando la birra è esaurita). */
+export const STATUS_STEPS = ["cotta", "fermentazione", "imbottigliato", "degustato", "esaurito"];
+/** Nomi vecchi (prima di 0020): «maturazione» = fermentata, «finito» = degustata. */
+export const normStatus = (s?: string | null) => (s === "maturazione" ? "fermentazione" : s === "finito" ? "degustato" : s ?? "");
+export const statusLabel = (s?: string | null) => STATUS_LABELS[normStatus(s)] ?? s ?? "";
+/** Ciclo chiuso: birra esaurita. */
+export const isEnded = (s?: string | null) => s === "esaurito";
 
 export const MATERIAL_CATEGORIES = [
   "malto", "luppolo", "lievito", "sali_acqua", "additivo",
@@ -73,7 +77,11 @@ export const dateTime = (s: string | null | undefined) =>
 export function errMsg(e: unknown): string {
   if (!e) return "Errore sconosciuto";
   if (typeof e === "string") return e;
-  if (typeof e === "object" && "message" in e) return String((e as { message: unknown }).message);
+  if (typeof e === "object" && "message" in e) {
+    const m = String((e as { message: unknown }).message);
+    if (/batches_status_check/.test(m)) return "Per i nuovi stati del batch esegui prima 0020_stati_batch.sql su Supabase";
+    return m;
+  }
   return String(e);
 }
 

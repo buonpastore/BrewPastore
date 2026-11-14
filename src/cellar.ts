@@ -3,7 +3,7 @@ import { supabase, type Row } from "./lib";
 /** Una birra c'è (si beve, si degusta, va sulla ruota) dall'imbottigliamento in poi, finché non è esaurita. */
 const EARLY = ["pianificato", "cotta", "fermentazione"];
 export const isProduced = (b: Row, tasted?: Set<string>) => b.status !== "esaurito" && (
-  b.status === "imbottigliato" || b.status === "finito" || Boolean(tasted?.has(b.id))
+  ["imbottigliato", "degustato", "finito"].includes(b.status) || Boolean(tasted?.has(b.id))
   // una data di imbottigliamento conta solo se il batch non è ancora in cotta/fermentazione
   || (!EARLY.includes(b.status) && (Boolean(b.bottling_date) || Boolean(b.first_tasting_date))));
 

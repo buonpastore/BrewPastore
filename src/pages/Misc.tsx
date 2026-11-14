@@ -9,7 +9,7 @@ import { lastStep } from "../components/PreviousBatches";
 import { getThemePref, setThemePref, sunTimes, type ThemePref } from "../theme";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, isEnded, type Row } from "../lib";
+import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, isEnded, normStatus, statusLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ChatPanel } from "../components/ChatPanel";
 import { HistoryList } from "../components/HistoryList";
@@ -152,7 +152,7 @@ export function Dashboard() {
             <Link key={b.id} to={`/batch/${b.id}`} className="card">
               <h3>{b.code} <CapDot color={b.cap_color} /></h3>
               <div className="muted">{b.recipes?.name}</div>
-              <div><span className={"badge st-" + b.status}>{STATUS_LABELS[b.status]}</span> {d != null && <span className="muted small">{d === 0 ? "da oggi" : d === 1 ? "da 1 giorno" : `da ${d} giorni`}</span>}</div>
+              <div><span className={"badge st-" + normStatus(b.status)}>{statusLabel(b.status)}</span> {d != null && <span className="muted small">{d === 0 ? "da oggi" : d === 1 ? "da 1 giorno" : `da ${d} giorni`}</span>}</div>
               <div className="stats"><span>OG {sg(b.original_gravity)}</span><span>FG {sg(b.final_gravity)}</span>{b.bottles_count && <span>{b.bottles_count} bott.</span>}</div>
               <div className="muted small">{lastStep(b).replace(/^./, (c) => c.toUpperCase())}</div>
             </Link>

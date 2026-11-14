@@ -168,7 +168,7 @@ export function capUnitPrice(mats: Row[]): number | null {
 export const isBrewed = (b: Row) => Boolean(b.brew_date || b.fermentation_start || b.bottling_date || b.bottles_count || b.original_gravity || b.volume_bottled_l)
   || (b.status && b.status !== "pianificato");
 /** Imbottigliato: da qui il costo è reale. */
-export const isBottled = (b: Row) => Boolean(b.bottles_count || b.bottling_date || b.volume_bottled_l || b.first_tasting_date) || b.status === "imbottigliato" || b.status === "finito";
+export const isBottled = (b: Row) => Boolean(b.bottles_count || b.bottling_date || b.volume_bottled_l || b.first_tasting_date) || ["imbottigliato", "degustato", "finito", "esaurito"].includes(b.status);
 
 /** Da dove viene un dato: inserito da voi, stimato/calcolato da me, oppure mancante. */
 export type Source = "inserito" | "stimato" | "manca";

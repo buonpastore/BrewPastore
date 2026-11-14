@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase, date, STATUS_LABELS, type Row } from "../lib";
+import { supabase, date, normStatus, statusLabel, type Row } from "../lib";
 
 /** Data dell'ultimo passaggio fatto, per dire "a che punto è". */
 export function lastStep(b: Row): string {
@@ -21,7 +21,7 @@ export function BatchStatusList({ batches, linkable = true }: { batches: Row[]; 
         const inner = (
           <>
             <strong>{b.code}</strong>
-            <span className={"badge st-" + b.status}>{STATUS_LABELS[b.status] ?? b.status}</span>
+            <span className={"badge st-" + normStatus(b.status)}>{statusLabel(b.status)}</span>
             <span className="muted small prev-when">{lastStep(b)}</span>
           </>
         );
