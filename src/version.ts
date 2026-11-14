@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.203", date: "15/11/2026 09:00", text: "Gira la bottiglia: quando si ferma, la pagina scorre da sola fino alla birra scelta, così la vedi senza scorrere" },
   { version: "0.202", date: "15/11/2026 08:50", text: "Quinto colore dell’app: il verde luppolo dell’etichetta. L’ordine è sempre giallo, ciano, magenta, viola, verde: lo stato Esaurita e il suo pulsante, la quinta tappa del batch, «Gira» nelle Utilità, la quinta birra e le quinte schede e riquadri" },
   { version: "0.201", date: "15/11/2026 08:35", text: "Gira la bottiglia: bottiglia più piccola, il bollino «Gira» è l’etichetta della bottiglia e gira con lei, nomi delle birre in bianco (non più del colore della banda)" },
   { version: "0.200", date: "15/11/2026 08:20", text: "Ogni birra ha un colore fisso (giallo, ciano, magenta, viola, poi si ricomincia, in ordine alfabetico delle ricette), lo stesso in Produzione e nella corona di Gira la bottiglia. Nella corona i nomi sono bianchi e più piccoli, così stanno dentro e non finiscono sulla banda colorata. Schede e riquadri dell’app ora girano su quattro colori" },

@@ -56,6 +56,7 @@ export function BeerWheel() {
   const timer = useRef<number>();
   const raf = useRef<number>();
   const wheelRef = useRef<SVGSVGElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const [muted, setMutedRaw] = useState(() => { try { return localStorage.getItem(MUTE_KEY) === "1"; } catch { return false; } });
   const setMuted = (m: boolean) => { setMutedRaw(m); try { localStorage.setItem(MUTE_KEY, m ? "1" : "0"); } catch { /* niente */ } };
 
@@ -164,6 +165,8 @@ export function BeerWheel() {
     follow(performance.now() + SPIN_MS);
     timer.current = window.setTimeout(() => {
       setSpinning(false); setWinner(beers[pick]);
+      // porta in vista il risultato sotto la bottiglia
+      window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
       if (!muted) ding();
       try { navigator.vibrate?.([60, 40, 120]); } catch { /* niente */ }
     }, SPIN_MS + 100);
@@ -237,7 +240,7 @@ export function BeerWheel() {
             </button>
           </div>
           <p className="muted small bottle-hint">{spinning ? "" : "Tocca la bottiglia per farla girare"}</p>
-          <div className={"wheel-result" + (winner ? " show" : "")} aria-live="polite">
+          <div ref={resultRef} className={"wheel-result" + (winner ? " show" : "")} aria-live="polite">
             {winner ? (
               <>
                 <span className="muted small">Stasera si beve</span>
