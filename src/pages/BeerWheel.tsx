@@ -205,16 +205,26 @@ export function BeerWheel() {
               })}
               <circle r="58" className="ring-inner" />
             </svg>
-            <button className="bottle-btn" onClick={spin} disabled={spinning || !n} aria-label="Gira la bottiglia">
+            <button className="bottle-btn" onClick={spin} disabled={spinning || !n} aria-label="Gira la bottiglia" tabIndex={-1}>
               <svg ref={wheelRef} className="bottle" viewBox="-60 -60 120 120"
                 style={{ transform: `rotate(${angle}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(.12,.72,.1,1)` : "none" }}>
-                {/* bottiglietta col collo in alto */}
-                <path className="bottle-glass" d="M -5 -52 H 5 V -40 C 5 -32 14 -28 14 -18 V 42 C 14 47 11 50 6 50 H -6 C -11 50 -14 47 -14 42 V -18 C -14 -28 -5 -32 -5 -40 Z" />
-                <rect className="bottle-label" x="-14" y="2" width="28" height="22" rx="2" />
-                <rect className="bottle-cap" x="-6.5" y="-56" width="13" height="6" rx="1.5" />
-                <path className="bottle-shine" d="M -9 -14 V 36" />
+                <defs>
+                  <linearGradient id="glass" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stopColor="#3b1d06" />
+                    <stop offset=".35" stopColor="#8a4a12" />
+                    <stop offset=".55" stopColor="#a65d18" />
+                    <stop offset="1" stopColor="#3b1d06" />
+                  </linearGradient>
+                </defs>
+                {/* bottiglia col collo verso l'alto; il centro di rotazione è sull'etichetta */}
+                <path className="bottle-glass" fill="url(#glass)" d="M -4.6 -47 L -4.6 -33 C -4.6 -26 -13.5 -22 -13.5 -12 L -13.5 37 C -13.5 41 -11 43.5 -7 43.5 L 7 43.5 C 11 43.5 13.5 41 13.5 37 L 13.5 -12 C 13.5 -22 4.6 -26 4.6 -33 L 4.6 -47 Z" />
+                <rect className="bottle-lip" x="-5.8" y="-50.5" width="11.6" height="4" rx="1.6" />
+                <path className="bottle-cap" d="M -6.4 -50.5 L -6.4 -54.6 L -5 -56 L -3.2 -54.8 L -1.6 -56 L 0 -54.8 L 1.6 -56 L 3.2 -54.8 L 5 -56 L 6.4 -54.6 L 6.4 -50.5 Z" />
+                <path className="bottle-neck-label" d="M -5.2 -38 H 5.2 V -33.5 C 5.2 -32 3 -31 0 -31 C -3 -31 -5.2 -32 -5.2 -33.5 Z" />
+                <path className="bottle-shine" d="M -8.5 -14 C -8.5 -18 -6 -21 -4 -23 M -9 -6 V 34" />
               </svg>
             </button>
+            <button className="bottle-seal" onClick={spin} disabled={spinning || !n}>{spinning ? "…" : "Gira"}</button>
           </div>
           <p className="muted small bottle-hint">{spinning ? "" : "Tocca la bottiglia per farla girare"}</p>
           <div className={"wheel-result" + (winner ? " show" : "")} aria-live="polite">
