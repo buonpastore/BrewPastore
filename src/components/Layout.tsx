@@ -7,7 +7,7 @@ import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
   Calculator, ClipboardList, LayoutGrid, Milk, Sparkles, FlaskConical, Timer,
-  Disc3,
+  Disc3, Warehouse,
 } from "lucide-react";
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
@@ -26,6 +26,7 @@ export const GROUPS: Group[] = [
       { to: "/ricette", label: "Ricette", icon: BookOpen, color: "var(--gold)" },
       { to: "/batch", label: "Batch", icon: Beer, color: "var(--teal)" },
       { to: "/degustazioni", label: "Degustazioni", icon: Star, color: "var(--magenta)" },
+      { to: "/cantina", label: "Cantina", icon: Warehouse, color: "var(--gold)" },
     ],
   },
   {
@@ -151,7 +152,7 @@ export function Layout() {
         {current.tabs && (
           <>
             <div className="section-title">{current.label}</div>
-            <nav className="section-tabs" style={{ ["--n" as string]: current.tabs.length }}>
+            <nav className={"section-tabs" + (current.tabs.length === 4 && current.key === "produzione" ? " two-rows" : "")} style={{ ["--n" as string]: current.tabs.length === 4 && current.key === "produzione" ? 2 : current.tabs.length }}>
               {current.tabs.map(({ to, label, short, icon: Icon, color }) => (
                 <NavLink key={to} to={to} style={{ ["--c" as string]: color }} className={tabActive({ to, label, icon: Icon, color, also: current.tabs!.find((t) => t.to === to)?.also }, loc.pathname) ? "active" : ""}>
                   <Icon size={16} /> <span className="st-long">{label}</span><span className="st-short">{short ?? label}</span>

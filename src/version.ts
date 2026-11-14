@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.188", date: "15/11/2026 04:20", text: "Nuova sezione Produzione → Cantina: ognuno segna quante bottiglie ha di ogni birra imbottigliata (col tappo), e in «Di tutti» si vede chi ha cosa. Ruota della birra rifatta, più scura e a tema (bordo con lucine, tappo al centro, fette contornate d’oro): solo le birre imbottigliate, di partenza quelle che hai in cantina, e si scelgono facilmente quali metterci. Da eseguire: 0018_cantina.sql" },
   { version: "0.187", date: "15/11/2026 03:55", text: "Nuova utilità «Ruota della birra»: tutte le birre imbottigliate (non finite) su una ruota col colore del loro tappo; tocchi GIRA e la ruota sceglie cosa bere stasera" },
   { version: "0.186", date: "15/11/2026 03:35", text: "Preventivo: accanto a «Espandi tutto» due iconcine per confermare tutti gli oggetti o rimetterli tutti in valutazione" },
   { version: "0.185", date: "15/11/2026 03:25", text: "Acquisti e fatture: elenco a schede, si apre toccando un punto qualsiasi della scheda. Vista compatta (data, fornitore, totale, articoli e pallini delle categorie) ed estesa (spedizione, numero fattura, spesa per categoria e nomi degli articoli)" },

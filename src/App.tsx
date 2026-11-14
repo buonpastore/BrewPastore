@@ -12,6 +12,7 @@ import { PurchaseDetail } from "./pages/Purchases";
 import { MaterialsHub } from "./pages/MaterialsHub";
 import { Expenses } from "./pages/Expenses";
 import { Tastings } from "./pages/Tastings";
+import { Cellar } from "./pages/Cellar";
 import { EquipmentProjects, EquipmentProject, EquipmentQuote } from "./pages/Equipment";
 import { ChatPage, Dashboard, HistoryPage, Login, Settings } from "./pages/Misc";
 
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="batch" element={<Batches />} />
           <Route path="batch/:id" element={<BatchDetail />} />
           <Route path="degustazioni" element={<Tastings />} />
+          <Route path="cantina" element={<Cellar />} />
           <Route path="acquisti" element={<Navigate to="/materie-prime?vista=acquisti" replace />} />
           <Route path="acquisti/:id" element={<PurchaseDetail />} />
           <Route path="materie-prime" element={<MaterialsHub />} />
