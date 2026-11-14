@@ -85,7 +85,6 @@ export function Expenses() {
                 <span>{nameOf(s.user_id)}{s.user_id === me ? " (tu)" : ""}</span>
                 <span className="xp-q">{eur(s.amount)}</span>
                 <span className="xp-st">{ok ? "saldato" : "da pagare"}</span>
-                {!ok && (s.user_id === me || isAdmin) && <button className="btn small primary" onClick={() => settle(e, s)}>Ho saldato</button>}
               </li>
             );
           })}
