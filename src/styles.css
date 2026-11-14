@@ -1516,14 +1516,14 @@ a.tk-item:hover { color: var(--text); border-color: var(--line-strong); }
 html { background: var(--bg); }
 body { background: transparent !important; }
 body::before {
-  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; filter: saturate(.55);
   background:
-    linear-gradient(rgba(18, 17, 15, .86), rgba(18, 17, 15, .9)),
+    linear-gradient(rgba(18, 17, 15, .94), rgba(18, 17, 15, .96)),
     url("./assets/sfondo.webp") center / cover no-repeat;
 }
 :root[data-theme="light"] body::before {
   background:
-    linear-gradient(rgba(245, 239, 227, .86), rgba(245, 239, 227, .9)),
+    linear-gradient(rgba(245, 239, 227, .94), rgba(245, 239, 227, .96)),
     url("./assets/sfondo.webp") center / cover no-repeat;
 }
 
