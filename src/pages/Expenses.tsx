@@ -209,23 +209,29 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
           <button type="button" className={"pay-method" + (mode === "equal" ? " on" : "")} onClick={() => setMode("equal")}>Parti uguali</button>
           <button type="button" className={"pay-method" + (mode === "custom" ? " on" : "")} onClick={() => setMode("custom")}>Personalizzata</button>
         </div>
-        <div className="xp-people">
-          {profiles.map((p) => (
-            <label key={p.id} className={"xp-person" + (participants.includes(p.id) ? " on" : "")}>
-              <input type="checkbox" checked={participants.includes(p.id)} onChange={(e) => setParticipants(e.target.checked ? [...participants, p.id] : participants.filter((x) => x !== p.id))} />
-              {p.display_name}
-            </label>
-          ))}
+        {/* una riga per persona: spunta, nome e quota (calcolata con parti uguali, da scrivere con personalizzata) */}
+        <div className="xp-rows">
+          {profiles.map((p) => {
+            const on = participants.includes(p.id);
+            const share = !on ? "" : mode === "equal" ? (total ? eur(each) : "—") : null;
+            return (
+              <div key={p.id} className={"xp-row" + (on ? " on" : "")}>
+                <label className="xp-row-name">
+                  <input type="checkbox" checked={on} onChange={(e) => setParticipants(e.target.checked ? [...participants, p.id] : participants.filter((x) => x !== p.id))} />
+                  <span className="xp-row-who">{p.display_name}{p.id === paidBy && <small className="muted">ha pagato</small>}</span>
+                </label>
+                {share !== null ? <span className="xp-row-amt">{share}</span> : (
+                  <span className="xp-row-in"><input inputMode="decimal" value={custom[p.id] ?? ""} placeholder="0,00" onChange={(e) => setCustom({ ...custom, [p.id]: e.target.value })} /> €</span>
+                )}
+              </div>
+            );
+          })}
         </div>
-        {mode === "equal" && total > 0 && <p className="muted small">{eur(total)} ÷ {n} = <strong>{eur(each)}</strong> a testa</p>}
-        {mode === "custom" && (
-          <div className="form-grid">
-            {profiles.filter((p) => participants.includes(p.id)).map((p) => (
-              <label key={p.id}><span>Quota di {p.display_name} €</span>
-                <input inputMode="decimal" value={custom[p.id] ?? ""} placeholder={total ? String(each).replace(".", ",") : "0,00"} onChange={(e) => setCustom({ ...custom, [p.id]: e.target.value })} /></label>
-            ))}
-          </div>
-        )}
+        {mode === "custom" && total > 0 && (() => {
+          const sum = participants.reduce((t, id) => t + (Number((custom[id] ?? "0").replace(",", ".")) || 0), 0);
+          const diff = Math.round((total - sum) * 100) / 100;
+          return <p className={"small " + (Math.abs(diff) < 0.01 ? "ok" : "warn")}>{Math.abs(diff) < 0.01 ? "✓ Le quote tornano" : diff > 0 ? `Mancano ${eur(diff)}` : `Ci sono ${eur(-diff)} in più`}</p>;
+        })()}
         <label className="block"><span>Scontrino (facoltativo)</span><input type="file" accept="image/*,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] ?? null)} /></label>
         {error && <p className="error">{error}</p>}
         <div className="qe-sheet-btns">

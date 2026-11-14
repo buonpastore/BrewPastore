@@ -1372,3 +1372,16 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .cap-chip > button:last-child { margin-left: auto; }
 
 .xp-types.two { grid-template-columns: 1fr 1fr; }
+
+.xp-rows { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.xp-row { display: grid; grid-template-columns: 1fr 120px; align-items: center; gap: 10px; padding: 8px 12px; min-height: 52px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); }
+.xp-row.on { border-color: color-mix(in srgb, var(--gold) 50%, transparent); }
+.xp-row:not(.on) { opacity: .55; }
+.xp-row-name { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
+.xp-row-name input { width: 20px; height: 20px; }
+.xp-row-amt { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; padding-right: 22px; }
+.xp-row-in { display: flex; align-items: center; gap: 6px; }
+.xp-row-in input { text-align: right; min-height: 40px; padding: 6px 8px; }
+.xp-row-name input { flex: none; }
+.xp-row-who { display: flex; flex-direction: column; line-height: 1.2; }
+.xp-row-who small { font-weight: 500; font-size: .74rem; }

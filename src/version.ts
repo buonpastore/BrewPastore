@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.143", date: "14/11/2026 15:45", text: "Nuova spesa: una riga per socio con la sua quota, uguale sia per parti uguali (quota calcolata) sia per divisione personalizzata (quota da scrivere)" },
   { version: "0.142", date: "14/11/2026 15:35", text: "Spese: il pulsante «Ho saldato» c'è solo in alto, in «Da pagare», per le proprie quote" },
   { version: "0.141", date: "14/11/2026 15:25", text: "Spese: torna la scelta tra divisione in parti uguali e divisione personalizzata" },
   { version: "0.140", date: "14/11/2026 15:15", text: "Spese: tipologie «Materie prime», «Bottiglie» e «Altro»" },
