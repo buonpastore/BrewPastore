@@ -29,7 +29,9 @@ export async function loginAs(userId: string, adminName: string) {
   if (!adminBackup()) localStorage.setItem(KEY, JSON.stringify({ name: adminName, access_token: cur.session.access_token, refresh_token: cur.session.refresh_token }));
   const { error: e2 } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
   if (e2) { localStorage.removeItem(KEY); throw e2; }
+  // ricarico l'app da zero: così ogni pagina (saldi, spese, task…) è calcolata per il nuovo utente
   window.location.hash = "#/";
+  window.location.reload();
 }
 
 export async function backToAdmin() {
@@ -41,4 +43,5 @@ export async function backToAdmin() {
   const { error } = await supabase.auth.setSession({ access_token: s.access_token, refresh_token: s.refresh_token });
   if (error) alert("La sessione dell'amministratore è scaduta: rientra con email e password.");
   window.location.hash = "#/impostazioni";
+  window.location.reload();
 }

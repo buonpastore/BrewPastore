@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.158", date: "14/11/2026 19:55", text: "«Entra come» e «Torna a…» ricaricano l'app: saldi e spese si vedono subito per l'utente giusto" },
   { version: "0.157", date: "14/11/2026 19:45", text: "Degustazioni: messaggio chiaro se manca l'aggiornamento del database" },
   { version: "0.156", date: "14/11/2026 19:35", text: "Task: «Le mie» mostra solo quelle assegnate a te, non quelle che hai creato per altri" },
   { version: "0.155", date: "14/11/2026 19:20", text: "Degustazione: titoli più grandi, «altro» più comodo, nuove voci Schiuma, Amaro e Finale, e il campo «Abbinata a» per il cibo" },
