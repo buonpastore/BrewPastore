@@ -438,6 +438,10 @@ const ITEM_FIELDS: [string, string][] = [["category", "Categoria"], ["supplier",
 function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: boolean; onChange: (r: Row[]) => void }) {
   const soci = useSoci();
   const [items, setItems] = useState<Row[]>([]);
+  const [view, setViewRaw] = useState<"lista" | "fornitore" | "tipologia">(() => {
+    try { const v = localStorage.getItem("pastorizia-quote-view"); return v === "lista" || v === "fornitore" ? v : "tipologia"; } catch { return "tipologia"; }
+  });
+  const setView = (v: typeof view) => { setViewRaw(v); try { localStorage.setItem("pastorizia-quote-view", v); } catch { /* niente */ } };
   const [openSup, setOpenSup] = useState<Set<string>>(new Set());
   const [openCat, setOpenCat] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<string | null>(null);
@@ -504,11 +508,11 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
   const sups = [...tree.keys()].sort((a, b) => last(a, b, "Fornitore non indicato"));
   const toggle = (set: Set<string>, k: string, fn: (s: Set<string>) => void) => { const n = new Set(set); n.has(k) ? n.delete(k) : n.add(k); fn(n); };
   const allCats = sups.flatMap((sp) => [...tree.get(sp)!.keys()].map((c) => sp + "|" + c));
-  const allOpen = openSup.size === sups.length && allCats.every((k) => openCat.has(k));
+  const allOpen = openSup.size === sups.length && (view === "fornitore" || allCats.every((k) => openCat.has(k)));
 
   const itemRow = (i: Row) => {
     const isOpen = open === i.id;
-    const sub = [i.brand, i.model].filter(Boolean).join(" · ");
+    const sub = [view === "lista" ? i.supplier : null, i.brand, i.model].filter(Boolean).join(" · ");
     return (
       <div key={i.id} className={"qi" + (isOpen ? " open" : "") + (Number(i.unit_price) ? "" : " zero") + (i.confirmed ? " conf" : "")}>
         <div className="qi-line">
@@ -544,14 +548,29 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
     <div className="panel">
       <div className="pv-head">
         <h2>Oggetti</h2>
-        {items.length > 0 && (
+        {items.length > 0 && view !== "lista" && (
           <button className="btn small" onClick={() => {
             if (allOpen) { setOpenSup(new Set()); setOpenCat(new Set()); }
             else { setOpenSup(new Set(sups)); setOpenCat(new Set(allCats)); }
           }}>{allOpen ? "Chiudi tutto" : "Espandi tutto"}</button>
         )}
       </div>
-      <div className="pv">
+      {items.length > 0 && (
+        <div className="pv-views">
+          {([["lista", "Tutti"], ["fornitore", "Per fornitore"], ["tipologia", "Fornitore e tipologia"]] as const).map(([k, l]) => (
+            <button key={k} className={"pv-view" + (view === k ? " on" : "")} onClick={() => setView(k)}>{l}</button>
+          ))}
+        </div>
+      )}
+      {view === "lista" && items.length > 0 && (
+        <div className="pv">
+          <div className="pv-sup open pv-flat">
+            <div className="pv-items">{items.map(itemRow)}</div>
+          </div>
+          <div className="qi-total"><span>Totale · {items.length} oggetti</span><strong>{eur(sum(items))}</strong></div>
+        </div>
+      )}
+      {view !== "lista" && <div className="pv">
         {sups.map((sp) => {
           const cm = tree.get(sp)!;
           const its = [...cm.values()].flat();
@@ -576,7 +595,8 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
               </button>
               </div>
 
-              {so && [...cm.keys()].sort((a, b) => last(a, b, "Senza categoria")).map((c) => {
+              {so && view === "fornitore" && <div className="pv-items">{its.map(itemRow)}</div>}
+              {so && view === "tipologia" && [...cm.keys()].sort((a, b) => last(a, b, "Senza categoria")).map((c) => {
                 const k = sp + "|" + c;
                 const ci = cm.get(c)!;
                 const co = openCat.has(k);
@@ -595,8 +615,8 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
             </div>
           );
         })}
-        {!items.length && <p className="muted">Nessun oggetto.</p>}
-      </div>
+      </div>}
+      {!items.length && <p className="muted">Nessun oggetto.</p>}
       {canEdit && (edit && !edit.id ? form : <button className="btn full-w" style={{ marginTop: 12 }} onClick={() => { setOpen(null); setEdit({ quantity: 1, unit_price: 0 }); }}>+ Aggiungi oggetto</button>)}
     </div>
   );

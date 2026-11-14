@@ -1709,3 +1709,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .cmp-equal strong { color: var(--text); }
 .cmp-warn { display: flex; gap: 8px; align-items: flex-start; font-size: .84rem; color: var(--muted); margin: 0 0 10px; }
 .cmp-warn svg { flex: none; color: var(--gold); margin-top: 1px; }
+.pv-views { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 12px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.pv-view { min-height: 38px; border: 0; border-radius: 9px; background: none; color: var(--muted); font: 600 .84rem var(--sans); cursor: pointer; padding: 4px 6px; line-height: 1.15; }
+.pv-view.on { background: var(--gold); color: #1f1500; }
+.pv-flat .pv-items { border-top: 0; padding-left: 14px; }
