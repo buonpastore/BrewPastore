@@ -1,4 +1,4 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, Beer, Leaf } from "lucide-react";
 import { CapDot, useCapColors } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -81,10 +81,10 @@ export function Recipes() {
               <div className="rc-style">{r.style ?? "stile non indicato"}</div>
               <div className="rc-traits">
                 {abvOf(r.target_og, r.target_fg) != null && (
-                  <div className="rc-trait"><strong>{num(abvOf(r.target_og, r.target_fg), 1)}%</strong><span>alcol</span></div>
+                  <div className="rc-trait"><strong><Beer size={16} className="rc-ico" style={{ color: "var(--gold)" }} />{num(abvOf(r.target_og, r.target_fg), 1)}%</strong><span>alcol</span></div>
                 )}
                 {r.target_ibu != null && (
-                  <div className="rc-trait"><strong>{num(r.target_ibu, 0)} IBU</strong><span>{ibuName(Number(r.target_ibu))}</span></div>
+                  <div className="rc-trait"><strong><Leaf size={16} className="rc-ico" style={{ color: "var(--cat-luppolo)" }} />{num(r.target_ibu, 0)} IBU</strong><span>{ibuName(Number(r.target_ibu))}</span></div>
                 )}
                 {r.target_ebc != null && (
                   <div className="rc-trait">
@@ -93,8 +93,7 @@ export function Recipes() {
                   </div>
                 )}
               </div>
-              {r.description && (() => { const d = cleanDescription(r.description).join(", "); return <p className="rc-desc">{d.slice(0, 110)}{d.length > 110 ? "…" : ""}</p>; })()}
-              <div className="muted small">{(r.batches as Row[]).length ? `${(r.batches as Row[]).length} ${(r.batches as Row[]).length === 1 ? "cotta" : "cotte"} · ultima il ${date(last)}` : "nessuna cotta ancora"}</div>
+              <div className="muted small">{(r.batches as Row[]).length ? `${(r.batches as Row[]).length} ${(r.batches as Row[]).length === 1 ? "cotta" : "cotte"}` : "nessuna cotta ancora"}</div>
             </Link>
           );
         })}
