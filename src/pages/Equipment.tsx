@@ -9,6 +9,8 @@ import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import { FilePicker } from "../components/FilePicker";
 import { PickedList } from "./ImportRecipe";
+import { textOf } from "../ocr";
+import { parseQuoteText, parseCsv } from "../quoteParser";
 
 const PROJECT_STATUS: Record<string, string> = { in_valutazione: "In valutazione", approvato: "Approvato", acquistato: "Acquistato", scartato: "Scartato" };
 const QUOTE_STATUS: Record<string, string> = { ricevuto: "Ricevuto", in_trattativa: "In trattativa", scelto: "Scelto ✓", scartato: "Scartato", superato: "Superato da nuova versione" };
@@ -110,8 +112,8 @@ export function EquipmentProject() {
         </div>
         {isAdmin && (
           <div className="row-actions">
-            <button className="btn primary" onClick={() => setImportMode("excel")}>📊 Importa da Excel</button>
-            <button className="btn primary" onClick={() => setImportMode("ai")}>📸 Importa da screenshot / PDF</button>
+            <button className="btn primary" onClick={() => setImportMode("excel")}>📊 Importa da Excel / Fogli Google</button>
+            <button className="btn primary" onClick={() => setImportMode("ai")}>📸 Importa da screenshot</button>
             <button className="btn" onClick={newManual}>+ Manuale</button>
           </div>
         )}
@@ -348,6 +350,9 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
   const [error, setError] = useState("");
   const [aiPath, setAiPath] = useState<string | null>(null);
   const [aiPicked, setAiPicked] = useState<File[]>([]);
+  const [progress, setProgress] = useState("");
+  const [readText, setReadText] = useState("");
+  const [skipped, setSkipped] = useState<string[]>([]);
 
   const suppliers = useMemo(() => [...new Set(quotes.map((q) => q.supplier))], [quotes]);
 
@@ -369,7 +374,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
   };
 
   const loadSheet = async (f: File, name: string) => {
-    const rows = (await readXlsxFile(f, { sheet: name })) as unknown[][];
+    const rows = /\.(csv|tsv|txt)$/i.test(f.name) ? parseCsv(await f.text()) : (await readXlsxFile(f, { sheet: name })) as unknown[][];
     setGrid(rows);
     const h = guessHeader(rows);
     setHeaderRow(h);
@@ -382,8 +387,8 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
     setFile(f); setError("");
     if (mode === "excel") {
       try {
-        if (!/\.xlsx$/i.test(f.name)) throw new Error("Serve un file .xlsx (da Excel: File → Salva con nome → Cartella di lavoro Excel .xlsx)");
-        const names = await readSheetNames(f);
+        if (!/\.(xlsx|csv|tsv|txt)$/i.test(f.name)) throw new Error("Serve un file .xlsx o .csv. Dal foglio Google: File → Scarica → Microsoft Excel (.xlsx)");
+        const names = /\.xlsx$/i.test(f.name) ? await readSheetNames(f) : [f.name.replace(/\.[^.]+$/, "")];
         setSheets(names); setSheet(names[0]);
         await loadSheet(f, names[0]);
         setSupplier(f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " "));
@@ -400,6 +405,15 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
         const ps: string[] = [];
         for (const f of aiPicked) ps.push(await uploadFile(`equipment/${projectId}`, f));
         setAiPath(ps[0]);
+        const text = await textOf(aiPicked, setProgress);
+        if (text != null) {
+          // screenshot o testo: lettura sul telefono, senza AI
+          const r = parseQuoteText(text);
+          setReadText(text); setSkipped(r.skipped);
+          setItems(r.items); setShipping(r.shipping); setIncludeVat(r.includeVat);
+          setStep("review");
+          return;
+        }
         const r = await parseQuote(ps);
         setSupplier(r.supplier ?? ""); setQuoteDate(r.date ?? quoteDate); setValidUntil(r.valid_until ?? "");
         setIncludeVat(r.prices_include_vat); setShipping(r.shipping_cost ?? 0); setNotes(r.notes ?? "");
@@ -419,7 +433,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
       if (!description) continue;
       const quantity = mapping.quantity != null ? toNum(get("quantity")) || 1 : 1;
       let unit_price = mapping.unit_price != null ? toNum(get("unit_price")) : 0;
-      if (!unit_price && mapping.total != null) unit_price = toNum(get("total")) / quantity;
+      if (!unit_price && mapping.total != null && toNum(get("total"))) unit_price = toNum(get("total")) / quantity;
       // salta righe di riepilogo (Totale, Imponibile, IVA...) senza quantità
       if (/^(totale|subtotale|sub-totale|imponibile|iva|total|sconto|trasporto)\b/i.test(description) && (mapping.quantity == null || get("quantity") == null)) continue;
       out.push({
@@ -427,7 +441,12 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
         quantity, unit_price, discount_pct: toNum(get("discount_pct")), vat_pct: mapping.vat_pct != null ? toNum(get("vat_pct")) || 22 : 22,
       });
     }
-    setItems(out); setStep("review");
+    const priceHead = String(header[mapping.unit_price ?? mapping.total ?? -1] ?? "");
+    if (/iva\s*(incl|compr)|ivat/i.test(priceHead)) setIncludeVat(true);
+    // trasporto / spedizione come riga del foglio → campo trasporto
+    const ship = out.filter((i) => /(spedizion|trasport|consegna|corriere)/i.test(i.description));
+    if (ship.length) setShipping(ship.reduce((t, i) => t + i.quantity * i.unit_price, 0));
+    setItems(out.filter((i) => !ship.includes(i))); setStep("review");
   };
 
   const setItem = (i: number, patch: Partial<DraftItem>) => setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
@@ -466,34 +485,43 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
   return (
     <div className="modal-backdrop">
       <div className="modal wide">
-        <h2>{mode === "excel" ? "📊 Importa preventivo da Excel" : "📸 Importa preventivo da screenshot / PDF"}</h2>
+        <h2>{mode === "excel" ? "📊 Importa preventivo da Excel / Fogli Google" : "📸 Importa preventivo da screenshot"}</h2>
         {step === "upload" && (
           <>
             <p>{mode === "excel"
               ? "Carica il file .xlsx del preventivo. Nel passo successivo scegli il foglio e quali colonne contengono descrizione, quantità e prezzi."
-              : "Carica lo screenshot, la foto o il PDF del preventivo: l'AI estrae fornitore, righe, sconti e IVA. Potrai correggere tutto prima di salvare."}</p>
+              : "Carica lo screenshot del preventivo (anche più di uno, ad esempio del foglio Google): leggo il testo direttamente sul telefono e ricavo righe, quantità e prezzi. Potrai correggere tutto prima di salvare."}</p>
+            {mode === "excel" && (
+              <div className="note small">
+                <strong>Da un foglio Google</strong><br />
+                Dal computer: <em>File → Scarica → Microsoft Excel (.xlsx)</em>.<br />
+                Dall'app Fogli sul telefono: <em>⋮ → Condividi ed esporta → Salva come → Excel</em>, poi scegli il file da «File».<br />
+                Al passo dopo scegli il tab (foglio) con il preventivo.
+              </div>
+            )}
             {mode === "excel" ? (
-              <label className="btn primary">Scegli file Excel
-                <input type="file" hidden accept=".xlsx" onChange={(e) => pick(e.target.files)} />
+              <label className="btn primary">Scegli file Excel / CSV
+                <input type="file" hidden accept=".xlsx,.csv,.tsv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => pick(e.target.files)} />
               </label>
             ) : (
               <>
-                <FilePicker onFiles={(f) => setAiPicked((p) => [...p, ...f].slice(0, 10))} accept="image/*,application/pdf,.eml,.txt"
+                <FilePicker onFiles={(f) => setAiPicked((p) => [...p, ...f].slice(0, 10))} accept="image/*,.txt,.csv"
                   hint="anche più screenshot" />
                 <PickedList files={aiPicked} onRemove={(i) => setAiPicked(aiPicked.filter((_, j) => j !== i))} />
               </>
             )}
           </>
         )}
-        {step === "reading" && <p>⏳ Sto leggendo il preventivo… (può volerci fino a un minuto)</p>}
+        {step === "reading" && <p>⏳ Sto leggendo il preventivo… {progress}</p>}
         {step === "map" && (
           <>
+            <p><strong>Quale tab contiene il preventivo?</strong></p>
+            <div className="pay-methods">
+              {sheets.map((s) => (
+                <button key={s} className={"pay-method" + (s === sheet ? " on" : "")} onClick={async () => { setSheet(s); await loadSheet(file!, s); }}>{s}</button>
+              ))}
+            </div>
             <div className="form-grid">
-              {sheets.length > 1 && (
-                <label><span>Foglio</span>
-                  <select value={sheet} onChange={async (e) => { setSheet(e.target.value); await loadSheet(file!, e.target.value); }}>{sheets.map((s) => <option key={s}>{s}</option>)}</select>
-                </label>
-              )}
               <label><span>Riga d'intestazione</span>
                 <select value={headerRow} onChange={(e) => { const h = Number(e.target.value); setHeaderRow(h); setMapping(guessMapping(grid[h] ?? [])); }}>
                   {grid.slice(0, 40).map((r, i) => <option key={i} value={i}>{i + 1}: {r.filter((c) => c != null).slice(0, 4).join(" | ").slice(0, 60)}</option>)}
@@ -550,7 +578,15 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
                 </tbody>
               </table>
             </div>
+            <button className="btn" onClick={() => setItems([...items, { code: "", description: "", category: "", quantity: 1, unit_price: 0, discount_pct: 0, vat_pct: 22 }])}>+ Aggiungi riga</button>
             <p>Totale IVA inclusa: <strong>{eur(total)}</strong> ({items.length} righe)</p>
+            {readText && !items.length && <p className="error">Non ho trovato righe con prezzi: aggiungile a mano o prova con uno screenshot più nitido.</p>}
+            {readText && (
+              <details>
+                <summary className="muted small">Testo letto dallo screenshot{skipped.length ? ` (${skipped.length} righe scartate: totali, intestazioni…)` : ""}</summary>
+                <pre className="small" style={{ whiteSpace: "pre-wrap" }}>{readText}</pre>
+              </details>
+            )}
             <label className="wide"><span>Note / condizioni</span><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
           </>
         )}

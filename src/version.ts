@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.165", date: "14/11/2026 21:35", text: "Preventivi: si importano dal foglio Google (scaricato come .xlsx o .csv) scegliendo il tab giusto, oppure da uno screenshot letto sul telefono senza AI. Trasporto, IVA inclusa e righe dei totali riconosciuti da soli; si possono aggiungere righe a mano" },
   { version: "0.164", date: "14/11/2026 21:15", text: "Sfondo a raggi più tenue e meno colorato, per non stancare la vista" },
   { version: "0.163", date: "14/11/2026 21:05", text: "Ognuno può mettere la sua foto (Impostazioni → Utente): compare in alto a destra al posto dell'iniziale, nei Soci, in chat e nelle note delle task. Tolto il cambio dell'immagine principale. Da eseguire: 0015_foto_utente.sql" },
   { version: "0.162", date: "14/11/2026 20:45", text: "Nuovo sfondo dell'app: i raggi giallo e ciano dell'etichetta, scuriti (o schiariti col tema chiaro) per leggere bene" },
