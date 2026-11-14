@@ -1503,3 +1503,9 @@ a.tk-item:hover { color: var(--text); border-color: var(--line-strong); }
 .tc-other-btn.on { color: var(--gold); }
 .mat-empty-btns { grid-template-columns: 1fr 1fr; }
 .mat-empty-btns .primary { grid-column: 1 / -1; }
+
+.tc-title { display: block; font-size: 1.02rem; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.tc-other-btn { margin-top: 6px; min-height: 38px; padding: 6px 14px; border: 1px dashed var(--line-strong); border-radius: 10px; font-size: .9rem; }
+.tc-other-btn.on { border-color: var(--gold); }
+.tc-pair { margin-top: 14px; }
+.tc-pair input { width: 100%; }

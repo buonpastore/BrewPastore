@@ -134,20 +134,51 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
 }
 
 /** Caratteristiche a scelta rapida (3–4 opzioni, oppure «Altro» da scrivere). */
-const CHOICES: { key: string; label: string; options: string[] }[] = [
-  { key: "appearance", label: "Aspetto", options: ["Limpida", "Velata", "Torbida"] },
-  { key: "aroma", label: "Aroma", options: ["Luppolato", "Maltato", "Fruttato", "Speziato"] },
-  { key: "flavor", label: "Gusto", options: ["Secco", "Equilibrato", "Dolce", "Amaro"] },
-  { key: "body", label: "Corpo", options: ["Leggero", "Medio", "Pieno"] },
-  { key: "fizz", label: "Bollicine", options: ["Poche", "Giuste", "Tante"] },
+/* Voci delle schede di degustazione (aspetto, schiuma, aroma, gusto, amaro, corpo, bollicine, finale).
+   Si salvano nei campi della degustazione: es. aspetto «Velata · schiuma cremosa», gusto «Secco · amaro medio · finale lungo». */
+const CHOICES: { key: string; label: string; options: string[]; field: string; prefix?: string }[] = [
+  { key: "appearance", label: "Aspetto", options: ["Limpida", "Velata", "Torbida"], field: "appearance" },
+  { key: "foam", label: "Schiuma", options: ["Scarsa", "Persistente", "Cremosa"], field: "appearance", prefix: "schiuma" },
+  { key: "aroma", label: "Aroma", options: ["Luppolato", "Maltato", "Fruttato", "Speziato"], field: "aroma" },
+  { key: "flavor", label: "Gusto", options: ["Secco", "Equilibrato", "Dolce", "Acidulo"], field: "flavor" },
+  { key: "bitter", label: "Amaro", options: ["Basso", "Medio", "Alto"], field: "flavor", prefix: "amaro" },
+  { key: "body", label: "Corpo", options: ["Leggero", "Medio", "Pieno"], field: "mouthfeel", prefix: "corpo" },
+  { key: "fizz", label: "Bollicine", options: ["Poche", "Giuste", "Tante"], field: "mouthfeel", prefix: "bollicine" },
+  { key: "finish", label: "Finale", options: ["Corto", "Medio", "Lungo"], field: "flavor", prefix: "finale" },
 ];
+const capF = (x: string) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : "");
+/** Dai campi salvati ai valori delle singole voci. */
+function splitFields(t: Row): Row {
+  const out: Row = {};
+  for (const f of ["appearance", "aroma", "flavor", "mouthfeel"]) {
+    for (const part of String(t[f] ?? "").split(/\s*·\s*/).filter(Boolean)) {
+      const c = CHOICES.find((x) => x.field === f && x.prefix && part.toLowerCase().startsWith(x.prefix + " "));
+      if (c) out[c.key] = capF(part.slice(c.prefix!.length + 1).trim());
+      else { const main = CHOICES.find((x) => x.field === f && !x.prefix); if (main && !out[main.key]) out[main.key] = part; else if (!main) out.body = part; }
+    }
+  }
+  const pair = String(t.notes ?? "").match(/(?:^|\n)Abbinata a:\s*(.+)$/);
+  out.pairing = pair ? pair[1].trim() : "";
+  out.notes = String(t.notes ?? "").replace(/(?:^|\n)Abbinata a:\s*.+$/, "").trim();
+  return out;
+}
+/** Dai valori delle voci ai campi da salvare. */
+function joinFields(t: Row): Row {
+  const out: Row = {};
+  for (const f of ["appearance", "aroma", "flavor", "mouthfeel"]) {
+    const parts = CHOICES.filter((c) => c.field === f && t[c.key]).map((c) => (c.prefix && c.options.includes(t[c.key]) ? `${c.prefix} ${String(t[c.key]).toLowerCase()}` : t[c.key]));
+    out[f] = parts.length ? capF(parts.join(" · ")) : null;
+  }
+  out.notes = [t.notes?.trim(), t.pairing?.trim() && `Abbinata a: ${t.pairing.trim()}`].filter(Boolean).join("\n") || null;
+  return out;
+}
 
 function Choice({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
   const other = value !== "" && !options.includes(value);
   const [otherOn, setOtherOn] = useState(other);
   return (
     <div className="tc-choice">
-      <span className="nb-label">{label}</span>
+      <span className="tc-title">{label}</span>
       <div className="tc-opts grid" style={{ ["--n" as string]: options.length }}>
         {options.map((o) => <button key={o} type="button" className={"tc-opt" + (value === o ? " on" : "")} onClick={() => { setOtherOn(false); onChange(value === o ? "" : o); }}>{o}</button>)}
       </div>
@@ -159,10 +190,9 @@ function Choice({ label, options, value, onChange }: { label: string; options: s
 
 function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initial: Row; batches: Row[]; lockBatch: boolean; onClose: () => void; onSaved: () => void }) {
   // corpo e bollicine sono salvati insieme in «mouthfeel» («Corpo medio · bollicine giuste»)
-  const mf = String(initial.mouthfeel ?? "");
-  const mBody = mf.match(/Corpo (\w+)/i)?.[1], mFizz = mf.match(/bollicine (\w+)/i)?.[1];
+
   const cap = (x?: string) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : "");
-  const [t, setT] = useState<Row>({ serving_temp_c: 4, ...initial, body: cap(mBody) || (mf && !mBody ? mf : ""), fizz: cap(mFizz) });
+  const [t, setT] = useState<Row>({ serving_temp_c: 4, ...initial, ...splitFields(initial) });
   const [error, setError] = useState("");
   const set = (k: string, v: unknown) => setT((x) => ({ ...x, [k]: v }));
   const temp = Number(t.serving_temp_c ?? 4);
@@ -171,11 +201,10 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
     e.preventDefault(); setError("");
     if (!t.batch_id) return setError("Scegli la birra");
     if (!t.rating) return setError("Dai un voto da 1 a 5 stelle");
-    const mouthfeel = [t.body && (CHOICES[3].options.includes(t.body) ? `Corpo ${t.body.toLowerCase()}` : t.body), t.fizz && (CHOICES[4].options.includes(t.fizz) ? `bollicine ${t.fizz.toLowerCase()}` : t.fizz)].filter(Boolean).join(" · ");
     const rec = {
       batch_id: t.batch_id, tasted_on: t.tasted_on || new Date().toISOString().slice(0, 10), rating: t.rating, serving_temp_c: temp,
       would_brew_again: t.would_brew_again ?? null,
-      appearance: t.appearance || null, aroma: t.aroma || null, flavor: t.flavor || null, mouthfeel: mouthfeel || null, notes: t.notes || null,
+      ...joinFields(t),
     };
     const res = t.id ? await supabase.from("tastings").update(rec).eq("id", t.id) : await supabase.from("tastings").insert(rec);
     if (res.error) return setError(errMsg(res.error));
@@ -187,7 +216,7 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
       <form className="modal tc-form" onSubmit={save}>
         <h2>{t.id ? "Modifica degustazione" : "⭐ Nuova degustazione"}</h2>
 
-        <span className="nb-label">Quale birra</span>
+        <span className="tc-title">Quale birra</span>
         <div className="tc-beers">
           {batches.filter((b) => !lockBatch || b.id === t.batch_id).map((b) => (
             <button key={b.id} type="button" className={"tc-beer" + (t.batch_id === b.id ? " on" : "")} onClick={() => set("batch_id", b.id)}>
@@ -212,11 +241,13 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
 
         {CHOICES.map((c) => <Choice key={c.key} label={c.label} options={c.options} value={t[c.key] ?? ""} onChange={(v) => set(c.key, v)} />)}
 
-        <label className="block"><span className="nb-label">Note (facoltative)</span>
-          <textarea rows={2} placeholder="abbinamenti, cosa cambiare…" value={t.notes ?? ""} onChange={(e) => set("notes", e.target.value)} /></label>
+        <label className="block tc-pair"><span className="tc-title">🍽️ Abbinata a</span>
+          <input value={t.pairing ?? ""} placeholder="es. pizza margherita, formaggi stagionati…" onChange={(e) => set("pairing", e.target.value)} /></label>
+        <label className="block"><span className="tc-title">Note (facoltative)</span>
+          <textarea rows={2} placeholder="impressioni, cosa cambiare…" value={t.notes ?? ""} onChange={(e) => set("notes", e.target.value)} /></label>
 
         <div className="tc-final">
-          <span className="nb-label">Valutazione</span>
+          <span className="tc-title">Valutazione</span>
           <Stars value={t.rating ?? 0} onChange={(v) => set("rating", v)} size={36} />
           <div className="tc-opts">
             <button type="button" className={"tc-opt" + (t.would_brew_again === true ? " on" : "")} onClick={() => set("would_brew_again", t.would_brew_again === true ? null : true)}>👍 La rifarei così</button>
