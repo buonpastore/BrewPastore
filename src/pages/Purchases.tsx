@@ -1,5 +1,5 @@
 import { textOf } from "../ocr";
-import { sortByCat, nameColor } from "../categories";
+import { sortByCat, nameColor, catColor, catLabel, catRank } from "../categories";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -21,9 +21,12 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [importing, setImporting] = useState(false);
   const [pasted, setPasted] = useState<File[] | undefined>();
+  const [view, setViewState] = useState<"estesa" | "compatta">(() => { try { return localStorage.getItem("bp-acquisti-vista") === "estesa" ? "estesa" : "compatta"; } catch { return "compatta"; } });
+  const setView = (v: "estesa" | "compatta") => { setViewState(v); try { localStorage.setItem("bp-acquisti-vista", v); } catch { /* niente */ } };
+  const full = view === "estesa";
 
   useEffect(() => {
-    supabase.from("purchases").select("*, purchase_items(total_price)").order("purchase_date", { ascending: false })
+    supabase.from("purchases").select("*, purchase_items(total_price, description, materials(name, category))").order("purchase_date", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
   }, []);
 
@@ -35,7 +38,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
     try {
       const r = await rebuildPurchasesFromDocuments((m) => setRebuilding(m));
       setReport(r);
-      const { data } = await supabase.from("purchases").select("*, purchase_items(total_price)").order("purchase_date", { ascending: false });
+      const { data } = await supabase.from("purchases").select("*, purchase_items(total_price, description, materials(name, category))").order("purchase_date", { ascending: false });
       setRows(data ?? []);
     } catch (e) { alert(errMsg(e)); }
     setRebuilding(null);
@@ -64,25 +67,49 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
   return (
     <div>
       {!embedded && <div className="page-head"><h1>Acquisti materie prime</h1></div>}
-      <div className="table-wrap">
-        <table>
-          <thead><tr><th>Data</th><th>Fornitore</th><th>Prezzo</th><th>Articoli</th>{isAdmin && <th />}</tr></thead>
-          <tbody>
-            {rows.map((p) => {
-              const goods = (p.purchase_items as Row[]).reduce((s, i) => s + Number(i.total_price), 0);
-              return (
-                <tr key={p.id}>
-                  <td className="nowrap">{date(p.purchase_date)}</td>
-                  <td><Link to={`/acquisti/${p.id}`}>{p.supplier}</Link></td>
-                  <td className="nowrap"><strong>{eur(goods + Number(p.shipping_cost))}</strong></td>
-                  <td>{p.purchase_items.length}</td>
-                  {isAdmin && <td><button className="icon" title="Elimina acquisto" onClick={() => removePurchase(p, goods)}>🗑️</button></td>}
-                </tr>
-              );
-            })}
-            {!rows.length && <tr><td colSpan={5} className="muted">Nessun acquisto. Importane uno qui sotto (es. il PDF o il testo dell'ordine Mr Malt).</td></tr>}
-          </tbody>
-        </table>
+      <div className="view-switch" role="group" aria-label="Visualizzazione">
+        <button className={"mini-btn" + (!full ? " on" : "")} onClick={() => setView("compatta")}>☰ <span>Compatta</span></button>
+        <button className={"mini-btn" + (full ? " on" : "")} onClick={() => setView("estesa")}>▦ <span>Estesa</span></button>
+      </div>
+      <div className={"pu-list" + (full ? " full" : "")}>
+        {rows.map((p) => {
+          const its = p.purchase_items as Row[];
+          const goods = its.reduce((s, i) => s + Number(i.total_price), 0);
+          const d = p.purchase_date ? new Date(p.purchase_date) : null;
+          const byCat = new Map<string, number>();
+          for (const i of its) { const c = i.materials?.category ?? "altro"; byCat.set(c, (byCat.get(c) ?? 0) + Number(i.total_price)); }
+          const cats = [...byCat.entries()].sort((x, y) => catRank(x[0]) - catRank(y[0]));
+          return (
+            <div key={p.id} className="pu-card" role="link" tabIndex={0} onClick={() => nav(`/acquisti/${p.id}`)} onKeyDown={(e) => { if (e.key === "Enter") nav(`/acquisti/${p.id}`); }}>
+              <div className="pu-date">{d ? <><strong>{d.getDate()}</strong><span>{d.toLocaleDateString("it-IT", { month: "short" }).replace(".", "")}</span><small>{d.getFullYear()}</small></> : "—"}</div>
+              <div className="pu-body">
+                <div className="pu-top">
+                  <span className="pu-sup">{p.supplier}</span>
+                  <strong className="pu-tot">{eur(goods + Number(p.shipping_cost))}</strong>
+                </div>
+                <div className="pu-meta">
+                  <span>{its.length} {its.length === 1 ? "articolo" : "articoli"}</span>
+                  {!full && <span className="pu-dots">{cats.map(([c]) => <i key={c} style={{ background: catColor(c) }} title={catLabel(c)} />)}</span>}
+                  {full && Number(p.shipping_cost) > 0 && <span>spedizione {eur(p.shipping_cost)}</span>}
+                  {full && p.invoice_number && <span>n. {p.invoice_number}</span>}
+                </div>
+                {full && cats.length > 0 && (
+                  <div className="pu-cats">
+                    {cats.map(([c, v]) => <span key={c} className="pu-cat" style={{ ["--c" as string]: catColor(c) }}>{catLabel(c)} <b>{eur(v)}</b></span>)}
+                  </div>
+                )}
+                {full && its.length > 0 && (
+                  <div className="pu-items">
+                    {sortByCat(its, (i) => i.materials?.category).slice(0, 6).map((i, n) => <span key={n} style={{ color: nameColor(i.materials?.category) }}>{i.materials?.name ?? i.description}</span>)}
+                    {its.length > 6 && <span className="muted">+{its.length - 6}</span>}
+                  </div>
+                )}
+              </div>
+              {isAdmin && full && <button className="icon pu-del" title="Elimina acquisto" onClick={(e) => { e.stopPropagation(); removePurchase(p, goods); }}>🗑️</button>}
+            </div>
+          );
+        })}
+        {!rows.length && <p className="muted">Nessun acquisto. Importane uno qui sotto (es. il PDF o il testo dell'ordine Mr Malt).</p>}
       </div>
       {isAdmin && (
         <div className="ing-import">
