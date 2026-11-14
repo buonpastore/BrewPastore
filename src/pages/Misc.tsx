@@ -1,11 +1,11 @@
-import { LogIn } from "lucide-react";
+import { LogIn, Minus, Plus } from "lucide-react";
 import { loginAs } from "../impersonate";
 import { Tabs } from "../components/Layout";
 import { CapColorsSettings } from "../components/CapColor";
 import { CapGallery, CapDot } from "../components/CapColor";
 import { lastStep } from "../components/PreviousBatches";
 import { getThemePref, setThemePref, sunTimes, type ThemePref } from "../theme";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -236,7 +236,7 @@ export function Settings() {
 
   const saveSetting = async (s: Row, value: string) => {
     const { error } = await supabase.from("settings").update({ value: Number(value.replace(",", ".")) }).eq("key", s.key);
-    setMsg(error ? errMsg(error) : `${s.label} salvato ✓`);
+    setMsg(error ? errMsg(error) : "");
     if (!error) setSettings((all) => all.map((x) => (x.key === s.key ? { ...x, value: Number(value.replace(",", ".")) } : x)));
   };
   const saveName = async () => {
@@ -272,30 +272,45 @@ export function Settings() {
           {isAdmin && <MascotUpload />}
         </>
       )}
-      {tab === "costi" && (
-        <div className="panel">
-          <h2>Prezzi per i costi delle birre</h2>
-          <table>
-            <tbody>
-              {settings.map((s) => (
-                <tr key={s.key}>
-                  <td>{s.label}</td>
-                  <td>{isAdmin
-                    ? <input defaultValue={s.value} inputMode="decimal" style={{ width: 100 }} onBlur={(e) => e.target.value !== String(s.value) && saveSetting(s, e.target.value)} />
-                    : s.value} {s.unit}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {(() => {
-            const per = (k: string) => { const p = settings.find((x) => x.key === `bottle_${k}_pack_price`), q = settings.find((x) => x.key === `bottle_${k}_pack_qty`); return p && q && Number(p.value) > 0 && Number(q.value) > 0 ? eur(Number(p.value) / Number(q.value)) : null; };
-            const b66 = per("66"), b33 = per("33");
-            return settings.some((x) => x.key.startsWith("bottle_"))
-              ? <p className="muted small">Bottiglia da 66 cl: {b66 ?? "—"} l'una · da 33 cl: {b33 ?? "non impostato"}. Nei costi per ora si usa sempre la bottiglia da 66 cl.</p>
-              : <p className="muted small">Per impostare il prezzo delle bottiglie esegui nello SQL Editor di Supabase il file <code>0008_prezzo_bottiglie.sql</code> (intanto uso 11 € per 24 bottiglie da 66 cl).</p>;
-          })()}
-        </div>
-      )}
+      {tab === "costi" && (() => {
+        const get = (k: string) => settings.find((x) => x.key === k);
+        const val = (k: string) => Number(get(k)?.value ?? 0);
+        const field = (k: string, label: string, step: number, dec: number, unit: string) => {
+          const st = get(k);
+          return st ? <PriceField key={k} label={label} value={Number(st.value)} step={step} decimals={dec} unit={unit} disabled={!isAdmin} onSave={(v) => saveSetting(st, String(v))} /> : null;
+        };
+        const bottle = (f: "66" | "33") => {
+          const price = val(`bottle_${f}_pack_price`), qty = val(`bottle_${f}_pack_qty`);
+          return (
+            <div className="cf-card" key={f}>
+              <h3>Bottiglie da {f} cl</h3>
+              {get(`bottle_${f}_pack_price`) ? (
+                <>
+                  <div className="cf-two">
+                    {field(`bottle_${f}_pack_price`, "Prezzo del pacco", 0.5, 2, "€")}
+                    {field(`bottle_${f}_pack_qty`, "Bottiglie nel pacco", 1, 0, "pz")}
+                  </div>
+                  <div className="cf-result">{price > 0 && qty > 0 ? <>= <strong>{eur(price / qty)}</strong> a bottiglia</> : <span className="muted">inserisci prezzo e numero di bottiglie</span>}</div>
+                </>
+              ) : <p className="muted small">Esegui su Supabase il file <code>0008_prezzo_bottiglie.sql</code> per poterle impostare (intanto uso 11 € per 24 bottiglie).</p>}
+            </div>
+          );
+        };
+        return (
+          <>
+            {bottle("66")}
+            {bottle("33")}
+            <div className="cf-card">
+              <h3>Corrente e acqua</h3>
+              <div className="cf-two">
+                {field("energy_price_kwh", "Corrente", 0.01, 2, "€/kWh")}
+                {field("water_price_l", "Acqua", 0.001, 3, "€/L")}
+              </div>
+            </div>
+            <p className="muted small">Nei costi delle birre per ora si usa la bottiglia da 66 cl.</p>
+          </>
+        );
+      })()}
       {tab === "tappi" && <CapColorsSettings canEdit={isAdmin} />}
       {tab === "utenti" && (
         <div className="panel">
@@ -329,6 +344,29 @@ export function Settings() {
           <p className="muted small version">Pastorizia {VERSION_LABEL} · pubblicata il {__BUILD_TIME__}</p>
         </>
       )}
+    </div>
+  );
+}
+
+/** Casella grande con − e +, come nei dati del batch: salva da sola. */
+function PriceField({ label, value, step, decimals, unit, disabled, onSave }: { label: string; value: number; step: number; decimals: number; unit: string; disabled?: boolean; onSave: (v: number) => void }) {
+  const fmt = (n: number) => n.toFixed(decimals).replace(".", ",");
+  const [text, setText] = useState(fmt(value));
+  const t = useRef<number>();
+  useEffect(() => setText(fmt(value)), [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  const commit = (v: number) => { window.clearTimeout(t.current); t.current = window.setTimeout(() => onSave(v), 600); };
+  const bump = (d: 1 | -1) => { const cur = Number(text.replace(",", ".")) || 0; const v = Math.max(0, Math.round((cur + d * step) * 1000) / 1000); setText(fmt(v)); commit(v); };
+  return (
+    <div className="big-field">
+      <div className="bf-head"><span>{label}</span></div>
+      <div className="bf-row">
+        <button type="button" className="bf-btn" disabled={disabled} onClick={() => bump(-1)}><Minus size={22} /></button>
+        <div className="bf-input">
+          <input inputMode="decimal" value={text} disabled={disabled} onChange={(e) => { setText(e.target.value); const v = Number(e.target.value.replace(",", ".")); if (!isNaN(v)) commit(v); }} />
+          <span className="bf-unit">{unit}</span>
+        </div>
+        <button type="button" className="bf-btn" disabled={disabled} onClick={() => bump(1)}><Plus size={22} /></button>
+      </div>
     </div>
   );
 }

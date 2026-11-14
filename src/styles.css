@@ -1428,3 +1428,11 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .socio-go { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
   border: 1px solid color-mix(in srgb, var(--teal) 55%, transparent); background: color-mix(in srgb, var(--teal) 12%, transparent); color: var(--teal); }
 .socio-go:active { transform: scale(.94); }
+
+/* impostazioni → costi fissi */
+.cf-card { padding: 14px; margin-bottom: 12px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); }
+.cf-card h3 { margin-top: 0; }
+.cf-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 420px) { .cf-two { grid-template-columns: 1fr; } }
+.cf-result { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); text-align: center; font-size: 1.05rem; }
+.cf-result strong { color: var(--gold); font-size: 1.3rem; }
