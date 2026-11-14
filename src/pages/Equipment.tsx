@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import readXlsxFile, { readSheetNames } from "read-excel-file";
 import { supabase, uploadFile, parseQuote, openFile, errMsg, eur, date, num, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
-import { RowsEditor } from "../components/RowsEditor";
 import { HistoryList } from "../components/HistoryList";
 import { Tabs } from "../components/Layout";
 import { FilePicker } from "../components/FilePicker";
@@ -15,10 +14,22 @@ import { parseQuoteText, parseCsv } from "../quoteParser";
 const PROJECT_STATUS: Record<string, string> = { in_valutazione: "In valutazione", approvato: "Approvato", acquistato: "Acquistato", scartato: "Scartato" };
 const QUOTE_STATUS: Record<string, string> = { ricevuto: "Ricevuto", in_trattativa: "In trattativa", scelto: "Scelto ✓", scartato: "Scartato", superato: "Superato da nuova versione" };
 
-const lineTotal = (i: Row, includeVat: boolean) => {
-  const net = Number(i.quantity) * Number(i.unit_price) * (1 - Number(i.discount_pct || 0) / 100);
-  return includeVat ? net : net * (1 + Number(i.vat_pct ?? 22) / 100);
-};
+/** I prezzi dei preventivi sono sempre IVA inclusa, senza sconti: riga = quantità × prezzo. */
+const lineTotal = (i: Row) => Number(i.quantity) * Number(i.unit_price);
+
+/** Totali dei preventivi calcolati qui (quantità × prezzo + trasporto), stessa forma della vista equipment_quote_totals. */
+async function loadTotals(projectId?: string): Promise<Row[]> {
+  let qq = supabase.from("equipment_quotes").select("id, project_id, supplier, version, status, shipping_cost");
+  if (projectId) qq = qq.eq("project_id", projectId);
+  const { data: qs } = await qq;
+  if (!qs?.length) return [];
+  const { data: its } = await supabase.from("equipment_quote_items").select("quote_id, quantity, unit_price").in("quote_id", qs.map((q) => q.id));
+  return qs.map((q) => {
+    const mine = (its ?? []).filter((i) => i.quote_id === q.id);
+    return { quote_id: q.id, project_id: q.project_id, supplier: q.supplier, version: q.version, status: q.status, items_count: mine.length,
+      total_with_vat: mine.reduce((t, i) => t + lineTotal(i), 0) + Number(q.shipping_cost || 0) };
+  });
+}
 
 /** Elimina un preventivo (righe comprese) e il suo file; se era l'ultima versione, la precedente torna attiva. */
 async function deleteQuote(q: Row) {
@@ -38,7 +49,7 @@ export function EquipmentProjects() {
 
   useEffect(() => {
     supabase.from("equipment_projects").select("*").order("created_at", { ascending: false }).then(({ data }) => setProjects(data ?? []));
-    supabase.from("equipment_quote_totals").select("*").then(({ data }) => setTotals(data ?? []));
+    loadTotals().then(setTotals);
   }, []);
 
   const create = async () => {
@@ -96,8 +107,7 @@ export function EquipmentProject() {
     supabase.from("equipment_projects").select("*").eq("id", id!).single().then(({ data }) => setProject(data));
     supabase.from("equipment_quotes").select("*").eq("project_id", id!).order("supplier").order("version", { ascending: false })
       .then(({ data }) => setQuotes(data ?? []));
-    supabase.from("equipment_quote_totals").select("*").eq("project_id", id!)
-      .then(({ data }) => setTotals(Object.fromEntries((data ?? []).map((t) => [t.quote_id, t]))));
+    loadTotals(id!).then((data) => setTotals(Object.fromEntries(data.map((t) => [t.quote_id, t]))));
   }, [id, reload]);
 
   const newManual = async () => {
@@ -140,7 +150,7 @@ export function EquipmentProject() {
             </div>
             <div className="table-wrap">
               <table>
-                <thead><tr><th /><th>Fornitore</th><th>Versione</th><th>Data</th><th>Valido fino</th><th>Righe</th><th>Totale IVA incl.</th><th>Stato</th>{isAdmin && <th />}</tr></thead>
+                <thead><tr><th /><th>Fornitore</th><th>Versione</th><th>Data</th><th>Valido fino</th><th>Righe</th><th>Totale</th><th>Stato</th>{isAdmin && <th />}</tr></thead>
                 <tbody>
                   {Object.entries(bySupplier).map(([sup, qs]) => qs.map((q, i) => {
                     const t = totals[q.id];
@@ -207,7 +217,7 @@ function QuoteComparison({ ids, quotes }: { ids: string[]; quotes: Row[] }) {
   // raggruppa per categoria (o descrizione) per affiancare le voci
   const keyOf = (i: Row) => (i.category || i.description).toLowerCase().trim();
   const keys = [...new Set(items.map(keyOf))];
-  const totalOf = (q: Row) => items.filter((i) => i.quote_id === q.id).reduce((s, i) => s + lineTotal(i, q.prices_include_vat), 0) + Number(q.shipping_cost);
+  const totalOf = (q: Row) => items.filter((i) => i.quote_id === q.id).reduce((s, i) => s + lineTotal(i), 0) + Number(q.shipping_cost);
   const best = Math.min(...qs.map(totalOf));
 
   return (
@@ -220,12 +230,12 @@ function QuoteComparison({ ids, quotes }: { ids: string[]; quotes: Row[] }) {
               <td>{k}</td>
               {qs.map((q) => {
                 const its = items.filter((i) => i.quote_id === q.id && keyOf(i) === k);
-                return <td key={q.id} className="small">{its.length ? its.map((i) => <div key={i.id}>{i.description}{i.quantity != 1 ? ` ×${num(i.quantity)}` : ""} — <strong>{eur(lineTotal(i, q.prices_include_vat))}</strong></div>) : <span className="muted">—</span>}</td>;
+                return <td key={q.id} className="small">{its.length ? its.map((i) => <div key={i.id}>{i.description}{i.quantity != 1 ? ` ×${num(i.quantity)}` : ""} — <strong>{eur(lineTotal(i))}</strong></div>) : <span className="muted">—</span>}</td>;
               })}
             </tr>
           ))}
           <tr><td>Trasporto / extra</td>{qs.map((q) => <td key={q.id}>{eur(q.shipping_cost)}</td>)}</tr>
-          <tr><td><strong>Totale IVA inclusa</strong></td>{qs.map((q) => <td key={q.id}><strong className={totalOf(q) === best ? "ok" : ""}>{eur(totalOf(q))}{totalOf(q) === best ? " ★" : ""}</strong></td>)}</tr>
+          <tr><td><strong>Totale</strong></td>{qs.map((q) => <td key={q.id}><strong className={totalOf(q) === best ? "ok" : ""}>{eur(totalOf(q))}{totalOf(q) === best ? " ★" : ""}</strong></td>)}</tr>
           <tr><td>Note</td>{qs.map((q) => <td key={q.id} className="small pre">{q.notes ?? "—"}</td>)}</tr>
         </tbody>
       </table>
@@ -277,8 +287,8 @@ export function EquipmentQuote() {
   };
 
   if (!q) return <p>Caricamento…</p>;
-  const goods = items.reduce((s, i) => s + lineTotal(i, true), 0);
-  const total = items.reduce((s, i) => s + lineTotal(i, q.prices_include_vat), 0) + Number(q.shipping_cost);
+  const goods = items.reduce((s, i) => s + lineTotal(i), 0);
+  const total = items.reduce((s, i) => s + lineTotal(i), 0) + Number(q.shipping_cost);
 
   return (
     <div>
@@ -297,10 +307,10 @@ export function EquipmentQuote() {
         </div>
       </div>
       <div className="kpis">
-        <div className="kpi"><span>Righe</span><strong>{items.length}</strong></div>
-        <div className="kpi"><span>Merce (scontata, {q.prices_include_vat ? "IVA incl." : "IVA escl."})</span><strong>{eur(goods)}</strong></div>
+        <div className="kpi"><span>Pezzi</span><strong>{num(items.reduce((t, i) => t + Number(i.quantity), 0))}</strong></div>
+        <div className="kpi"><span>Oggetti</span><strong>{eur(goods)}</strong></div>
         <div className="kpi"><span>Trasporto / extra</span><strong>{eur(q.shipping_cost)}</strong></div>
-        <div className="kpi main"><span>Totale IVA inclusa</span><strong>{eur(total)}</strong></div>
+        <div className="kpi main"><span>Totale</span><strong>{eur(total)}</strong></div>
       </div>
       <div className="panel">
         <RecordForm table="equipment_quotes" row={q} canEdit={isAdmin} onSaved={setQ} sections={[{ fields: [
@@ -308,30 +318,11 @@ export function EquipmentQuote() {
           { key: "status", label: "Stato", type: "select", required: true, options: Object.entries(QUOTE_STATUS).map(([value, label]) => ({ value, label })) },
           { key: "quote_date", label: "Data", type: "date" },
           { key: "valid_until", label: "Valido fino al", type: "date" },
-          { key: "shipping_cost", label: "Trasporto / extra € (IVA incl.)", type: "number", render: (v) => eur(v as number) },
-          { key: "prices_include_vat", label: "Prezzi IVA inclusa", type: "checkbox" },
+          { key: "shipping_cost", label: "Trasporto / extra €", type: "number", render: (v) => eur(v as number) },
           { key: "notes", label: "Note / condizioni", type: "textarea" },
         ] }]} />
       </div>
-      <div className="panel">
-        <h2>Righe</h2>
-        <RowsEditor table="equipment_quote_items" parentKey="quote_id" parentId={q.id} canEdit={isAdmin}
-          orderBy={{ column: "sort_order" }} onChange={setItems} defaults={{ quantity: 1, discount_pct: 0, vat_pct: 22, sort_order: items.length }}
-          fields={[
-            { key: "code", label: "Codice" },
-            { key: "description", label: "Descrizione", required: true },
-            { key: "category", label: "Categoria" },
-            { key: "supplier", label: "Fornitore" },
-            { key: "brand", label: "Marca" },
-            { key: "model", label: "Modello" },
-            { key: "quantity", label: "Q.tà", type: "number", required: true },
-            { key: "unit_price", label: "Prezzo unit. €", type: "number", required: true, render: (v) => eur(v as number) },
-            { key: "discount_pct", label: "Sconto %", type: "number" },
-            { key: "vat_pct", label: "IVA %", type: "number" },
-            { key: "sort_order", label: "Ordine", type: "number" },
-          ]}
-          extraColumns={[{ label: "Totale IVA incl.", render: (r) => eur(lineTotal(r, q.prices_include_vat)) }]} />
-      </div>
+      <QuoteItems quoteId={q.id} canEdit={isAdmin} onChange={setItems} />
       {isAdmin && <button className="btn danger" style={{ width: "100%", margin: "4px 0 16px" }} onClick={remove}>🗑️ Elimina preventivo</button>}
       <div className="panel">
         <h2>Storico versioni di questo preventivo</h2>
@@ -341,8 +332,112 @@ export function EquipmentQuote() {
   );
 }
 
+// ------------------------------------------------------------------ oggetti del preventivo
+const ITEM_FIELDS: [string, string][] = [["category", "Categoria"], ["supplier", "Fornitore"], ["brand", "Marca"], ["model", "Modello"], ["code", "Codice"]];
+
+function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: boolean; onChange: (r: Row[]) => void }) {
+  const [items, setItems] = useState<Row[]>([]);
+  const [cat, setCat] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [edit, setEdit] = useState<Row | null>(null);
+
+  const load = () => supabase.from("equipment_quote_items").select("*").eq("quote_id", quoteId).order("sort_order")
+    .then(({ data }) => { setItems(data ?? []); onChange(data ?? []); });
+  useEffect(() => { load(); }, [quoteId]);
+
+  const catOf = (i: Row) => (i.category ?? "").trim() || "Senza categoria";
+  const cats = [...new Set(items.map(catOf))].sort((a, b) => (a === "Senza categoria" ? 1 : b === "Senza categoria" ? -1 : a.localeCompare(b)));
+  const shown = cat ? items.filter((i) => catOf(i) === cat) : items;
+  const sum = (rs: Row[]) => rs.reduce((t, i) => t + lineTotal(i), 0);
+
+  const save = async () => {
+    if (!edit || !String(edit.description ?? "").trim()) return alert("Scrivi l'oggetto");
+    const row: Row = { description: edit.description.trim(), quantity: Number(edit.quantity) || 1, unit_price: Number(edit.unit_price) || 0, notes: edit.notes || null };
+    for (const [k] of ITEM_FIELDS) if (k in edit || edit.id == null) row[k] = (edit[k] ?? "").trim() || null;
+    const q = edit.id
+      ? supabase.from("equipment_quote_items").update(row).eq("id", edit.id)
+      : supabase.from("equipment_quote_items").insert({ ...row, quote_id: quoteId, sort_order: items.length });
+    const { error } = await q;
+    if (error) return alert(/brand|model|supplier/i.test(error.message) ? "Per Fornitore, Marca e Modello esegui prima 0016_preventivi_marca_modello.sql su Supabase" : errMsg(error));
+    setEdit(null); load();
+  };
+  const remove = async (i: Row) => {
+    if (!confirm(`Togliere «${i.description}» dal preventivo?`)) return;
+    const { error } = await supabase.from("equipment_quote_items").delete().eq("id", i.id);
+    if (error) return alert(errMsg(error));
+    setOpen(null); load();
+  };
+
+  const form = edit && (
+    <div className="qi-edit">
+      <div className="form-grid">
+        <label className="wide"><span>Oggetto</span><input value={edit.description ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} /></label>
+        <label><span>Quantità</span><input type="number" step="any" inputMode="decimal" value={edit.quantity ?? 1} onChange={(e) => setEdit({ ...edit, quantity: e.target.value })} /></label>
+        <label><span>Prezzo cad. €</span><input type="number" step="any" inputMode="decimal" value={edit.unit_price ?? 0} onChange={(e) => setEdit({ ...edit, unit_price: e.target.value })} /></label>
+        {ITEM_FIELDS.map(([k, l]) => (
+          <label key={k}><span>{l}</span><input list={k === "category" ? "qi-cats" : undefined} value={edit[k] ?? ""} onChange={(e) => setEdit({ ...edit, [k]: e.target.value })} /></label>
+        ))}
+        <label className="wide"><span>Note</span><textarea rows={2} value={edit.notes ?? ""} onChange={(e) => setEdit({ ...edit, notes: e.target.value })} /></label>
+      </div>
+      <datalist id="qi-cats">{cats.filter((c) => c !== "Senza categoria").map((c) => <option key={c} value={c} />)}</datalist>
+      <div className="row-actions">
+        <button className="btn primary" onClick={save}>Salva</button>
+        <button className="btn" onClick={() => setEdit(null)}>Annulla</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="panel">
+      <h2>Oggetti</h2>
+      {cats.length > 1 && (
+        <div className="qi-cats">
+          <button className={"nb-chip" + (cat == null ? " on" : "")} onClick={() => setCat(null)}>Tutti · {items.length}</button>
+          {cats.map((c) => {
+            const n = items.filter((i) => catOf(i) === c).length;
+            return <button key={c} className={"nb-chip" + (cat === c ? " on" : "")} onClick={() => setCat(cat === c ? null : c)}>{c} · {n}</button>;
+          })}
+        </div>
+      )}
+      <div className="qi-list">
+        {shown.map((i) => {
+          const isOpen = open === i.id;
+          const sub = [i.brand, i.model].filter(Boolean).join(" · ");
+          return (
+            <div key={i.id} className={"qi" + (isOpen ? " open" : "") + (Number(i.unit_price) ? "" : " zero")}>
+              <button className="qi-row" onClick={() => { setOpen(isOpen ? null : i.id); setEdit(null); }}>
+                <span className="qi-name">{i.description}{sub && <small>{sub}</small>}</span>
+                <span className="qi-qty">×{num(i.quantity)}</span>
+                <span className="qi-price">{Number(i.unit_price) ? eur(lineTotal(i)) : "—"}</span>
+              </button>
+              {isOpen && (edit?.id === i.id ? form : (
+                <div className="qi-detail">
+                  <dl>
+                    <dt>Prezzo cad.</dt><dd>{eur(i.unit_price)}</dd>
+                    {ITEM_FIELDS.map(([k, l]) => i[k] ? <Fragment key={k}><dt>{l}</dt><dd>{i[k]}</dd></Fragment> : null)}
+                    {i.notes && <><dt>Note</dt><dd className="pre">{i.notes}</dd></>}
+                  </dl>
+                  {canEdit && (
+                    <div className="row-actions">
+                      <button className="btn" onClick={() => setEdit({ ...i })}>✏️ Modifica</button>
+                      <button className="btn danger" onClick={() => remove(i)}>🗑️ Togli</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+        {!items.length && <p className="muted">Nessun oggetto.</p>}
+      </div>
+      <div className="qi-total"><span>{cat ? `Totale ${cat}` : "Totale oggetti"}</span><strong>{eur(sum(shown))}</strong></div>
+      {canEdit && (edit && !edit.id ? form : <button className="btn full-w" onClick={() => { setOpen(null); setEdit({ quantity: 1, unit_price: 0, category: cat && cat !== "Senza categoria" ? cat : "" }); }}>+ Aggiungi oggetto</button>)}
+    </div>
+  );
+}
+
 // ------------------------------------------------------------------ import
-interface DraftItem { code: string; description: string; category: string; supplier: string; brand: string; model: string; quantity: number; unit_price: number; discount_pct: number; vat_pct: number }
+interface DraftItem { code: string; description: string; category: string; supplier: string; brand: string; model: string; notes: string; quantity: number; unit_price: number }
 const FIELDS: { key: keyof DraftItem | "total"; label: string; match: RegExp }[] = [
   { key: "code", label: "Codice", match: /^(cod|codice|art\.?|sku|rif)/i },
   { key: "description", label: "Descrizione *", match: /(descr|articolo|prodotto|oggetto|voce|item|denominaz)/i },
@@ -353,8 +448,7 @@ const FIELDS: { key: keyof DraftItem | "total"; label: string; match: RegExp }[]
   { key: "quantity", label: "Quantità", match: /(q\.?\s?t[aà]|quant|qty|pz|n\.|^nr\.?$|^num)/i },
   { key: "unit_price", label: "Prezzo unitario", match: /(prezzo\s*unit|p\.?\s*unit|unitario|€\s*\/|listino|prezzo$|prezzo)/i },
   { key: "total", label: "Totale riga (se manca il prezzo unit.)", match: /(totale|importo|subtot)/i },
-  { key: "discount_pct", label: "Sconto %", match: /(sconto|sc\.|disc)/i },
-  { key: "vat_pct", label: "IVA %", match: /^(iva|vat|aliq)/i },
+  { key: "notes", label: "Note", match: /^note/i },
 ];
 
 /** Converte "1.234,56 €" / 1234.56 / "10%" in numero. */
@@ -383,7 +477,6 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
   const [supplier, setSupplier] = useState("");
   const [quoteDate, setQuoteDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState("");
-  const [includeVat, setIncludeVat] = useState(false);
   const [shipping, setShipping] = useState(0);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
@@ -449,14 +542,17 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
           // screenshot o testo: lettura sul telefono, senza AI
           const r = parseQuoteText(text);
           setReadText(text); setSkipped(r.skipped);
-          setItems(r.items.map((i) => ({ ...i, supplier: "", brand: "", model: "" }))); setShipping(r.shipping); setIncludeVat(r.includeVat);
+          setItems(r.items.map((i) => ({ code: "", description: i.description, category: "", supplier: "", brand: "", model: "", notes: "", quantity: i.quantity, unit_price: Math.round(i.unit_price * (1 - i.discount_pct / 100) * 100) / 100 }))); setShipping(r.shipping);
           setStep("review");
           return;
         }
         const r = await parseQuote(ps);
         setSupplier(r.supplier ?? ""); setQuoteDate(r.date ?? quoteDate); setValidUntil(r.valid_until ?? "");
-        setIncludeVat(r.prices_include_vat); setShipping(r.shipping_cost ?? 0); setNotes(r.notes ?? "");
-        setItems(r.items.map((i) => ({ code: i.code ?? "", description: i.description, category: i.category ?? "", supplier: "", brand: "", model: "", quantity: i.quantity, unit_price: i.unit_price, discount_pct: i.discount_pct ?? 0, vat_pct: i.vat_pct ?? 22 })));
+        setShipping(r.shipping_cost ?? 0); setNotes(r.notes ?? "");
+        // prezzi sempre IVA inclusa e già scontati
+        const gross = (i: { unit_price: number; discount_pct?: number | null; vat_pct?: number | null }) =>
+          Math.round(i.unit_price * (1 - (i.discount_pct ?? 0) / 100) * (r.prices_include_vat ? 1 : 1 + (i.vat_pct ?? 22) / 100) * 100) / 100;
+        setItems(r.items.map((i) => ({ code: i.code ?? "", description: i.description, category: i.category ?? "", supplier: "", brand: "", model: "", notes: "", quantity: i.quantity, unit_price: gross(i) })));
         setStep("review");
       } catch (e) { setError(errMsg(e)); setStep("upload"); }
     }
@@ -466,10 +562,8 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
     if (mapping.description == null) return setError("Indica almeno la colonna della descrizione");
     setError("");
     const out: DraftItem[] = [];
-    // le note del foglio vanno fra parentesi nella descrizione;
     // se c'è un «Prezzo finale» compilato vale quello al posto del prezzo del preventivo
     const used = Object.values(mapping);
-    const noteCol = header.findIndex((h, i) => /^note/i.test(String(h ?? "")) && !used.includes(i));
     const finalCol = header.findIndex((h, i) => /prezzo.*(final|definitiv|effettiv)/i.test(String(h ?? "")) && i !== mapping.unit_price);
     let grandTotal = 0;
     for (const r of grid.slice(Math.max(fromRow, headerRow + 1), toRow + 1)) {
@@ -480,8 +574,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
         if (t) grandTotal = t;
         continue;
       }
-      const note = noteCol >= 0 ? String(r[noteCol] ?? "").trim() : "";
-      const description = base + (note ? ` (${note})` : "");
+      const description = base;
       const txt = (k: string) => String(get(k) ?? "").trim();
       const quantity = mapping.quantity != null ? toNum(get("quantity")) || 1 : 1;
       let unit_price = mapping.unit_price != null ? toNum(get("unit_price")) : 0;
@@ -490,14 +583,11 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
       // salta righe di riepilogo (Totale, Imponibile, IVA...) senza quantità
       if (/^(totale|subtotale|sub-totale|imponibile|iva|total|sconto|trasporto)\b/i.test(description) && (mapping.quantity == null || get("quantity") == null)) continue;
       out.push({
-        code: txt("code"), description, category: txt("category"), supplier: txt("supplier"), brand: txt("brand"), model: txt("model"),
-        quantity, unit_price, discount_pct: toNum(get("discount_pct")), vat_pct: mapping.vat_pct != null ? toNum(get("vat_pct")) || 22 : 22,
+        code: txt("code"), description, category: txt("category"), supplier: txt("supplier"), brand: txt("brand"), model: txt("model"), notes: txt("notes"),
+        quantity, unit_price,
       });
     }
-    const priceHead = String(header[mapping.unit_price ?? mapping.total ?? -1] ?? "");
-    const sum = out.reduce((t, i) => t + i.quantity * i.unit_price * (1 - i.discount_pct / 100), 0);
-    // se il totale del foglio è la somma semplice delle righe, i prezzi sono già IVA inclusa
-    if (/iva\s*(incl|compr)|ivat/i.test(priceHead) || (grandTotal && Math.abs(sum - grandTotal) < 0.05)) setIncludeVat(true);
+    void grandTotal;
     // trasporto / spedizione come riga del foglio → campo trasporto
     const ship = out.filter((i) => /(spedizion|trasport|consegna|corriere)/i.test(i.description));
     if (ship.length) setShipping(ship.reduce((t, i) => t + i.quantity * i.unit_price, 0));
@@ -505,7 +595,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
   };
 
   const setItem = (i: number, patch: Partial<DraftItem>) => setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
-  const total = items.reduce((s, i) => s + lineTotal(i, includeVat), 0) + Number(shipping || 0);
+  const total = items.reduce((s, i) => s + lineTotal(i), 0) + Number(shipping || 0);
 
   const save = async () => {
     if (!supplier.trim()) return setError("Indica il fornitore");
@@ -517,23 +607,25 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
       const version = 1 + Math.max(0, ...same.map((q) => q.version));
       const { data: q, error } = await supabase.from("equipment_quotes").insert({
         project_id: projectId, supplier: same[0]?.supplier ?? supplier.trim(), version, quote_date: quoteDate || null, valid_until: validUntil || null,
-        prices_include_vat: includeVat, shipping_cost: Number(shipping || 0), notes: notes || null, source_path,
+        prices_include_vat: true, shipping_cost: Number(shipping || 0), notes: notes || null, source_path,
       }).select().single();
       if (error) throw error;
       if (items.length) {
         const rows = items.map((i, n) => ({
           ...i, code: i.code || null, category: i.category || null, supplier: i.supplier || null, brand: i.brand || null, model: i.model || null,
-          quote_id: q.id, sort_order: n,
-          quantity: Number(i.quantity), unit_price: Number(i.unit_price), discount_pct: Number(i.discount_pct || 0), vat_pct: Number(i.vat_pct ?? 22),
+          notes: i.notes || null, quote_id: q.id, sort_order: n,
+          quantity: Number(i.quantity), unit_price: Number(i.unit_price), discount_pct: 0, vat_pct: 22,
         }));
         let { error: e2 } = await supabase.from("equipment_quote_items").insert(rows);
-        if (e2 && /brand|model|supplier/i.test(e2.message)) {
+        const missingCols = !!e2 && /brand|model|supplier/i.test(e2.message);
+        if (missingCols) {
           // database senza 0016: marca e modello finiscono nella descrizione
           ({ error: e2 } = await supabase.from("equipment_quote_items").insert(rows.map(({ supplier: s, brand, model, ...r }) => ({
             ...r, description: [r.description, brand, model].filter(Boolean).join(" ") + (s ? ` — ${s}` : ""),
           }))));
         }
         if (e2) throw e2;
+        if (missingCols) alert("Preventivo salvato, ma Fornitore, Marca e Modello non hanno ancora le loro colonne nel database: li ho messi nella descrizione. Esegui 0016_preventivi_marca_modello.sql su Supabase e reimporta.");
       }
       if (same.length) await supabase.from("equipment_quotes").update({ status: "superato" }).in("id", same.filter((s) => s.status !== "scartato").map((s) => s.id));
       onDone(); onClose();
@@ -629,12 +721,11 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
               <label><span>Data</span><input type="date" value={quoteDate} onChange={(e) => setQuoteDate(e.target.value)} /></label>
               <label><span>Valido fino al</span><input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></label>
               <label><span>Trasporto / extra €</span><input type="number" step="any" value={shipping} onChange={(e) => setShipping(Number(e.target.value))} /></label>
-              <label className="check"><input type="checkbox" checked={includeVat} onChange={(e) => setIncludeVat(e.target.checked)} /> prezzi IVA inclusa</label>
             </div>
             {isNewVersion && <p className="note">Esiste già un preventivo di "{supplier}": questo verrà salvato come <strong>nuova versione</strong> e quella precedente segnata come superata.</p>}
             <div className="table-wrap">
               <table>
-                <thead><tr><th>Codice</th><th>Descrizione</th><th>Fornitore</th><th>Marca</th><th>Modello</th><th>Categoria</th><th>Q.tà</th><th>Prezzo unit.</th><th>Sc. %</th><th>IVA %</th><th>Totale</th><th /></tr></thead>
+                <thead><tr><th>Codice</th><th>Descrizione</th><th>Fornitore</th><th>Marca</th><th>Modello</th><th>Categoria</th><th>Note</th><th>Q.tà</th><th>Prezzo unit.</th><th>Totale</th><th /></tr></thead>
                 <tbody>
                   {items.map((it, i) => (
                     <tr key={i}>
@@ -644,19 +735,18 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
                       <td><input style={{ width: 100 }} value={it.brand} onChange={(e) => setItem(i, { brand: e.target.value })} /></td>
                       <td><input style={{ width: 90 }} value={it.model} onChange={(e) => setItem(i, { model: e.target.value })} /></td>
                       <td><input style={{ width: 110 }} value={it.category} onChange={(e) => setItem(i, { category: e.target.value })} /></td>
+                      <td><input style={{ width: 130 }} value={it.notes} onChange={(e) => setItem(i, { notes: e.target.value })} /></td>
                       <td><input type="number" step="any" style={{ width: 60 }} value={it.quantity} onChange={(e) => setItem(i, { quantity: Number(e.target.value) })} /></td>
                       <td><input type="number" step="any" style={{ width: 90 }} value={it.unit_price} onChange={(e) => setItem(i, { unit_price: Number(e.target.value) })} /></td>
-                      <td><input type="number" step="any" style={{ width: 55 }} value={it.discount_pct} onChange={(e) => setItem(i, { discount_pct: Number(e.target.value) })} /></td>
-                      <td><input type="number" step="any" style={{ width: 55 }} value={it.vat_pct} onChange={(e) => setItem(i, { vat_pct: Number(e.target.value) })} /></td>
-                      <td className="nowrap">{eur(lineTotal(it, includeVat))}</td>
+                      <td className="nowrap">{eur(lineTotal(it))}</td>
                       <td><button className="icon" onClick={() => setItems(items.filter((_, j) => j !== i))}>🗑️</button></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <button className="btn" onClick={() => setItems([...items, { code: "", description: "", category: "", supplier: "", brand: "", model: "", quantity: 1, unit_price: 0, discount_pct: 0, vat_pct: 22 }])}>+ Aggiungi riga</button>
-            <p>Totale IVA inclusa: <strong>{eur(total)}</strong> ({items.length} righe)</p>
+            <button className="btn" onClick={() => setItems([...items, { code: "", description: "", category: "", supplier: "", brand: "", model: "", notes: "", quantity: 1, unit_price: 0 }])}>+ Aggiungi riga</button>
+            <p>Totale: <strong>{eur(total)}</strong> ({items.length} righe)</p>
             {readText && !items.length && <p className="error">Non ho trovato righe con prezzi: aggiungile a mano o prova con uno screenshot più nitido.</p>}
             {readText && (
               <details>
