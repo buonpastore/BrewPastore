@@ -118,12 +118,11 @@ export function Dashboard() {
       </div>
       {q && <div className="panel quote-panel"><QuoteCard quote={q} onAnother={another} /></div>}
 
-      {(myBalance != null && Math.abs(myBalance) > 0.005) || pending > 0 ? (
+      {myBalance != null && Math.abs(myBalance) > 0.005 ? (
         <div className="panel">
           {myBalance != null && Math.abs(myBalance) > 0.005 && (
             <p>💶 Spese condivise: {myBalance > 0 ? <>devi ricevere <strong>{eur(myBalance)}</strong></> : <>devi dare <strong>{eur(-myBalance)}</strong></>}. <Link to="/spese">Vai alle spese</Link></p>
           )}
-          {pending > 0 && <p>📬 Hai {pending} rimborso/i da confermare. <Link to="/spese">Conferma</Link></p>}
         </div>
       ) : null}
 

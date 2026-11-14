@@ -1343,3 +1343,28 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 @media (max-width: 600px) { .ut-timer-btns { grid-template-columns: 1fr 1fr; } .ut-timer-btns .btn:last-child { grid-column: 1 / -1; } }
 
 .impersonate-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 14px; border-radius: var(--r); background: color-mix(in srgb, var(--magenta) 16%, var(--surface)); border: 1px solid var(--magenta); }
+
+/* ---------------- spese condivise (semplici) ---------------- */
+.xp-list, .xp-due { display: flex; flex-direction: column; gap: 10px; }
+.xp-card { padding: 14px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); }
+.xp-card.closed { opacity: .75; }
+.xp-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.xp-amount { font-size: 1.2rem; white-space: nowrap; }
+.xp-shares { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.xp-shares li { display: grid; grid-template-columns: 18px 1fr auto auto; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.xp-shares li .btn { grid-column: 1 / -1; justify-content: center; }
+.xp-shares li.ok svg, .xp-shares li.ok .xp-st { color: var(--teal); }
+.xp-shares li.due svg, .xp-shares li.due .xp-st { color: var(--magenta); }
+.xp-st { font-size: .8rem; font-weight: 600; }
+.xp-q { font-weight: 700; }
+.xp-recv { margin: 10px 0 0; color: var(--gold); }
+.xp-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.xp-actions label.mini-btn { cursor: pointer; }
+.xp-due-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; padding: 12px 14px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--magenta); }
+.xp-due-row .btn { grid-column: 1 / -1; justify-content: center; min-height: 48px; }
+.xp-hist-btn { display: flex; align-items: center; gap: 6px; margin: 22px 0 10px; background: none; border: 0; color: var(--muted); font: 700 1rem var(--sans); cursor: pointer; padding: 0; }
+.xp-types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 6px 0 12px; }
+.xp-types .pay-method { text-align: center; }
+.xp-people { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 8px; }
+.xp-person { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 99px; border: 1px solid var(--line-strong); background: var(--surface-2); cursor: pointer; }
+.xp-person.on { border-color: var(--gold); }
