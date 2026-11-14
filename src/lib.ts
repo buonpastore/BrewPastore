@@ -82,10 +82,11 @@ export async function uploadFile(folder: string, file: File): Promise<string> {
   return path;
 }
 
+/** Apre un file dentro l'app (visore a tutto schermo), non in una pagina nuova del browser. */
 export async function openFile(path: string) {
-  const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 300);
+  const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 600);
   if (error) throw error;
-  window.open(data.signedUrl, "_blank", "noopener");
+  window.dispatchEvent(new CustomEvent("pastorizia:view-file", { detail: { url: data.signedUrl, name: path.split("/").pop() ?? "" } }));
 }
 
 export interface ParsedItem {

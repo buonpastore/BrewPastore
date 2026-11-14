@@ -1,3 +1,4 @@
+import { FileViewer } from "./FileViewer";
 import { adminBackup, backToAdmin } from "../impersonate";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -128,6 +129,7 @@ export function Layout() {
 
       <main className="content">
         <UpdateBanner />
+        <FileViewer />
         {adminBackup() && (
           <div className="impersonate-bar">
             👤 Stai usando l'app come <strong>{profile?.display_name}</strong>

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.145", date: "14/11/2026 16:15", text: "Scontrini e documenti si aprono dentro l'app in un visore a tutto schermo (ingrandisci, scarica, chiudi), non più in una pagina bianca del browser" },
   { version: "0.144", date: "14/11/2026 16:00", text: "Nuova spesa: riquadro più carino per aggiungere lo scontrino, con l'anteprima della foto" },
   { version: "0.143", date: "14/11/2026 15:45", text: "Nuova spesa: una riga per socio con la sua quota, uguale sia per parti uguali (quota calcolata) sia per divisione personalizzata (quota da scrivere)" },
   { version: "0.142", date: "14/11/2026 15:35", text: "Spese: il pulsante «Ho saldato» c'è solo in alto, in «Da pagare», per le proprie quote" },
