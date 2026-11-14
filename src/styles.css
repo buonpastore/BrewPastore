@@ -735,7 +735,8 @@ img.quote-mascot { width: 64px; height: 64px; border-radius: 50%; object-fit: co
 .exp-card footer { display: flex; justify-content: space-between; align-items: center; }
 .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .pay-method { min-height: 64px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font: 700 1rem var(--sans); cursor: pointer; }
-.pay-method:active, .pay-method:hover { border-color: var(--gold); background: rgba(237, 165, 18, .1); }
+/* l'evidenziazione al passaggio solo dove c'è un mouse: sul telefono restava «accesa» dopo il tocco */
+@media (hover: hover) { .pay-method:hover { border-color: var(--gold); background: rgba(237, 165, 18, .1); } }
 /* spese: i due pulsanti principali sulla stessa riga, larghi uguali */
 .exp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 480px; }
 .exp-actions .btn { min-height: 50px; width: 100%; font-size: .98rem; white-space: nowrap; padding: 8px 10px; }
