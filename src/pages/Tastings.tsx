@@ -207,7 +207,7 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
       ...joinFields(t),
     };
     const res = t.id ? await supabase.from("tastings").update(rec).eq("id", t.id) : await supabase.from("tastings").insert(rec);
-    if (res.error) return setError(errMsg(res.error));
+    if (res.error) return setError(/tastings|schema cache|relation/i.test(res.error.message) ? "Manca un aggiornamento del database: esegui su Supabase il file 0005_degustazioni.sql." : errMsg(res.error));
     onSaved(); onClose();
   };
 
