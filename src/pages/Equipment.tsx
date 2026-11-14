@@ -525,6 +525,12 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
           const so = openSup.has(sp);
           return (
             <div key={sp} className={"pv-sup" + (so ? " open" : "")}>
+              <div className="pv-line">
+              <button className={"qi-check pv-check" + (its.every((i) => i.confirmed) ? " on" : "")} disabled={!canEdit}
+                title={its.every((i) => i.confirmed) ? "Tutto confermato: tocca per rimettere in valutazione" : `Conferma tutto ${sp}`}
+                onClick={() => its.every((i) => i.confirmed) ? setConfirmed(its, false) : setConfirmed(its.filter((i) => !i.confirmed), true)}>
+                {its.every((i) => i.confirmed) ? <CircleCheck size={24} /> : <Circle size={24} />}
+              </button>
               <button className="pv-row lvl1" onClick={() => toggle(openSup, sp, setOpenSup)}>
                 <ChevronRight size={18} className="pv-chev" />
                 <span className="pv-name">{sp}
@@ -535,13 +541,8 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
                 <span className="pv-n">{its.length}</span>
                 <span className="pv-tot">{eur(sum(its))}<small>{eur(sum(its) / soci)} a testa</small></span>
               </button>
-              {so && canEdit && (
-                <div className="pv-acts">
-                  {its.every((i) => i.confirmed)
-                    ? <button className="btn small" onClick={() => setConfirmed(its, false)}>Rimetti tutto in valutazione</button>
-                    : <button className="btn small" onClick={() => setConfirmed(its.filter((i) => !i.confirmed), true)}><CircleCheck size={15} /> Conferma tutto {sp}</button>}
-                </div>
-              )}
+              </div>
+
               {so && [...cm.keys()].sort((a, b) => last(a, b, "Senza categoria")).map((c) => {
                 const k = sp + "|" + c;
                 const ci = cm.get(c)!;

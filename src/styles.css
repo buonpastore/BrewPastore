@@ -1680,3 +1680,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .cmp-miss-row small { display: block; color: var(--muted); font-size: .74rem; }
 .cmp-miss-row strong { flex: none; font-variant-numeric: tabular-nums; }
 .cmp-more > summary { cursor: pointer; font-weight: 700; padding: 10px 0; }
+.pv-line { display: flex; align-items: center; }
+.pv-line .pv-row.lvl1 { flex: 1; min-width: 0; padding-left: 4px; }
+.pv-check { margin-left: 10px; }
+.pv-check.on { color: var(--teal); }
