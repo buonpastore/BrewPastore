@@ -125,6 +125,15 @@ export function BeerWheel() {
     raf.current = requestAnimationFrame(step);
   };
 
+  // banda «a pillola» di ogni birra, staccata dalle vicine
+  const pill = (i: number) => {
+    const r = 98;
+    if (n === 1) return `M 0 ${-r} A ${r} ${r} 0 1 1 -0.01 ${-r}`;
+    const gap = Math.min(4, seg * 0.12);
+    const a0 = (i * seg + gap - 90) * Math.PI / 180, a1 = ((i + 1) * seg - gap - 90) * Math.PI / 180;
+    return `M ${r * Math.cos(a0)} ${r * Math.sin(a0)} A ${r} ${r} 0 ${seg - 2 * gap > 180 ? 1 : 0} 1 ${r * Math.cos(a1)} ${r * Math.sin(a1)}`;
+  };
+
   // spicchio della corona tra due raggi
   const band = (i: number, r0: number, r1: number) => {
     if (n === 1) return `M 0 ${-r1} A ${r1} ${r1} 0 1 1 -0.01 ${-r1} Z M 0 ${-r0} A ${r0} ${r0} 0 1 0 0.01 ${-r0} Z`;
@@ -155,6 +164,29 @@ export function BeerWheel() {
     return best;
   };
 
+  // porta il risultato in vista (anche su iPhone e quando l'app è aperta dalla schermata Home)
+  const showResult = () => {
+    const go = () => {
+      const el = resultRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const bottomBar = (document.querySelector(".bottom-nav") as HTMLElement | null)?.offsetHeight ?? 0;
+      const visibleBottom = window.innerHeight - bottomBar - 12;
+      if (r.top >= 70 && r.bottom <= visibleBottom) return;
+      const dy = r.bottom - visibleBottom + 8;
+      try { window.scrollBy({ top: dy, behavior: "smooth" }); } catch { window.scrollBy(0, dy); }
+      // se la pagina scorre dentro un contenitore, sposta anche quello
+      let p = el.parentElement;
+      while (p && p !== document.body) {
+        const st = getComputedStyle(p);
+        if (/(auto|scroll)/.test(st.overflowY) && p.scrollHeight > p.clientHeight) { p.scrollTop += dy; break; }
+        p = p.parentElement;
+      }
+    };
+    window.setTimeout(go, 150);
+    window.setTimeout(go, 700);   // di nuovo, a riquadro ormai disegnato
+  };
+
   const spin = () => {
     if (!n || spinning) return;
     const pick = Math.floor(Math.random() * n);
@@ -178,7 +210,7 @@ export function BeerWheel() {
       timer.current = window.setTimeout(() => {
         setSpinning(false); setMotion("none"); setWinner(beers[pick]);
         // porta in vista il risultato sotto la bottiglia
-        window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
+        showResult();
         if (!muted) ding();
         try { navigator.vibrate?.([60, 40, 120]); } catch { /* niente */ }
       }, settle + 60);
@@ -194,37 +226,37 @@ export function BeerWheel() {
       {!all.length ? <p className="note">Non c'è ancora nessuna birra imbottigliata da mettere intorno alla bottiglia.</p> : (
         <div className="wheel-wrap">
           <div className="bottle-stage">
-            <svg className="bottle-ring" viewBox="-110 -110 220 220" role="img" aria-label="Birre intorno alla bottiglia">
-              <circle r="104" className="ring-base" />
+            <svg className="bottle-ring" viewBox="-112 -112 224 224" role="img" aria-label="Birre intorno alla bottiglia">
+              <defs>
+                <radialGradient id="tavolo" r=".5">
+                  <stop offset="0" stopColor="var(--surface-2)" />
+                  <stop offset=".75" stopColor="var(--surface)" />
+                  <stop offset="1" stopColor="var(--bg)" />
+                </radialGradient>
+              </defs>
+              <circle r="108" className="ring-base" />
+              <circle r="90" fill="url(#tavolo)" />
+              <circle r="56" className="ring-inner" />
               {slices.map(({ b, i, mid }) => {
                 const c = colorOf(b, i);
                 const win = winner?.id === b.id;
                 const a = (mid - 90) * Math.PI / 180;
-                const R = n <= 2 ? 74 : 72;
+                const R = n <= 2 ? 74 : 73;
                 const lines = splitName(nameOf(b));
-                // il nome deve stare dentro la banda colorata (raggio 90) e nello spicchio
-                let fs = n <= 4 ? 9.5 : n <= 6 ? 8.5 : n <= 8 ? 7.6 : 6.8;
-                const longest = Math.max(...lines.map((l) => l.length));
-                const fits = (f: number) => {
-                  const w = 0.56 * f * longest / 2, hh = lines.length * f * 1.1 / 2;
-                  const cx = R * Math.cos(a), cy = R * Math.sin(a);
-                  return [[-w, -hh], [w, -hh], [-w, hh], [w, hh]].every(([dx, dy]) => Math.hypot(cx + dx, cy + dy) <= 88);
-                };
-                while (fs > 5.5 && !fits(fs)) fs -= 0.3;
-                const h = lines.length * fs * 1.1;
+                // stessa grandezza per tutti i nomi (dipende solo da quante birre ci sono)
+                const fs = n <= 4 ? 9.5 : n <= 6 ? 8.6 : n <= 9 ? 7.8 : 6.8;
+                const h = lines.length * fs * 1.12;
                 return (
                   <g key={b.id} className={win ? "ring-win" : ""} style={{ color: c }}>
-                    <path d={band(i, 92, 104)} style={{ fill: c }} className="ring-band" />
-                    {n > 1 && <line x1={0} y1={-58} x2={0} y2={-104} transform={`rotate(${i * seg})`} className="ring-sep" />}
+                    <path d={pill(i)} className="ring-pill" style={{ stroke: c }} />
                     <g transform={`translate(${R * Math.cos(a)} ${R * Math.sin(a)})`}>
-                      <text textAnchor="middle" fontSize={fs} className="ring-text" fill={win ? "var(--gold-2)" : "var(--text)"}>
-                        {lines.map((l, k) => <tspan key={k} x="0" y={-h / 2 + fs * 0.85 + k * fs * 1.1}>{l}</tspan>)}
+                      <text textAnchor="middle" fontSize={fs} className="ring-text">
+                        {lines.map((l, k) => <tspan key={k} x="0" y={-h / 2 + fs * 0.85 + k * fs * 1.12}>{l}</tspan>)}
                       </text>
                     </g>
                   </g>
                 );
               })}
-              <circle r="58" className="ring-inner" />
             </svg>
             <button className="bottle-btn" onClick={spin} disabled={spinning || !n} aria-label="Gira la bottiglia">
               <svg ref={wheelRef} className="bottle" viewBox="-74 -74 148 148"

@@ -1902,3 +1902,10 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .nb-chip.on.st-esaurito { background: var(--hop); color: #1f1500; }
 .timeline > div.done:nth-child(5)::before { background: var(--hop); border-color: var(--hop); box-shadow: 0 0 0 4px color-mix(in srgb, var(--hop) 20%, transparent); }
 .seal-arrow path { fill: none; stroke: #1f1500; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+/* corona: bande a pillola, fondo tavolo */
+.ring-base { fill: var(--bg); stroke: var(--line); stroke-width: .8; }
+.ring-pill { fill: none; stroke-width: 9; stroke-linecap: round; opacity: .92; transition: stroke-width .3s, opacity .3s; }
+.ring-inner { fill: none; stroke: var(--line-strong); stroke-width: .7; stroke-dasharray: 1.5 3; }
+.ring-text { fill: var(--text); font-weight: 700; }
+.ring-win .ring-pill { stroke-width: 13; opacity: 1; filter: drop-shadow(0 0 5px currentColor); }
+.ring-win .ring-text { fill: var(--gold-2); font-weight: 800; }
