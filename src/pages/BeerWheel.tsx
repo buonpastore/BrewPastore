@@ -187,34 +187,53 @@ export function BeerWheel() {
     window.setTimeout(go, 700);   // di nuovo, a riquadro ormai disegnato
   };
 
+  // numero casuale «forte» del telefono (meglio di Math.random)
+  const rand = () => { try { return crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32; } catch { return Math.random(); } };
+  // angolo a cui si trova adesso la bottiglia (anche a metà giro)
+  const visualAngle = () => {
+    const el = wheelRef.current;
+    const m = el ? getComputedStyle(el).transform : "none";
+    const v = m && m !== "none" ? m.match(/matrix\(([^)]+)\)/)?.[1].split(",").map(Number) : null;
+    return v ? (Math.atan2(v[1], v[0]) * 180 / Math.PI + 360) % 360 : ((angle % 360) + 360) % 360;
+  };
+
   const spin = () => {
-    if (!n || spinning) return;
-    const pick = Math.floor(Math.random() * n);
-    const heading = pick * seg + seg / 2 + (Math.random() - 0.5) * seg * 0.6;   // dove si fermerà il collo
-    // spinta diversa ogni volta: più giri = più tempo (attrito costante: tempo ∝ √giri)
-    const turns = 3 + Math.floor(Math.random() * 4);
-    const cur = ((angle % 360) + 360) % 360;
-    const final = angle + turns * 360 + ((heading - cur + 360) % 360);
-    const dur = Math.round(2100 * Math.sqrt(turns + 0.5));
-    const over = 3 + Math.random() * 5;                                           // va un filo oltre…
-    const settle = 700;
+    if (!n) return;
+    // ritoccandola mentre gira, riparte da dov'è con una nuova spinta
+    const again = spinning;
+    window.clearTimeout(timer.current);
+    if (raf.current) cancelAnimationFrame(raf.current);
+    const start = again ? visualAngle() : angle;
+    // spinta casuale: la bottiglia fa da 3 a 7 giri (anche frazioni) e la birra è dove si ferma il collo
+    const total = (3 + rand() * 4) * 360;
+    const final = start + total;
+    const heading = ((final % 360) + 360) % 360;
+    const pick = Math.min(n - 1, Math.floor(heading / seg));
+    const dur = Math.round(2100 * Math.sqrt(total / 360 + 0.5));   // attrito costante: tempo ∝ √giri
+    const over = 2 + rand() * 4;
+    const settle = 650;
     setWinner(null); setSpinning(true);
     if (!muted) audio();   // sblocca l'audio col tocco (iPhone)
-    // parte subito veloce e rallenta in modo costante, come una bottiglia spinta sul tavolo
-    setMotion(`transform ${dur}ms cubic-bezier(.22,.68,.36,1)`);
-    setAngle(final + over);
-    follow(performance.now() + dur + settle);
-    timer.current = window.setTimeout(() => {
-      setMotion(`transform ${settle}ms cubic-bezier(.45,0,.3,1)`);                  // …e torna indietro assestandosi
-      setAngle(final);
+    const launch = () => {
+      setMotion(`transform ${dur}ms cubic-bezier(.22,.68,.36,1)`);
+      setAngle(final + over);
+      follow(performance.now() + dur + settle);
       timer.current = window.setTimeout(() => {
-        setSpinning(false); setMotion("none"); setWinner(beers[pick]);
-        // porta in vista il risultato sotto la bottiglia
-        showResult();
-        if (!muted) ding();
-        try { navigator.vibrate?.([60, 40, 120]); } catch { /* niente */ }
-      }, settle + 60);
-    }, dur);
+        setMotion(`transform ${settle}ms cubic-bezier(.45,0,.3,1)`);   // va un filo oltre e torna indietro
+        setAngle(final);
+        timer.current = window.setTimeout(() => {
+          setSpinning(false); setMotion("none"); setWinner(beers[pick]);
+          showResult();
+          if (!muted) ding();
+          try { navigator.vibrate?.([60, 40, 120]); } catch { /* niente */ }
+        }, settle + 60);
+      }, dur);
+    };
+    if (again) {
+      // ferma la bottiglia dov'è, poi la rilancia
+      setMotion("none"); setAngle(start);
+      requestAnimationFrame(() => requestAnimationFrame(launch));
+    } else launch();
   };
 
   if (all == null) return <p>Caricamento…</p>;
@@ -258,7 +277,7 @@ export function BeerWheel() {
                 );
               })}
             </svg>
-            <button className="bottle-btn" onClick={spin} disabled={spinning || !n} aria-label="Gira la bottiglia">
+            <button className="bottle-btn" onClick={spin} disabled={!n} aria-label="Gira la bottiglia">
               <svg ref={wheelRef} className="bottle" viewBox="-74 -74 148 148"
                 style={{ transform: `rotate(${angle}deg)`, transition: motion }}>
                 <defs>
@@ -290,7 +309,7 @@ export function BeerWheel() {
               </svg>
             </button>
           </div>
-          <p className="muted small bottle-hint">{spinning ? "" : "Tocca la bottiglia per farla girare"}</p>
+          <p className="muted small bottle-hint">{spinning ? "Toccala di nuovo per darle un'altra spinta" : "Tocca la bottiglia per farla girare"}</p>
           <div ref={resultRef} className={"wheel-result" + (winner ? " show" : "")} aria-live="polite">
             {winner ? (
               <>
