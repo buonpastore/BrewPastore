@@ -3,7 +3,7 @@ import { Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
 import { type Row } from "../lib";
 import { useAuth } from "../auth";
-import { CapDot, capInfo, useCapColors } from "../components/CapColor";
+import { CapDot, CapIcon, capInfo, useCapColors } from "../components/CapColor";
 import { loadCellar, loadProduced } from "../cellar";
 
 // fette coi colori del sito, ammorbiditi
@@ -94,14 +94,12 @@ export function BeerWheel() {
   }), [beers]);
 
   const slices = useMemo(() => beers.map((b, i) => {
-    const a0 = (i * seg - 90) * Math.PI / 180, a1 = ((i + 1) * seg - 90) * Math.PI / 180, r = 90;
-    const d = n === 1 ? "M 0 -90 A 90 90 0 1 1 -0.01 -90 Z"
+    const a0 = (i * seg - 90) * Math.PI / 180, a1 = ((i + 1) * seg - 90) * Math.PI / 180, r = 100;
+    const d = n === 1 ? "M 0 -100 A 100 100 0 1 1 -0.01 -100 Z"
       : `M 0 0 L ${r * Math.cos(a0)} ${r * Math.sin(a0)} A ${r} ${r} 0 ${seg > 180 ? 1 : 0} 1 ${r * Math.cos(a1)} ${r * Math.sin(a1)} Z`;
     return { b, i, d, mid: i * seg + seg / 2 };
   }), [beers, seg, n]);
 
-  // dentelli del tappo al centro (morbidi, da cartone)
-  const crown = Array.from({ length: 36 }, (_, i) => { const a = (i * 10 - 90) * Math.PI / 180, r = i % 2 ? 20 : 23; return `${r * Math.cos(a)},${r * Math.sin(a)}`; }).join(" ");
 
   // tic a ogni fetta che passa sotto la freccia
   const follow = (until: number) => {
@@ -148,33 +146,30 @@ export function BeerWheel() {
       {!all.length ? <p className="note">Non c'è ancora nessuna birra imbottigliata da mettere sulla ruota.</p> : (
         <div className="wheel-wrap">
           <div className="wheel-stage">
-            <svg className="wheel-pointer" viewBox="0 0 40 46" aria-hidden><path d="M20 44 L4 8 Q20 -4 36 8 Z" /></svg>
+            <svg className="wheel-pointer" viewBox="0 0 24 20" aria-hidden><path d="M12 19 L2 2 H22 Z" /></svg>
             <div className="wheel-disc">
-              <svg ref={wheelRef} className="wheel" viewBox="-104 -104 208 208" role="img" aria-label="Ruota delle birre"
+              <svg ref={wheelRef} className="wheel" viewBox="-102 -102 204 204" role="img" aria-label="Ruota delle birre"
                 style={{ transform: `rotate(${angle}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(.12,.72,.1,1)` : "none" }}>
-                <circle r="101" className="wheel-rim" />
-                {Array.from({ length: 12 }, (_, i) => { const a = (i * 30 - 90) * Math.PI / 180; return <circle key={i} cx={96 * Math.cos(a)} cy={96 * Math.sin(a)} r="2.2" className="wheel-dot" />; })}
-                {n === 0 && <circle r="90" className="wheel-empty" />}
+                <circle r="100" className="wheel-base" />
                 {slices.map(({ b, i, d, mid }) => {
                   const name = nameOf(b);
                   const label = name.length > 22 ? name.slice(0, 21) + "…" : name;
-                  const fs = Math.max(5.5, Math.min(12, 52 / (0.6 * Math.max(label.length, 4)), (2 * Math.PI * 55 * seg / 360) * 0.55));
+                  const fs = Math.max(5.5, Math.min(10.5, 50 / (0.58 * Math.max(label.length, 4)), (2 * Math.PI * 55 * seg / 360) * 0.5));
                   const cap = capInfo(b.cap_color)?.hex;
                   return (
                     <g key={b.id}>
-                      <path d={d} style={{ fill: fills[i] }} className="wheel-slice" />
+                      <path d={d} className={"wheel-slice" + (i % 2 ? " alt" : "")} />
                       <g transform={`rotate(${mid - 90})`}>
-                        {cap && <circle cx="80" cy="0" r="5.2" fill={cap} className="wheel-capdot" />}
-                        <text x={cap ? 71 : 82} y="0.5" textAnchor="end" dominantBaseline="middle" fontSize={fs} className="wheel-text">{label}</text>
+                        {cap && <g transform="translate(77 -8) rotate(90 8 8)"><CapIcon hex={cap} size={16} /></g>}
+                        <text x={cap ? 73 : 88} y="0.5" textAnchor="end" dominantBaseline="middle" fontSize={fs} className="wheel-text">{label}</text>
                       </g>
                     </g>
                   );
                 })}
-                <circle r="90" className="wheel-inner-ring" />
-                <polygon points={crown} className="wheel-crown" />
+                <circle r="22" className="wheel-hub" />
               </svg>
             </div>
-            <button className="wheel-spin" onClick={spin} disabled={spinning || !n}>{spinning ? "…" : "GIRA"}</button>
+            <button className="wheel-spin" onClick={spin} disabled={spinning || !n}>{spinning ? "…" : "Gira"}</button>
           </div>
 
           <div className={"wheel-result" + (winner ? " show" : "")} aria-live="polite">

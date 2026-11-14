@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.192", date: "15/11/2026 05:40", text: "Ruota della birra semplificata, come il resto dell’app: fette piatte coi colori delle schede, linee sottili, il tappo stilizzato di ogni birra e il nome scritto come negli elenchi; pulsante «Gira» giallo al centro" },
   { version: "0.191", date: "15/11/2026 05:25", text: "Conti, Produzione e Utilità: i pulsanti in alto sono sempre su due righe, anche su schermi larghi (tablet, telefono in orizzontale, computer)" },
   { version: "0.190", date: "15/11/2026 05:15", text: "Cantina: pulsante «Azzera tutte» e «Riconosci dalla foto», che conta i tappi in una foto e li abbina alle birre dal colore del tappo (puoi correggere prima di salvare). Ruota della birra rifatta coi colori del sito, più tenue e in stile cartone, con il tappino colorato su ogni fetta, il tic mentre gira e un «ding» quando si ferma (si può togliere l’audio)" },
   { version: "0.189", date: "15/11/2026 04:45", text: "Pulsanti delle sezioni con 4 o più voci (Produzione, Conti, Utilità) su due colonne. Ruota, cantina, degustazioni e tappi: ci sono tutte le birre dall’imbottigliamento in poi (anche quelle già degustate). Nuovo stato del batch «Esaurita»: la birra non ce l’ha più nessuno e sparisce da tappi, ruota, degustazioni, cantina e batch in corso. Da eseguire: 0019_birra_esaurita.sql" },
