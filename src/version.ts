@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.181", date: "15/11/2026 02:25", text: "Preventivo: cambiando vista degli oggetti la pagina non si sposta più (il posto di «Espandi tutto» resta anche nella vista «Tutti»)" },
   { version: "0.180", date: "15/11/2026 02:15", text: "Preventivo: tre pulsanti sopra gli oggetti per vederli tutti in un unico elenco, divisi solo per fornitore, oppure per fornitore e tipologia. L’app ricorda la scelta" },
   { version: "0.179", date: "15/11/2026 02:00", text: "Il menu «Chat» (con Chat e Task) ora si chiama «Attività»" },
   { version: "0.178", date: "15/11/2026 01:50", text: "Confronto preventivi più chiaro: niente testo lungo, solo chi costa meno e di quanto, il totale a parità di oggetti, gli oggetti che mancano da una parte e dall’altra e una tabella degli oggetti in comune con il prezzo più basso evidenziato e la differenza" },

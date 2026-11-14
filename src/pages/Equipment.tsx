@@ -548,8 +548,8 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
     <div className="panel">
       <div className="pv-head">
         <h2>Oggetti</h2>
-        {items.length > 0 && view !== "lista" && (
-          <button className="btn small" onClick={() => {
+        {items.length > 0 && (
+          <button className="btn small" style={view === "lista" ? { visibility: "hidden" } : undefined} tabIndex={view === "lista" ? -1 : undefined} onClick={() => {
             if (allOpen) { setOpenSup(new Set()); setOpenCat(new Set()); }
             else { setOpenSup(new Set(sups)); setOpenCat(new Set(allCats)); }
           }}>{allOpen ? "Chiudi tutto" : "Espandi tutto"}</button>
