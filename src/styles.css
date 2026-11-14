@@ -1436,3 +1436,34 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 @media (max-width: 420px) { .cf-two { grid-template-columns: 1fr; } }
 .cf-result { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); text-align: center; font-size: 1.05rem; }
 .cf-result strong { color: var(--gold); font-size: 1.3rem; }
+
+/* ---------------- Task ---------------- */
+.tk-list { display: flex; flex-direction: column; gap: 8px; }
+.tk-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--tc); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.tk-ico { flex: none; color: var(--tc); }
+.tk-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tk-badge { flex: none; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); }
+.ts-new { --tc: var(--gold); }
+.ts-doing { --tc: var(--teal); }
+.ts-done { --tc: var(--muted); }
+.tk-item.ts-done { opacity: .7; }
+.tk-who { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 6px 0 12px; }
+.tk-who .pay-method { text-align: center; }
+.tk-detail { max-width: 560px; }
+.tk-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.tk-detail-head h2 { margin: 0; }
+.tk-desc { white-space: pre-wrap; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.tk-states { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 6px 0 14px; }
+.tk-state { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font: 600 .9rem var(--sans); cursor: pointer; }
+.tk-state svg { color: var(--tc); }
+.tk-state.on { border-color: var(--tc); background: color-mix(in srgb, var(--tc) 16%, var(--surface-2)); box-shadow: 0 0 0 1px var(--tc) inset; }
+.tk-notes { display: flex; flex-direction: column; gap: 8px; max-height: 40vh; overflow-y: auto; margin: 6px 0 10px; }
+.tk-note { padding: 8px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.tk-note.mine { border-color: color-mix(in srgb, var(--gold) 35%, transparent); }
+.tk-note p { margin: 4px 0 0; white-space: pre-wrap; }
+.tk-note-head { display: flex; align-items: center; gap: 8px; }
+.tk-note-head .icon { margin-left: auto; min-width: 0; min-height: 0; }
+.tk-file { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--teal); font: 600 .85rem var(--sans); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tk-add textarea { width: 100%; }
+.tk-add-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; }
+.tk-add-row label.mini-btn { cursor: pointer; }

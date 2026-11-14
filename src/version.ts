@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.149", date: "14/11/2026 17:20", text: "Nuova sezione Task (accanto alla Chat): cose da fare con chi le deve fare, note con foto o file e stato inserita / in corso / terminata; le terminate vanno nello storico. Da eseguire: 0013_task.sql" },
   { version: "0.148", date: "14/11/2026 16:55", text: "Impostazioni → Costi fissi rifatta: per ogni formato di bottiglia prezzo del pacco e numero di bottiglie con − e +, e subito il costo a bottiglia; corrente e acqua con caselle grandi" },
   { version: "0.147", date: "14/11/2026 16:40", text: "Impostazioni → Soci rifatta: una scheda per socio con iniziali e ruolo; «Entra come» è un pulsante tondo con la freccia" },
   { version: "0.146", date: "14/11/2026 16:30", text: "Impostazioni: il nome nel profilo non resta più vuoto; pallino utente in alto rifatto con anello colorato e rotellina delle impostazioni" },

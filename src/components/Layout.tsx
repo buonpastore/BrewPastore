@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
-  Calculator, LayoutGrid, Milk, Sparkles, FlaskConical, Timer,
+  Calculator, ClipboardList, LayoutGrid, Milk, Sparkles, FlaskConical, Timer,
 } from "lucide-react";
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
@@ -35,7 +35,13 @@ export const GROUPS: Group[] = [
       { to: "/impianto", label: "Preventivi impianto", short: "Preventivi", icon: Wrench, color: "var(--gold)" },
     ],
   },
-  { key: "chat", label: "Chat", icon: MessageCircle, to: "/chat", color: "var(--magenta)" },
+  {
+    key: "chat", label: "Chat", icon: MessageCircle, to: "/chat", color: "var(--magenta)",
+    tabs: [
+      { to: "/chat", label: "Chat", icon: MessageCircle, color: "var(--gold)" },
+      { to: "/task", label: "Task", short: "Task", icon: ClipboardList, color: "var(--teal)" },
+    ],
+  },
   {
     key: "utilita", label: "Utilità", icon: LayoutGrid, to: "/utilita/bottiglie", color: "var(--gold)",
     tabs: [
