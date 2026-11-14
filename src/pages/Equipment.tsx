@@ -533,9 +533,9 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
               {i.notes && <><dt>Note</dt><dd className="pre">{i.notes}</dd></>}
             </dl>
             {canEdit && (
-              <div className="row-actions">
-                <button className="btn" onClick={() => setEdit({ ...i })}>✏️ Modifica</button>
-                <button className="btn danger" onClick={() => remove(i)}>🗑️ Togli</button>
+              <div className="qi-acts">
+                <button className="icon" title="Modifica" aria-label="Modifica" onClick={() => setEdit({ ...i })}>✏️</button>
+                <button className="icon" title="Togli dal preventivo" aria-label="Togli" onClick={() => remove(i)}>🗑️</button>
               </div>
             )}
           </div>
