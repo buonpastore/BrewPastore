@@ -224,8 +224,8 @@ export function BeerWheel() {
                     <stop offset="1" stopColor="#3b1d06" />
                   </linearGradient>
                 </defs>
-                {/* bottiglia col collo verso l'alto; il centro di rotazione è sul bollino */}
-                <g transform="translate(0 -15)">
+                {/* bottiglia col collo verso l'alto: gira attorno al suo baricentro, a metà bottiglia, come una vera sul tavolo */}
+                <g transform="translate(0 4)">
                 <path className="bottle-glass" fill="url(#glass)" d="M -4.6 -47 L -4.6 -33 C -4.6 -26 -13.5 -22 -13.5 -12 L -13.5 37 C -13.5 41 -11 43.5 -7 43.5 L 7 43.5 C 11 43.5 13.5 41 13.5 37 L 13.5 -12 C 13.5 -22 4.6 -26 4.6 -33 L 4.6 -47 Z" />
                 <rect className="bottle-lip" x="-5.8" y="-50.5" width="11.6" height="4" rx="1.6" />
                 <path className="bottle-cap" d="M -6.4 -50.5 L -6.4 -54.6 L -5 -56 L -3.2 -54.8 L -1.6 -56 L 0 -54.8 L 1.6 -56 L 3.2 -54.8 L 5 -56 L 6.4 -54.6 L 6.4 -50.5 Z" />
@@ -233,9 +233,11 @@ export function BeerWheel() {
                 <path className="bottle-shine" d="M -8.5 -14 C -8.5 -18 -6 -21 -4 -23 M -9 -6 V 34" />
                 </g>
                 {/* il bollino «Gira» è l'etichetta della bottiglia e gira con lei */}
-                <circle r="10.5" className="seal-ring" />
-                <circle r="9" className="seal" />
-                <text className="seal-text" textAnchor="middle" dominantBaseline="central" fontSize="5.2">{spinning ? "…" : "GIRA"}</text>
+                <g transform="translate(0 19)">
+                  <circle r="10.5" className="seal-ring" />
+                  <circle r="9" className="seal" />
+                  <text className="seal-text" textAnchor="middle" dominantBaseline="central" fontSize="5.2">{spinning ? "…" : "GIRA"}</text>
+                </g>
               </svg>
             </button>
           </div>
