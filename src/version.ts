@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.137", date: "14/11/2026 14:30", text: "«Entra come»: funziona anche se la funzione su Supabase si chiama «Impersonate» con la maiuscola" },
   { version: "0.136", date: "14/11/2026 14:20", text: "Tolto il pulsante per copiare il codice della funzione dalle Impostazioni" },
   { version: "0.135", date: "14/11/2026 14:10", text: "Impostazioni → Soci: pulsante per copiare il codice della funzione «impersonate» da incollare su Supabase" },
   { version: "0.134", date: "14/11/2026 02:30", text: "Impostazioni → Soci: l'amministratore può entrare nell'app come un altro utente e poi tornare a sé (serve la funzione «impersonate» su Supabase)" },

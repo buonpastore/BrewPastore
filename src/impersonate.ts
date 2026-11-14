@@ -11,7 +11,11 @@ export function adminBackup(): { name: string } | null {
 export async function loginAs(userId: string, adminName: string) {
   const { data: cur } = await supabase.auth.getSession();
   if (!cur.session) throw new Error("Sessione non valida");
-  const { data, error } = await supabase.functions.invoke("impersonate", { body: { user_id: userId } });
+  // la funzione può chiamarsi «impersonate» o «Impersonate» (il nome su Supabase distingue le maiuscole)
+  let res = await supabase.functions.invoke("impersonate", { body: { user_id: userId } });
+  const st = (res.error as { context?: Response } | null)?.context?.status;
+  if (res.error && (st === 404 || (res.error as { name?: string }).name === "FunctionsFetchError")) res = await supabase.functions.invoke("Impersonate", { body: { user_id: userId } });
+  const { data, error } = res;
   if (error) {
     const ctx = (error as { context?: Response }).context;
     let msg = "";
