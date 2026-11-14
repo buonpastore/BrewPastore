@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.194", date: "15/11/2026 06:15", text: "Ruota della birra: fette tenui di sei colori (giallo, ciano, magenta, arancio, verde luppolo, rosso) con una fascetta colorata sul bordo, come i chip dell’app. In Attività prima i Task e poi la Chat" },
   { version: "0.193", date: "15/11/2026 06:00", text: "Nuovi stati del batch: Cotta → Fermentata → Imbottigliata → Degustata → Esaurita. Una birra degustata resta in giro (ruota, cantina, degustazioni, batch in corso); il ciclo finisce solo quando è esaurita. «In maturazione» diventa Fermentata e «Finito» diventa Degustata. Da eseguire: 0020_stati_batch.sql" },
   { version: "0.192", date: "15/11/2026 05:40", text: "Ruota della birra semplificata, come il resto dell’app: fette piatte coi colori delle schede, linee sottili, il tappo stilizzato di ogni birra e il nome scritto come negli elenchi; pulsante «Gira» giallo al centro" },
   { version: "0.191", date: "15/11/2026 05:25", text: "Conti, Produzione e Utilità: i pulsanti in alto sono sempre su due righe, anche su schermi larghi (tablet, telefono in orizzontale, computer)" },

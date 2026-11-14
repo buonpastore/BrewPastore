@@ -6,9 +6,8 @@ import { useAuth } from "../auth";
 import { CapDot, CapIcon, capInfo, useCapColors } from "../components/CapColor";
 import { loadCellar, loadProduced } from "../cellar";
 
-// fette coi colori del sito, ammorbiditi
-const SITE = ["var(--gold)", "var(--teal)", "var(--magenta)"];
-const soft = (c: string) => `color-mix(in srgb, ${c} 42%, #1d1712)`;
+// colori delle fette: quelli del sito e delle etichette, usati tenui come nei chip dell'app
+const SITE = ["var(--gold)", "var(--teal)", "var(--magenta)", "var(--orange)", "var(--hop)", "var(--cat-lievito, #e5483d)"];
 const MUTE_KEY = "pastorizia-ruota-muta";
 
 /** Suoni della ruota (Web Audio, niente file): tic a ogni fetta e un «ding» alla fine. */
@@ -87,10 +86,11 @@ export function BeerWheel() {
   const n = beers.length;
   const seg = n ? 360 / n : 360;
   const nameOf = (b: Row) => b.recipes?.name ?? b.code ?? "Birra";
-  const fills = useMemo(() => beers.map((_, i) => {
-    let c = i % 3;
+  const accents = useMemo(() => beers.map((_, i) => {
+    const k = Math.min(beers.length, SITE.length);
+    let c = i % k;
     if (i === beers.length - 1 && i > 0 && c === 0) c = 1;   // l'ultima non uguale alla prima
-    return soft(SITE[c]);
+    return SITE[c];
   }), [beers]);
 
   const slices = useMemo(() => beers.map((b, i) => {
@@ -119,6 +119,12 @@ export function BeerWheel() {
       if (performance.now() < until) raf.current = requestAnimationFrame(step);
     };
     raf.current = requestAnimationFrame(step);
+  };
+
+  // fascetta colorata sul bordo di ogni fetta
+  const arc = (i: number) => {
+    const a0 = (i * seg - 90) * Math.PI / 180, a1 = ((i + 1) * seg - 90) * Math.PI / 180, r = 96.5;
+    return `M ${r * Math.cos(a0)} ${r * Math.sin(a0)} A ${r} ${r} 0 ${seg > 180 ? 1 : 0} 1 ${r * Math.cos(a1)} ${r * Math.sin(a1)}`;
   };
 
   const spin = () => {
@@ -158,10 +164,11 @@ export function BeerWheel() {
                   const cap = capInfo(b.cap_color)?.hex;
                   return (
                     <g key={b.id}>
-                      <path d={d} className={"wheel-slice" + (i % 2 ? " alt" : "")} />
+                      <path d={d} className="wheel-slice" style={{ ["--c" as string]: accents[i] }} />
+                      {n > 1 && <path d={arc(i)} className="wheel-band" style={{ ["--c" as string]: accents[i] }} />}
                       <g transform={`rotate(${mid - 90})`}>
-                        {cap && <g transform="translate(77 -8) rotate(90 8 8)"><CapIcon hex={cap} size={16} /></g>}
-                        <text x={cap ? 73 : 88} y="0.5" textAnchor="end" dominantBaseline="middle" fontSize={fs} className="wheel-text">{label}</text>
+                        {cap && <g transform="translate(72 -8) rotate(90 8 8)"><CapIcon hex={cap} size={16} /></g>}
+                        <text x={cap ? 68 : 86} y="0.5" textAnchor="end" dominantBaseline="middle" fontSize={fs} className="wheel-text">{label}</text>
                       </g>
                     </g>
                   );

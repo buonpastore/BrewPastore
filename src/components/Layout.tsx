@@ -39,10 +39,10 @@ export const GROUPS: Group[] = [
     ],
   },
   {
-    key: "chat", label: "Attività", icon: MessageCircle, to: "/chat", color: "var(--magenta)",
+    key: "chat", label: "Attività", icon: MessageCircle, to: "/task", color: "var(--magenta)",
     tabs: [
-      { to: "/chat", label: "Chat", icon: MessageCircle, color: "var(--gold)" },
       { to: "/task", label: "Task", short: "Task", icon: ClipboardList, color: "var(--teal)" },
+      { to: "/chat", label: "Chat", icon: MessageCircle, color: "var(--gold)" },
     ],
   },
   {
