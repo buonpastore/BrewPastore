@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Receipt, Check, Hourglass, ChevronDown, ChevronRight, Paperclip, Trash2 } from "lucide-react";
+import { Camera, Receipt, Check, Hourglass, ChevronDown, ChevronRight, Paperclip, Trash2 } from "lucide-react";
 import { supabase, uploadFile, openFile, errMsg, eur, date, type Row } from "../lib";
 import { useAuth } from "../auth";
 
@@ -232,7 +232,20 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
           const diff = Math.round((total - sum) * 100) / 100;
           return <p className={"small " + (Math.abs(diff) < 0.01 ? "ok" : "warn")}>{Math.abs(diff) < 0.01 ? "✓ Le quote tornano" : diff > 0 ? `Mancano ${eur(diff)}` : `Ci sono ${eur(-diff)} in più`}</p>;
         })()}
-        <label className="block"><span>Scontrino (facoltativo)</span><input type="file" accept="image/*,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] ?? null)} /></label>
+        <span className="nb-label">Scontrino (facoltativo)</span>
+        {receipt ? (
+          <div className="xp-receipt">
+            {receipt.type.startsWith("image/") ? <img src={URL.createObjectURL(receipt)} alt="Scontrino" /> : <span className="xp-receipt-pdf">📄</span>}
+            <span className="xp-receipt-name">{receipt.name}</span>
+            <button type="button" className="mini-btn" onClick={() => setReceipt(null)}>Togli</button>
+          </div>
+        ) : (
+          <label className="xp-drop">
+            <Camera size={26} />
+            <span><strong>Aggiungi lo scontrino</strong><small>foto, immagine o PDF</small></span>
+            <input type="file" accept="image/*,application/pdf" hidden onChange={(e) => setReceipt(e.target.files?.[0] ?? null)} />
+          </label>
+        )}
         {error && <p className="error">{error}</p>}
         <div className="qe-sheet-btns">
           <button type="button" className="btn" onClick={onClose}>Annulla</button>
