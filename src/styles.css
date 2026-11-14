@@ -1747,3 +1747,25 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .pv-sel-btn { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--teal); cursor: pointer; padding: 0; }
 .pv-sel-btn + .pv-sel-btn { color: var(--muted); }
 .pv-sel-btn:disabled { opacity: .35; cursor: default; }
+
+/* ruota della birra */
+.wheel-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 8px; }
+.wheel-stage { position: relative; width: min(88vw, 420px); aspect-ratio: 1; }
+.wheel { width: 100%; height: 100%; display: block; filter: drop-shadow(0 10px 30px rgba(0, 0, 0, .5)); }
+.wheel-rim { fill: none; stroke: var(--gold); stroke-width: 3; }
+.wheel-slice { stroke: rgba(0, 0, 0, .35); stroke-width: .8; }
+.wheel-text { font-family: var(--sans); font-weight: 800; letter-spacing: .01em; paint-order: stroke; stroke: rgba(0, 0, 0, .12); stroke-width: .4; }
+.wheel-hub { fill: var(--surface); stroke: var(--gold); stroke-width: 2; }
+.wheel-pointer { position: absolute; top: -14px; left: 50%; width: 38px; height: 44px; transform: translateX(-50%); z-index: 2; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .5)); }
+.wheel-pointer path { fill: var(--gold); stroke: #1f1500; stroke-width: 2; }
+.wheel-spin { position: absolute; top: 50%; left: 50%; width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid #1f1500; background: var(--gold); color: #1f1500; font: 900 clamp(.8rem, 3.6vw, 1.05rem) var(--sans); letter-spacing: .06em; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .45); z-index: 2; }
+.wheel-spin:disabled { opacity: .85; cursor: default; }
+.wheel-spin:not(:disabled):active { transform: translate(-50%, -50%) scale(.95); }
+.wheel-result { min-height: 110px; width: min(88vw, 420px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+.wheel-result.show { border-color: var(--gold); background: rgba(237, 165, 18, .1); animation: wheel-pop .45s ease-out; }
+.wheel-result strong { display: inline-flex; align-items: center; gap: 8px; font-size: 1.5rem; color: var(--gold-2); }
+.wheel-links { display: flex; gap: 16px; margin-top: 6px; font-size: .9rem; }
+@keyframes wheel-pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.wheel-disc { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+.wheel { filter: none; }
+.wheel-hub { r: 20; }

@@ -7,6 +7,7 @@ import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
   Calculator, ClipboardList, LayoutGrid, Milk, Sparkles, FlaskConical, Timer,
+  Disc3,
 } from "lucide-react";
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
@@ -50,6 +51,7 @@ export const GROUPS: Group[] = [
       { to: "/utilita/carbonazione", label: "Carbonazione", short: "CO₂", icon: Sparkles, color: "var(--teal)" },
       { to: "/utilita/ph", label: "Correzione pH", short: "pH", icon: FlaskConical, color: "var(--magenta)" },
       { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--gold)" },
+      { to: "/utilita/ruota", label: "Ruota della birra", short: "Ruota", icon: Disc3, color: "var(--magenta)" },
     ],
   },
 ];

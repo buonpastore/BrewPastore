@@ -4,6 +4,7 @@ import { Play, Pause, RotateCcw, Bell, Minus, Plus } from "lucide-react";
 import { supabase, errMsg, num, PRIMING_FACTORS, residualCo2, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { STYLE_CO2, findStyle } from "../styleGuide";
+import { BeerWheel } from "./BeerWheel";
 
 /** Utilità: conta bottiglie, carbonazione, correzione del pH, timer dei luppoli. */
 export function Utilities() {
@@ -11,6 +12,7 @@ export function Utilities() {
   if (tool === "carbonazione") return <Carbonation />;
   if (tool === "ph") return <PhAdjust />;
   if (tool === "timer") return <HopTimer />;
+  if (tool === "ruota") return <BeerWheel />;
   return <BottleCount />;
 }
 
