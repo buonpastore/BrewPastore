@@ -1,3 +1,4 @@
+import { Tabs } from "../components/Layout";
 import { CapColorsSettings } from "../components/CapColor";
 import { CapGallery, CapDot } from "../components/CapColor";
 import { lastStep } from "../components/PreviousBatches";
@@ -223,6 +224,7 @@ function ThemePicker() {
 
 export function Settings() {
   const { isAdmin, profiles, profile } = useAuth();
+  const [settingsTab, setSettingsTab] = useState(() => (/versioni|storico/.test(window.location.hash) ? "app" : "utente"));
   const [settings, setSettings] = useState<Row[]>([]);
   const [name, setName] = useState(profile?.display_name ?? "");
   const [msg, setMsg] = useState("");
@@ -239,58 +241,76 @@ export function Settings() {
     setMsg(error ? errMsg(error) : "Nome aggiornato ✓ (ricarica la pagina)");
   };
 
+  const tab = settingsTab;
   return (
     <div>
       <div className="page-head">
         <h1>Impostazioni</h1>
-        <a className="btn small" href="#/impostazioni" onClick={(e) => { e.preventDefault(); document.getElementById("storico")?.scrollIntoView({ behavior: "smooth" }); }}>🕓 Vai allo storico versioni</a>
       </div>
+      <Tabs grid active={tab} onChange={(k) => setSettingsTab(k)} tabs={[
+        ["utente", "Utente"], ["aspetto", "Aspetto"], ["costi", "Costi fissi"],
+        ["tappi", "Tappi"], ["utenti", "Soci"], ["app", "App e storico"],
+      ]} />
       {msg && <p className="ok">{msg}</p>}
-      <ThemePicker />
-      <CapColorsSettings canEdit={isAdmin} />
-      <div className="panel">
-        <h2>Il mio profilo</h2>
-        <div className="inline-form">
-          <label><span>Nome visualizzato</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
-          <button className="btn small" onClick={saveName}>Salva</button>
+      {tab === "utente" && (
+        <div className="panel">
+          <h2>Il mio profilo</h2>
+          <div className="inline-form">
+            <label><span>Nome visualizzato</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
+            <button className="btn small" onClick={saveName}>Salva</button>
+          </div>
+          <SetPassword />
+          <button className="btn danger" style={{ marginTop: 8 }} onClick={() => supabase.auth.signOut()}>Esci da Pastorizia</button>
         </div>
-        <SetPassword />
-        <button className="btn danger" style={{ marginTop: 8 }} onClick={() => supabase.auth.signOut()}>Esci da Pastorizia</button>
-      </div>
-      {isAdmin && <MascotUpload />}
-      <div className="panel">
-        <h2>Prezzi per i costi delle birre</h2>
-        <table>
-          <tbody>
-            {settings.map((s) => (
-              <tr key={s.key}>
-                <td>{s.label}</td>
-                <td>{isAdmin
-                  ? <input defaultValue={s.value} inputMode="decimal" style={{ width: 100 }} onBlur={(e) => e.target.value !== String(s.value) && saveSetting(s, e.target.value)} />
-                  : s.value} {s.unit}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {(() => {
-          const per = (k: string) => { const p = settings.find((x) => x.key === `bottle_${k}_pack_price`), q = settings.find((x) => x.key === `bottle_${k}_pack_qty`); return p && q && Number(p.value) > 0 && Number(q.value) > 0 ? eur(Number(p.value) / Number(q.value)) : null; };
-          const b66 = per("66"), b33 = per("33");
-          return settings.some((x) => x.key.startsWith("bottle_"))
-            ? <p className="muted small">Bottiglia da 66 cl: {b66 ?? "—"} l'una · da 33 cl: {b33 ?? "non impostato"}. Nei costi per ora si usa sempre la bottiglia da 66 cl.</p>
-            : <p className="muted small">Per impostare il prezzo delle bottiglie esegui nello SQL Editor di Supabase il file <code>0008_prezzo_bottiglie.sql</code> (intanto uso 11 € per 24 bottiglie da 66 cl).</p>;
-        })()}
-      </div>
-      <div className="panel">
-        <h2>Utenti</h2>
-        <table>
-          <thead><tr><th>Nome</th><th>Ruolo</th></tr></thead>
-          <tbody>{profiles.map((p) => <tr key={p.id}><td>{p.display_name}</td><td>{p.role === "admin" ? "Amministratore" : "Consultazione"}</td></tr>)}</tbody>
-        </table>
-        <p className="muted small">Gli utenti si aggiungono da Supabase → Authentication → Users. Il ruolo si cambia dalla tabella <code>profiles</code>.</p>
-      </div>
-      <Releases />
-      <HistoryPage embedded />
-      <p className="muted small version">Pastorizia {VERSION_LABEL} · pubblicata il {__BUILD_TIME__}</p>
+      )}
+      {tab === "aspetto" && (
+        <>
+          <ThemePicker />
+          {isAdmin && <MascotUpload />}
+        </>
+      )}
+      {tab === "costi" && (
+        <div className="panel">
+          <h2>Prezzi per i costi delle birre</h2>
+          <table>
+            <tbody>
+              {settings.map((s) => (
+                <tr key={s.key}>
+                  <td>{s.label}</td>
+                  <td>{isAdmin
+                    ? <input defaultValue={s.value} inputMode="decimal" style={{ width: 100 }} onBlur={(e) => e.target.value !== String(s.value) && saveSetting(s, e.target.value)} />
+                    : s.value} {s.unit}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {(() => {
+            const per = (k: string) => { const p = settings.find((x) => x.key === `bottle_${k}_pack_price`), q = settings.find((x) => x.key === `bottle_${k}_pack_qty`); return p && q && Number(p.value) > 0 && Number(q.value) > 0 ? eur(Number(p.value) / Number(q.value)) : null; };
+            const b66 = per("66"), b33 = per("33");
+            return settings.some((x) => x.key.startsWith("bottle_"))
+              ? <p className="muted small">Bottiglia da 66 cl: {b66 ?? "—"} l'una · da 33 cl: {b33 ?? "non impostato"}. Nei costi per ora si usa sempre la bottiglia da 66 cl.</p>
+              : <p className="muted small">Per impostare il prezzo delle bottiglie esegui nello SQL Editor di Supabase il file <code>0008_prezzo_bottiglie.sql</code> (intanto uso 11 € per 24 bottiglie da 66 cl).</p>;
+          })()}
+        </div>
+      )}
+      {tab === "tappi" && <CapColorsSettings canEdit={isAdmin} />}
+      {tab === "utenti" && (
+        <div className="panel">
+          <h2>Soci</h2>
+          <table>
+            <thead><tr><th>Nome</th><th>Ruolo</th></tr></thead>
+            <tbody>{profiles.map((p) => <tr key={p.id}><td>{p.display_name}</td><td>{p.role === "admin" ? "Amministratore" : "Consultazione"}</td></tr>)}</tbody>
+          </table>
+          <p className="muted small">Gli utenti si aggiungono da Supabase → Authentication → Users. Il ruolo si cambia dalla tabella <code>profiles</code>.</p>
+        </div>
+      )}
+      {tab === "app" && (
+        <>
+          <Releases />
+          <HistoryPage embedded />
+          <p className="muted small version">Pastorizia {VERSION_LABEL} · pubblicata il {__BUILD_TIME__}</p>
+        </>
+      )}
     </div>
   );
 }

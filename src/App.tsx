@@ -1,4 +1,5 @@
 import { BeerCosts } from "./pages/BeerCosts";
+import { Utilities } from "./pages/Utilities";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
 import { Layout } from "./components/Layout";
@@ -38,6 +39,8 @@ export default function App() {
           <Route path="chat" element={<ChatPage />} />
           <Route path="storico" element={<HistoryPage />} />
           <Route path="impostazioni" element={<Settings />} />
+          <Route path="utilita" element={<Navigate to="/utilita/bottiglie" replace />} />
+          <Route path="utilita/:tool" element={<Utilities />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
       </Routes>

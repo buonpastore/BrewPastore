@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
-  Calculator,
+  Calculator, LayoutGrid, Milk, Sparkles, FlaskConical, Timer,
 } from "lucide-react";
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
@@ -34,11 +34,20 @@ export const GROUPS: Group[] = [
     ],
   },
   { key: "chat", label: "Chat", icon: MessageCircle, to: "/chat", color: "var(--magenta)" },
-  { key: "impostazioni", label: "Impostazioni", icon: Settings, to: "/impostazioni", color: "var(--muted)" },
+  {
+    key: "utilita", label: "Utilità", icon: LayoutGrid, to: "/utilita/bottiglie", color: "var(--gold)",
+    tabs: [
+      { to: "/utilita/bottiglie", label: "Conta bottiglie", short: "Bottiglie", icon: Milk, color: "var(--gold)" },
+      { to: "/utilita/carbonazione", label: "Carbonazione", short: "CO₂", icon: Sparkles, color: "var(--teal)" },
+      { to: "/utilita/ph", label: "Correzione pH", short: "pH", icon: FlaskConical, color: "var(--magenta)" },
+      { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--gold)" },
+    ],
+  },
 ];
 
 function groupOf(path: string): Group {
   if (path === "/") return GROUPS[0];
+  if (path.startsWith("/impostazioni") || path.startsWith("/storico")) return { key: "impostazioni", label: "Impostazioni", icon: Settings, to: "/impostazioni", color: "var(--muted)" };
   return GROUPS.find((g) => g.key !== "home" && (path.startsWith(g.to) || g.tabs?.some((t) => tabActive(t, path)))) ?? GROUPS[0];
 }
 
@@ -87,7 +96,7 @@ export function Layout() {
         <div className="user">
           <span className="user-name">{profile?.display_name}</span>
           {isAdmin && <span className="badge admin">admin</span>}
-          <NavLink to="/impostazioni" className="avatar" title="Profilo">{initials(profile?.display_name)}</NavLink>
+          <NavLink to="/impostazioni" className="avatar" title="Impostazioni e profilo">{initials(profile?.display_name)}</NavLink>
           <button className="icon-btn desktop-only" title="Esci" onClick={() => supabase.auth.signOut()}><LogOut size={18} /></button>
         </div>
       </header>
@@ -110,6 +119,7 @@ export function Layout() {
           );
         })}
         <div className="sidebar-foot">
+          <NavLink to="/impostazioni" className="sidebar-logout"><Settings size={17} /> Impostazioni</NavLink>
           <button className="sidebar-logout" onClick={() => supabase.auth.signOut()}><LogOut size={17} /> Esci</button>
           <NavLink to="/impostazioni#versioni" className="sidebar-ver">Pastorizia {VERSION_LABEL}</NavLink>
         </div>
