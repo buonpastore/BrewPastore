@@ -1588,3 +1588,25 @@ body::before {
 .qv-file-name { flex: 1; min-width: 0; text-align: left; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; color: var(--text); font: inherit; cursor: pointer; overflow-wrap: anywhere; }
 .qv-file-name small { display: block; color: var(--muted); font-size: .78rem; }
 @media (max-width: 520px) { .pv-items { padding-left: 14px; } .pv-row.lvl2 { padding-left: 20px; } }
+
+/* preventivo: stati e conferma degli oggetti */
+.qv-states { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+.qv-state { min-height: 42px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--muted); font: 700 .9rem var(--sans); cursor: pointer; padding: 4px 6px; }
+.qv-state:disabled { cursor: default; }
+.qv-state.on.qs-inserito { border-color: var(--gold); color: var(--gold-2); background: rgba(237, 165, 18, .14); }
+.qv-state.on.qs-in_valutazione { border-color: var(--magenta); color: var(--magenta); background: color-mix(in srgb, var(--magenta) 14%, transparent); }
+.qv-state.on.qs-confermato { border-color: var(--teal); color: var(--teal); background: color-mix(in srgb, var(--teal) 14%, transparent); }
+.badge.qs-confermato, .badge.qs-scelto { color: var(--teal); }
+.badge.qs-in_valutazione, .badge.qs-in_trattativa { color: var(--magenta); }
+.qv-conf { display: block; color: var(--teal); font-size: .8rem; margin-top: 2px; }
+.qi-line { display: flex; align-items: center; gap: 8px; }
+.qi-line .qi-row { flex: 1; min-width: 0; }
+.qi-check { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0; border-radius: 99px; }
+.qi-check:disabled { cursor: default; }
+.qi.conf .qi-check, .qi-ok { color: var(--teal); }
+.pv-name small { display: flex; align-items: center; gap: 4px; font-size: .74rem; font-weight: 600; margin-top: 2px; }
+.pv-ready { color: var(--teal); }
+.pv-wait { color: var(--muted); }
+.pv-n.all { color: var(--teal); border-color: color-mix(in srgb, var(--teal) 50%, transparent); }
+.pv-acts { padding: 0 14px 12px 42px; }
+.pv-acts .btn { display: inline-flex; align-items: center; gap: 6px; }

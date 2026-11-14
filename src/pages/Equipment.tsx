@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Circle, CircleCheck, ShoppingCart } from "lucide-react";
 import readXlsxFile, { readSheetNames } from "read-excel-file";
 import { supabase, uploadFile, parseQuote, openFile, errMsg, eur, date, num, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -13,7 +13,11 @@ import { textOf } from "../ocr";
 import { parseQuoteText, parseCsv } from "../quoteParser";
 
 const PROJECT_STATUS: Record<string, string> = { in_valutazione: "In valutazione", approvato: "Approvato", acquistato: "Acquistato", scartato: "Scartato" };
-const QUOTE_STATUS: Record<string, string> = { ricevuto: "Ricevuto", in_trattativa: "In trattativa", scelto: "Scelto ✓", scartato: "Scartato", superato: "Superato da nuova versione" };
+/** Stati del preventivo: i primi tre sono quelli che si scelgono. */
+const STATES: [string, string][] = [["inserito", "Inserito"], ["in_valutazione", "In valutazione"], ["confermato", "Confermato"]];
+const QUOTE_STATUS: Record<string, string> = { ...Object.fromEntries(STATES), scartato: "Scartato", superato: "Superato da nuova versione",
+  ricevuto: "Inserito", in_trattativa: "In valutazione", scelto: "Confermato" };   // vecchi nomi, prima di 0017
+const NEED_0017 = "Per gli stati e la conferma degli oggetti esegui prima 0017_preventivi_stati_conferma.sql su Supabase";
 
 /** I prezzi dei preventivi sono sempre IVA inclusa, senza sconti: riga = quantità × prezzo. */
 const lineTotal = (i: Row) => Number(i.quantity) * Number(i.unit_price);
@@ -38,7 +42,7 @@ async function deleteQuote(q: Row) {
   if (error) throw error;
   if (q.source_path) await supabase.storage.from("documents").remove([q.source_path]);
   const { data: rest } = await supabase.from("equipment_quotes").select("id, status, version").eq("project_id", q.project_id).eq("supplier", q.supplier).order("version", { ascending: false });
-  if (rest?.length && rest.every((r) => r.status === "superato")) await supabase.from("equipment_quotes").update({ status: "ricevuto" }).eq("id", rest[0].id);
+  if (rest?.length && rest.every((r) => r.status === "superato")) await supabase.from("equipment_quotes").update({ status: "inserito" }).eq("id", rest[0].id);
 }
 
 // ------------------------------------------------------------------ elenco progetti
@@ -166,7 +170,7 @@ export function EquipmentProject() {
                         <td>{date(q.valid_until)}</td>
                         <td>{t?.items_count ?? 0}</td>
                         <td><strong>{eur(t?.total_with_vat)}</strong>{delta != null && Math.abs(delta) > 0.005 && <span className={delta < 0 ? "ok small" : "warn small"}> {delta < 0 ? "▼" : "▲"} {eur(Math.abs(delta))} vs v{qs[i + 1].version}</span>}</td>
-                        <td><span className="badge">{QUOTE_STATUS[q.status]}</span></td>
+                        <td><span className={"badge qs-" + q.status}>{QUOTE_STATUS[q.status] ?? q.status}</span></td>
                         {isAdmin && <td><button className="icon" title="Elimina preventivo" onClick={async () => {
                           if (!confirm(`Eliminare il preventivo ${q.supplier} v${q.version} con tutte le righe e il file?`)) return;
                           try { await deleteQuote(q); setReload((x) => x + 1); } catch (e) { alert(errMsg(e)); }
@@ -267,7 +271,7 @@ export function EquipmentQuote() {
     if (!confirm(`Creare la versione v${version} partendo da questa? La versione attuale verrà segnata come "superata".`)) return;
     const { id: _i, created_at, updated_at, ...rest } = q;
     void _i; void created_at; void updated_at;
-    const { data: nq, error } = await supabase.from("equipment_quotes").insert({ ...rest, version, status: "ricevuto", quote_date: new Date().toISOString().slice(0, 10) }).select().single();
+    const { data: nq, error } = await supabase.from("equipment_quotes").insert({ ...rest, version, status: "inserito", quote_date: new Date().toISOString().slice(0, 10) }).select().single();
     if (error) return alert(errMsg(error));
     if (items.length) await supabase.from("equipment_quote_items").insert(items.map(({ id: _x, ...i }) => ({ ...i, quote_id: nq.id })));
     await supabase.from("equipment_quotes").update({ status: "superato" }).eq("id", q.id);
@@ -300,9 +304,22 @@ export function EquipmentQuote() {
           {siblings.map((x) => <Link key={x.id} to={`/impianto/preventivo/${x.id}`} className={"badge" + (x.id === q.id ? " admin" : "")}>v{x.version}</Link>)}
         </div>
       )}
+      <div className="qv-states">
+        {STATES.map(([k, l]) => {
+          const on = (QUOTE_STATUS[q.status] ?? "") === l;
+          return <button key={k} disabled={!isAdmin} className={"qv-state qs-" + k + (on ? " on" : "")} onClick={async () => {
+            const { data, error } = await supabase.from("equipment_quotes").update({ status: k }).eq("id", q.id).select().single();
+            if (error) return alert(/check|status/i.test(error.message) ? NEED_0017 : errMsg(error));
+            setQ(data);
+          }}>{l}</button>;
+        })}
+      </div>
+      {q.status === "superato" && <p className="note small">Questa è una versione vecchia: è stata superata da una più recente.</p>}
       <div className="kpis qv-kpis">
         <div className="kpi"><span>Oggetti</span><strong>{num(items.reduce((t, i) => t + Number(i.quantity), 0))}</strong></div>
-        <div className="kpi main"><span>Totale</span><strong>{eur(goods)}</strong></div>
+        <div className="kpi main"><span>Totale</span><strong>{eur(goods)}</strong>
+          {items.some((i) => i.confirmed) && <small className="qv-conf">confermato {eur(items.filter((i) => i.confirmed).reduce((t, i) => t + lineTotal(i), 0))}</small>}
+        </div>
       </div>
       <QuoteItems quoteId={q.id} canEdit={isAdmin} onChange={setItems} />
 
@@ -310,7 +327,6 @@ export function EquipmentQuote() {
         <summary>Dati del preventivo</summary>
         <RecordForm table="equipment_quotes" row={q} canEdit={isAdmin} onSaved={setQ} sections={[{ fields: [
           { key: "supplier", label: "Nome del preventivo", required: true },
-          { key: "status", label: "Stato", type: "select", required: true, options: Object.entries(QUOTE_STATUS).map(([value, label]) => ({ value, label })) },
           { key: "quote_date", label: "Data", type: "date" },
           { key: "notes", label: "Note", type: "textarea" },
         ] }]} />
@@ -369,6 +385,11 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
     if (error) return alert(/brand|model|supplier/i.test(error.message) ? "Per Fornitore, Marca e Modello esegui prima 0016_preventivi_marca_modello.sql su Supabase" : errMsg(error));
     setEdit(null); load();
   };
+  const setConfirmed = async (rows: Row[], v: boolean) => {
+    const { error } = await supabase.from("equipment_quote_items").update({ confirmed: v }).in("id", rows.map((r) => r.id));
+    if (error) return alert(/confirmed/i.test(error.message) ? NEED_0017 : errMsg(error));
+    load();
+  };
   const remove = async (i: Row) => {
     if (!confirm(`Togliere «${i.description}» dal preventivo?`)) return;
     const { error } = await supabase.from("equipment_quote_items").delete().eq("id", i.id);
@@ -412,15 +433,20 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
     const isOpen = open === i.id;
     const sub = [i.brand, i.model].filter(Boolean).join(" · ");
     return (
-      <div key={i.id} className={"qi" + (isOpen ? " open" : "") + (Number(i.unit_price) ? "" : " zero")}>
+      <div key={i.id} className={"qi" + (isOpen ? " open" : "") + (Number(i.unit_price) ? "" : " zero") + (i.confirmed ? " conf" : "")}>
+        <div className="qi-line">
+        <button className="qi-check" disabled={!canEdit} title={i.confirmed ? "Confermato: tocca per rimetterlo in valutazione" : "In valutazione: tocca per confermarlo"}
+          onClick={() => setConfirmed([i], !i.confirmed)}>{i.confirmed ? <CircleCheck size={22} /> : <Circle size={22} />}</button>
         <button className="qi-row" onClick={() => { setOpen(isOpen ? null : i.id); setEdit(null); }}>
           <span className="qi-name">{i.description}{sub && <small>{sub}</small>}</span>
           <span className="qi-qty">×{num(i.quantity)}</span>
           <span className="qi-price">{Number(i.unit_price) ? eur(lineTotal(i)) : "—"}</span>
         </button>
+        </div>
         {isOpen && (edit?.id === i.id ? form : (
           <div className="qi-detail">
             <dl>
+              <dt>Stato</dt><dd>{i.confirmed ? <span className="qi-ok">✓ Confermato</span> : "In valutazione"}</dd>
               <dt>Prezzo cad.</dt><dd>{eur(i.unit_price)}</dd>
               {ITEM_FIELDS.map(([k, l]) => i[k] ? <Fragment key={k}><dt>{l}</dt><dd>{i[k]}</dd></Fragment> : null)}
               {i.notes && <><dt>Note</dt><dd className="pre">{i.notes}</dd></>}
@@ -457,10 +483,21 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
             <div key={sp} className={"pv-sup" + (so ? " open" : "")}>
               <button className="pv-row lvl1" onClick={() => toggle(openSup, sp, setOpenSup)}>
                 <ChevronRight size={18} className="pv-chev" />
-                <span className="pv-name">{sp}</span>
+                <span className="pv-name">{sp}
+                  {its.every((i) => i.confirmed)
+                    ? <small className="pv-ready"><ShoppingCart size={13} /> pronto da acquistare</small>
+                    : <small className="pv-wait">{its.filter((i) => i.confirmed).length}/{its.length} confermati</small>}
+                </span>
                 <span className="pv-n">{its.length}</span>
                 <span className="pv-tot">{eur(sum(its))}</span>
               </button>
+              {so && canEdit && (
+                <div className="pv-acts">
+                  {its.every((i) => i.confirmed)
+                    ? <button className="btn small" onClick={() => setConfirmed(its, false)}>Rimetti tutto in valutazione</button>
+                    : <button className="btn small" onClick={() => setConfirmed(its.filter((i) => !i.confirmed), true)}><CircleCheck size={15} /> Conferma tutto {sp}</button>}
+                </div>
+              )}
               {so && [...cm.keys()].sort((a, b) => last(a, b, "Senza categoria")).map((c) => {
                 const k = sp + "|" + c;
                 const ci = cm.get(c)!;
@@ -470,7 +507,7 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
                     <button className="pv-row lvl2" onClick={() => toggle(openCat, k, setOpenCat)}>
                       <ChevronRight size={16} className="pv-chev" />
                       <span className="pv-name">{c}</span>
-                      <span className="pv-n">{ci.length}</span>
+                      <span className={"pv-n" + (ci.every((i) => i.confirmed) ? " all" : "")}>{ci.filter((i) => i.confirmed).length}/{ci.length}</span>
                       <span className="pv-tot">{eur(sum(ci))}</span>
                     </button>
                     {co && <div className="pv-items">{ci.map(itemRow)}</div>}
