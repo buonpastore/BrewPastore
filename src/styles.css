@@ -1819,3 +1819,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .cel-scan-row { display: flex; align-items: center; gap: 10px; }
 .cel-scan-row select { flex: 1; min-width: 0; }
 .cel-scan p { margin: 0; }
+/* 4 o più pulsanti di sezione: sempre due per riga, su qualsiasi schermo */
+.section-tabs.two-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; max-width: 640px; }
+.section-tabs.two-cols a { justify-content: center; }
+.section-tabs.two-cols.odd a:last-child { grid-column: 1 / -1; }
