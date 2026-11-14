@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.167", date: "14/11/2026 22:20", text: "Preventivi: ogni riga ha anche Fornitore, Marca e Modello; importando da Excel scegli da quale a quale riga leggere; si può eliminare un preventivo (anche dall’elenco col cestino), togliere solo il file originale o eliminare tutto il progetto. Da eseguire: 0016_preventivi_marca_modello.sql" },
   { version: "0.166", date: "14/11/2026 21:55", text: "Preventivi: letti bene anche gli screenshot dei Fogli Google col tema scuro e le celle colorate. Riconosciute le colonne Nr, Oggetto, Marca, Modello, Note e Prezzo finale (se compilato vale lui); se il totale del foglio è la somma delle righe, i prezzi sono presi IVA inclusa" },
   { version: "0.165", date: "14/11/2026 21:35", text: "Preventivi: si importano dal foglio Google (scaricato come .xlsx o .csv) scegliendo il tab giusto, oppure da uno screenshot letto sul telefono senza AI. Trasporto, IVA inclusa e righe dei totali riconosciuti da soli; si possono aggiungere righe a mano" },
   { version: "0.164", date: "14/11/2026 21:15", text: "Sfondo a raggi più tenue e meno colorato, per non stancare la vista" },
