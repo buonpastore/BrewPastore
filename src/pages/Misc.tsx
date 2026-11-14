@@ -1,3 +1,4 @@
+import IMPERSONATE_CODE from "../../supabase/functions/impersonate/index.ts?raw";
 import { loginAs } from "../impersonate";
 import { Tabs } from "../components/Layout";
 import { CapColorsSettings } from "../components/CapColor";
@@ -312,7 +313,7 @@ export function Settings() {
               </tr>
             ))}</tbody>
           </table>
-          {isAdmin && <p className="muted small">«Entra come» usa la funzione <code>impersonate</code> di Supabase: va installata una volta (Edge Functions → Deploy a new function → Via editor, nome <code>impersonate</code>, incolla il file <code>supabase/functions/impersonate/index.ts</code>).</p>}
+          {isAdmin && <ImpersonateSetup />}
           <p className="muted small">Gli utenti si aggiungono da Supabase → Authentication → Users. Il ruolo si cambia dalla tabella <code>profiles</code>.</p>
         </div>
       )}
@@ -323,6 +324,28 @@ export function Settings() {
           <p className="muted small version">Pastorizia {VERSION_LABEL} · pubblicata il {__BUILD_TIME__}</p>
         </>
       )}
+    </div>
+  );
+}
+
+/** Istruzioni e codice da copiare per installare la funzione «impersonate» su Supabase. */
+function ImpersonateSetup() {
+  const [msg, setMsg] = useState("");
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(IMPERSONATE_CODE); setMsg("✓ Codice copiato: ora incollalo nell'editor di Supabase"); }
+    catch {
+      // Safari a volte blocca la copia automatica: seleziono il testo così basta «Copia»
+      const ta = document.getElementById("imp-code") as HTMLTextAreaElement | null;
+      ta?.focus(); ta?.select(); ta?.setSelectionRange(0, IMPERSONATE_CODE.length);
+      setMsg("Il testo è selezionato: tocca «Copia».");
+    }
+  };
+  return (
+    <div className="imp-setup">
+      <p className="muted small">«Entra come» usa la funzione <code>impersonate</code> di Supabase, da installare una volta: Edge Functions → Deploy a new function → Via editor → nome <code>impersonate</code> → al posto del codice di esempio incolla questo → Deploy function.</p>
+      <button className="btn primary" onClick={copy}>📋 Copia il codice della funzione</button>
+      {msg && <p className="ok small">{msg}</p>}
+      <textarea id="imp-code" readOnly value={IMPERSONATE_CODE} rows={6} className="imp-code" />
     </div>
   );
 }
