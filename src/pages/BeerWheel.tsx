@@ -246,10 +246,14 @@ export function BeerWheel() {
                 <path className="bottle-shine" d="M -8.5 -14 C -8.5 -18 -6 -21 -4 -23 M -9 -6 V 34" />
                 </g>
                 {/* il bollino «Gira» è l'etichetta della bottiglia e gira con lei */}
-                <g transform="translate(0 19)">
+                {/* bollino sul perno, al centro della rotazione, con la freccia che gira */}
+                <g>
                   <circle r="10.5" className="seal-ring" />
                   <circle r="9" className="seal" />
-                  <text className="seal-text" textAnchor="middle" dominantBaseline="central" fontSize="5.2">{spinning ? "…" : "GIRA"}</text>
+                  <g transform="translate(-6.3 -6.3) scale(.525)" className="seal-arrow">
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                    <path d="M21 3v5h-5" />
+                  </g>
                 </g>
               </svg>
             </button>

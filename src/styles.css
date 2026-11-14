@@ -1901,3 +1901,4 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .badge.st-esaurito { background: color-mix(in srgb, var(--hop) 15%, transparent); color: var(--hop); }
 .nb-chip.on.st-esaurito { background: var(--hop); color: #1f1500; }
 .timeline > div.done:nth-child(5)::before { background: var(--hop); border-color: var(--hop); box-shadow: 0 0 0 4px color-mix(in srgb, var(--hop) 20%, transparent); }
+.seal-arrow path { fill: none; stroke: #1f1500; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
