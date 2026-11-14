@@ -333,7 +333,6 @@ export function PurchaseDetail() {
           } }]} />
         <p>Merce {eur(goods)} + spedizione {eur(p.shipping_cost)} = <strong>{eur(goods + Number(p.shipping_cost))}</strong>
           {p.total_amount != null && <span className="muted"> (documento: {eur(p.total_amount)})</span>}</p>
-        <p className="muted small">La spedizione viene ripartita sulle righe in proporzione al valore per calcolare il costo medio.</p>
       </div>
       <div className="panel">
         <h2>Documenti</h2>

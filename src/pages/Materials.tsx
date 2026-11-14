@@ -261,7 +261,6 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                               {isAdmin && <td />}
                             </tr></tfoot>
                           </table>
-                          <p className="muted small mat-formula">Costo medio = (prezzi + quote di spedizione) ÷ quantità totale. La spedizione di un ordine si divide in proporzione al prezzo: un articolo da 30 € ne prende 30 volte più di uno da 1 €.</p>
                         </>
                       );
                     })() : <span className="muted">Nessun acquisto registrato</span>}
