@@ -52,7 +52,7 @@ export const GROUPS: Group[] = [
       { to: "/utilita/carbonazione", label: "Carbonazione", short: "CO₂", icon: Sparkles, color: "var(--teal)" },
       { to: "/utilita/ph", label: "Correzione pH", short: "pH", icon: FlaskConical, color: "var(--magenta)" },
       { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--violet)" },
-      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--gold)" },
+      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--hop)" },
     ],
   },
 ];

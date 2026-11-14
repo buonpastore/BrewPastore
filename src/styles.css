@@ -1883,3 +1883,19 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .seal { fill: var(--gold); }
 .seal-ring { fill: var(--bg); stroke: var(--gold); stroke-width: 1; }
 .seal-text { fill: #1f1500; font-family: var(--sans); font-weight: 800; letter-spacing: .04em; }
+
+/* quinto colore (verde luppolo): serie di cinque */
+.cards > .card:nth-child(5n+1)::before { background: var(--gold); }
+.cards > .card:nth-child(5n+2)::before { background: var(--teal); }
+.cards > .card:nth-child(5n+3)::before { background: var(--magenta); }
+.cards > .card:nth-child(5n+4)::before { background: var(--violet); }
+.cards > .card:nth-child(5n+5)::before { background: var(--hop); }
+.cards > .card.rc-card::before { background: var(--rc); }
+.kpis > .kpi:nth-child(5n+1)::after { background: var(--gold); }
+.kpis > .kpi:nth-child(5n+2)::after { background: var(--teal); }
+.kpis > .kpi:nth-child(5n+3)::after { background: var(--magenta); }
+.kpis > .kpi:nth-child(5n+4)::after { background: var(--violet); }
+.kpis > .kpi:nth-child(5n+5)::after { background: var(--hop); }
+.badge.st-esaurito { background: color-mix(in srgb, var(--hop) 15%, transparent); color: var(--hop); }
+.nb-chip.on.st-esaurito { background: var(--hop); color: #1f1500; }
+.timeline > div.done:nth-child(5)::before { background: var(--hop); border-color: var(--hop); box-shadow: 0 0 0 4px color-mix(in srgb, var(--hop) 20%, transparent); }

@@ -75,7 +75,7 @@ const QUICK: { status: string; field?: string; label: string; color: string }[] 
   { status: "fermentazione", field: "fermentation_start", label: "🫧 Fermentata oggi", color: "var(--teal)" },
   { status: "imbottigliato", field: "bottling_date", label: "🍾 Imbottigliata oggi", color: "var(--magenta)" },
   { status: "degustato", field: "first_tasting_date", label: "🍻 Degustata oggi", color: "var(--violet)" },
-  { status: "esaurito", label: "🫙 Esaurita", color: "var(--muted)" },
+  { status: "esaurito", label: "🫙 Esaurita", color: "var(--hop)" },
 ];
 
 function PrimingCalc({ batch }: { batch: Row }) {

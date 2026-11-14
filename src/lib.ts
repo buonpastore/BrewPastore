@@ -35,9 +35,9 @@ export const STATUS_STEPS = ["cotta", "fermentazione", "imbottigliato", "degusta
 /** Nomi vecchi (prima di 0020): «maturazione» = fermentata, «finito» = degustata. */
 export const normStatus = (s?: string | null) => (s === "maturazione" ? "fermentazione" : s === "finito" ? "degustato" : s ?? "");
 export const statusLabel = (s?: string | null) => STATUS_LABELS[normStatus(s)] ?? s ?? "";
-/** I quattro colori dell'app, in ordine: giallo, ciano, magenta, viola (poi si ricomincia). */
-export const ACCENTS = ["var(--gold)", "var(--teal)", "var(--magenta)", "var(--violet)"];
-export const accentAt = (i: number) => ACCENTS[((i % 4) + 4) % 4];
+/** I cinque colori dell'app, in ordine: giallo, ciano, magenta, viola, verde luppolo (poi si ricomincia). */
+export const ACCENTS = ["var(--gold)", "var(--teal)", "var(--magenta)", "var(--violet)", "var(--hop)"];
+export const accentAt = (i: number) => ACCENTS[((i % ACCENTS.length) + ACCENTS.length) % ACCENTS.length];
 /** Colore fisso di ogni birra: la posizione della ricetta in ordine alfabetico (come in Produzione → Ricette). */
 export async function loadRecipeColors(): Promise<Record<string, string>> {
   const { data } = await supabase.from("recipes").select("id").order("name");
