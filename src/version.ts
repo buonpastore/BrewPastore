@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.186", date: "15/11/2026 03:35", text: "Preventivo: accanto a «Espandi tutto» due iconcine per confermare tutti gli oggetti o rimetterli tutti in valutazione" },
   { version: "0.185", date: "15/11/2026 03:25", text: "Acquisti e fatture: elenco a schede, si apre toccando un punto qualsiasi della scheda. Vista compatta (data, fornitore, totale, articoli e pallini delle categorie) ed estesa (spedizione, numero fattura, spesa per categoria e nomi degli articoli)" },
   { version: "0.184", date: "15/11/2026 03:05", text: "Progetto impianto: tolta la sezione vuota «Dati del progetto»" },
   { version: "0.183", date: "15/11/2026 02:55", text: "Preventivo: oggetti visibili tutti insieme, per tipologia o per fornitore (un solo livello alla volta). Tipologie in ordine Boil, Ferm, Bottle, Tool e poi le altre per importo; fornitori dal più caro. Anche le tipologie si confermano col cerchietto" },

@@ -536,6 +536,14 @@ function QuoteItems({ quoteId, canEdit, onChange }: { quoteId: string; canEdit: 
     <div className="panel">
       <div className="pv-head">
         <h2>Oggetti</h2>
+        {items.length > 0 && canEdit && (
+          <span className="pv-sel">
+            <button className="pv-sel-btn" title="Conferma tutti gli oggetti" aria-label="Seleziona tutto"
+              disabled={items.every((i) => i.confirmed)} onClick={() => setConfirmed(items.filter((i) => !i.confirmed), true)}><CircleCheck size={18} /></button>
+            <button className="pv-sel-btn" title="Rimetti tutti in valutazione" aria-label="Deseleziona tutto"
+              disabled={!items.some((i) => i.confirmed)} onClick={() => { if (confirm("Rimettere tutti gli oggetti in valutazione?")) setConfirmed(items.filter((i) => i.confirmed), false); }}><Circle size={18} /></button>
+          </span>
+        )}
         {items.length > 0 && (
           <button className="btn small" style={view === "lista" ? { visibility: "hidden" } : undefined} tabIndex={view === "lista" ? -1 : undefined} onClick={() => {
             setOpenSup(allOpen ? new Set() : new Set(groups.map((g) => view + "|" + g)));

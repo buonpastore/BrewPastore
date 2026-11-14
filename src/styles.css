@@ -1742,3 +1742,8 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .pu-items { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: .8rem; }
 .pu-del { flex: none; align-self: flex-start; }
 .pu-list.full .pu-card { align-items: flex-start; padding: 12px; }
+.pv-head h2 { margin-right: auto; }
+.pv-sel { display: inline-flex; gap: 4px; }
+.pv-sel-btn { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--teal); cursor: pointer; padding: 0; }
+.pv-sel-btn + .pv-sel-btn { color: var(--muted); }
+.pv-sel-btn:disabled { opacity: .35; cursor: default; }
