@@ -4,7 +4,8 @@ import { supabase, date, normStatus, statusLabel, type Row } from "../lib";
 
 /** Data dell'ultimo passaggio fatto, per dire "a che punto è". */
 export function lastStep(b: Row): string {
-  if (b.first_tasting_date) return `bevuta dal ${date(b.first_tasting_date)}`;
+  if (b.status === "esaurito") return "esaurita";
+  if (b.first_tasting_date) return `degustata dal ${date(b.first_tasting_date)}`;
   if (b.bottling_date) return `imbottigliata il ${date(b.bottling_date)}`;
   if (b.fermentation_start) return `in fermentatore dal ${date(b.fermentation_start)}`;
   if (b.brew_date) return `cotta il ${date(b.brew_date)}`;

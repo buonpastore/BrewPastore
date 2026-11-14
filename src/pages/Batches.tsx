@@ -13,7 +13,7 @@ export function Batches() {
   const nav = useNavigate();
   const [choose, setChoose] = useState<Row[] | null>(null);
   const [showDone, setShowDone] = useState(false);
-  // birra finita = ricetta che ha batch e sono tutti finiti (bevuti): non la propongo, salvo richiesta
+  // ricetta chiusa = tutti i suoi batch sono esauriti: non la propongo, salvo richiesta
   const isDone = (r: Row) => ((r.batches ?? []) as Row[]).length > 0 && ((r.batches ?? []) as Row[]).every((b) => isEnded(b.status));
   const [busy, setBusy] = useState(false);
   const startNew = async () => {

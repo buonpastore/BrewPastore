@@ -127,6 +127,20 @@ export function BeerWheel() {
     return `M ${r * Math.cos(a0)} ${r * Math.sin(a0)} A ${r} ${r} 0 ${seg > 180 ? 1 : 0} 1 ${r * Math.cos(a1)} ${r * Math.sin(a1)}`;
   };
 
+  // nome su una o due righe, per stare nello spicchio
+  const splitName = (name: string) => {
+    const t = name.length > 26 ? name.slice(0, 25) + "…" : name;
+    if (t.length <= 11 || !t.includes(" ")) return [t];
+    const words = t.split(" ");
+    let best = [t], score = 1e9;
+    for (let k = 1; k < words.length; k++) {
+      const l1 = words.slice(0, k).join(" "), l2 = words.slice(k).join(" ");
+      const sc = Math.max(l1.length, l2.length);
+      if (sc < score) { score = sc; best = [l1, l2]; }
+    }
+    return best;
+  };
+
   const spin = () => {
     if (!n || spinning) return;
     const pick = Math.floor(Math.random() * n);
@@ -157,18 +171,27 @@ export function BeerWheel() {
               <svg ref={wheelRef} className="wheel" viewBox="-102 -102 204 204" role="img" aria-label="Ruota delle birre"
                 style={{ transform: `rotate(${angle}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(.12,.72,.1,1)` : "none" }}>
                 <circle r="100" className="wheel-base" />
-                {slices.map(({ b, i, d, mid }) => {
-                  const name = nameOf(b);
-                  const label = name.length > 22 ? name.slice(0, 21) + "…" : name;
-                  const fs = Math.max(5.5, Math.min(10.5, 50 / (0.58 * Math.max(label.length, 4)), (2 * Math.PI * 55 * seg / 360) * 0.5));
+                {slices.map(({ b, i, d }) => (
+                  <g key={b.id}>
+                    <path d={d} className="wheel-slice" />
+                    {n > 1 && <path d={arc(i)} className="wheel-band" style={{ stroke: accents[i] }} />}
+                  </g>
+                ))}
+                {n === 1 && <circle r="96.5" className="wheel-band" style={{ stroke: accents[0] }} />}
+                {/* nomi sempre dritti: ogni etichetta gira al contrario della ruota */}
+                {slices.map(({ b, i, mid }) => {
+                  const a = (mid - 90) * Math.PI / 180, R = n === 1 ? 0 : n <= 3 ? 56 : 60;
+                  const lines = splitName(nameOf(b));
+                  const fs = n <= 4 ? 11 : n <= 6 ? 9.5 : n <= 8 ? 8.2 : 7;
                   const cap = capInfo(b.cap_color)?.hex;
+                  const h = lines.length * fs * 1.1;
                   return (
-                    <g key={b.id}>
-                      <path d={d} className="wheel-slice" style={{ ["--c" as string]: accents[i] }} />
-                      {n > 1 && <path d={arc(i)} className="wheel-band" style={{ ["--c" as string]: accents[i] }} />}
-                      <g transform={`rotate(${mid - 90})`}>
-                        {cap && <g transform="translate(72 -8) rotate(90 8 8)"><CapIcon hex={cap} size={16} /></g>}
-                        <text x={cap ? 68 : 86} y="0.5" textAnchor="end" dominantBaseline="middle" fontSize={fs} className="wheel-text">{label}</text>
+                    <g key={b.id + "-l"} transform={`translate(${R * Math.cos(a)} ${R * Math.sin(a) + (n === 1 ? -45 : 0)})`}>
+                      <g className="wheel-label" style={{ transform: `rotate(${-angle}deg)`, transition: spinning ? `transform ${SPIN_MS}ms cubic-bezier(.12,.72,.1,1)` : "none" }}>
+                        {cap && <g transform={`translate(${-fs * 0.7} ${-h / 2 - fs * 1.55})`}><CapIcon hex={cap} size={fs * 1.4} /></g>}
+                        <text textAnchor="middle" fontSize={fs} className="wheel-text" style={{ fill: accents[i] }}>
+                          {lines.map((l, k) => <tspan key={k} x="0" y={-h / 2 + fs * 0.85 + k * fs * 1.1}>{l}</tspan>)}
+                        </text>
                       </g>
                     </g>
                   );

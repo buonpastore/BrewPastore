@@ -26,11 +26,11 @@ const sgField = (key: string, label: string): FieldDef => ({ key, label, type: "
 const SECTIONS: { title?: string; fields: FieldDef[] }[] = [
   { title: "Date", fields: [
     { key: "code", label: "Nome batch", required: true },
-    { key: "status", label: "Stato", type: "select", required: true, options: ["pianificato", ...STATUS_STEPS].map((value) => ({ value, label: STATUS_LABELS[value] })) },
+    { key: "status", label: "Stato", type: "select", required: true, options: ["pianificato", ...STATUS_STEPS].map((value) => ({ value, label: STATUS_LABELS[value] })), render: (v) => statusLabel(v as string) },
     { key: "brew_date", label: "Data cotta", type: "date" },
     { key: "fermentation_start", label: "Inizio fermentazione", type: "date" },
     { key: "bottling_date", label: "Imbottigliamento", type: "date" },
-    { key: "first_tasting_date", label: "Prima bevuta", type: "date" },
+    { key: "first_tasting_date", label: "Prima degustazione", type: "date" },
   ]},
   { title: "pH", fields: [
     { key: "water_ph_initial", label: "pH acqua iniziale", type: "number", step: "0.01" },
@@ -271,7 +271,8 @@ export function BatchDetail() {
         <div className={batch.brew_date ? "done" : ""}><span>Cotta</span>{date(batch.brew_date)}</div>
         <div className={batch.fermentation_start ? "done" : ""}><span>Fermentazione</span>{date(batch.fermentation_start)}</div>
         <div className={batch.bottling_date ? "done" : ""}><span>Imbottigliata</span>{date(batch.bottling_date)}</div>
-        <div className={batch.first_tasting_date ? "done" : ""}><span>Bevuta</span>{date(batch.first_tasting_date)}</div>
+        <div className={batch.first_tasting_date ? "done" : ""}><span>Degustata</span>{date(batch.first_tasting_date)}</div>
+        <div className={batch.status === "esaurito" ? "done" : ""}><span>Esaurita</span>{batch.status === "esaurito" ? "✓" : "—"}</div>
       </div>
 
       <Tabs grid wide active={tab} onChange={setTab} tabs={[
