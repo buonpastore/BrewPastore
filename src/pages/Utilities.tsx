@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Play, Pause, RotateCcw, Bell, Minus, Plus } from "lucide-react";
-import { supabase, errMsg, num, PRIMING_FACTORS, residualCo2, type Row } from "../lib";
+import { supabase, errMsg, num, PRIMING_FACTORS, residualCo2, isEnded, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { STYLE_CO2, findStyle } from "../styleGuide";
 import { BeerWheel } from "./BeerWheel";
@@ -22,7 +22,7 @@ function useCurrentBatch() {
   useEffect(() => {
     supabase.from("batches").select("*, recipes(*)").then(({ data }) => {
       const key = (x: Row) => String(x.brew_date ?? x.created_at ?? "");
-      const list = (data ?? []).filter((x) => x.status !== "finito").sort((a, c) => key(c).localeCompare(key(a)));
+      const list = (data ?? []).filter((x) => !isEnded(x.status)).sort((a, c) => key(c).localeCompare(key(a)));
       setB(list.find((x) => x.status === "cotta") ?? list[0] ?? null);
     });
   }, []);

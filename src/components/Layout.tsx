@@ -152,7 +152,7 @@ export function Layout() {
         {current.tabs && (
           <>
             <div className="section-title">{current.label}</div>
-            <nav className={"section-tabs" + (current.tabs.length === 4 && current.key === "produzione" ? " two-rows" : "")} style={{ ["--n" as string]: current.tabs.length === 4 && current.key === "produzione" ? 2 : current.tabs.length }}>
+            <nav className={"section-tabs" + (current.tabs.length >= 4 && current.tabs.length % 2 ? " odd" : "")} style={{ ["--n" as string]: current.tabs.length >= 4 ? 2 : current.tabs.length }}>
               {current.tabs.map(({ to, label, short, icon: Icon, color }) => (
                 <NavLink key={to} to={to} style={{ ["--c" as string]: color }} className={tabActive({ to, label, icon: Icon, color, also: current.tabs!.find((t) => t.to === to)?.also }, loc.pathname) ? "active" : ""}>
                   <Icon size={16} /> <span className="st-long">{label}</span><span className="st-short">{short ?? label}</span>

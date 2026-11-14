@@ -1,13 +1,26 @@
 import { supabase, type Row } from "./lib";
 
-/** Una birra è «prodotta» quando il batch è imbottigliato (o finito). */
-export const isProduced = (b: Row) => b.status === "imbottigliato" || b.status === "finito";
+/** Una birra c'è (si beve, si degusta, va sulla ruota) dall'imbottigliamento in poi, finché non è esaurita. */
+const EARLY = ["pianificato", "cotta", "fermentazione"];
+export const isProduced = (b: Row, tasted?: Set<string>) => b.status !== "esaurito" && (
+  b.status === "imbottigliato" || b.status === "finito" || Boolean(tasted?.has(b.id))
+  // una data di imbottigliamento conta solo se il batch non è ancora in cotta/fermentazione
+  || (!EARLY.includes(b.status) && (Boolean(b.bottling_date) || Boolean(b.first_tasting_date))));
+
+/** Id dei batch già degustati (se una birra è stata degustata, è imbottigliata). */
+export async function loadTasted(): Promise<Set<string>> {
+  const { data } = await supabase.from("tastings").select("batch_id");
+  return new Set((data ?? []).map((t) => t.batch_id).filter(Boolean));
+}
 
 /** Batch prodotti, dal più recente, con nome e stile della ricetta. */
 export async function loadProduced(): Promise<Row[]> {
-  const { data } = await supabase.from("batches").select("id, code, status, bottling_date, cap_color, brew_date, recipe_id, recipes(name, style)")
-    .order("bottling_date", { ascending: false, nullsFirst: false });
-  return (data ?? []).filter(isProduced);
+  const [{ data }, tasted] = await Promise.all([
+    supabase.from("batches").select("id, code, status, bottling_date, first_tasting_date, cap_color, brew_date, recipe_id, recipes(name, style)")
+      .order("bottling_date", { ascending: false, nullsFirst: false }),
+    loadTasted(),
+  ]);
+  return (data ?? []).filter((b) => isProduced(b, tasted));
 }
 
 /** Bottiglie in cantina di tutti (null se la tabella non c'è ancora: manca 0018). */

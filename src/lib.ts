@@ -29,7 +29,10 @@ export const STATUS_LABELS: Record<string, string> = {
   maturazione: "In maturazione",
   imbottigliato: "Imbottigliato",
   finito: "Finito",
+  esaurito: "Esaurita",
 };
+/** Batch chiuso: ciclo finito o birra esaurita. */
+export const isEnded = (s?: string | null) => s === "finito" || s === "esaurito";
 
 export const MATERIAL_CATEGORIES = [
   "malto", "luppolo", "lievito", "sali_acqua", "additivo",

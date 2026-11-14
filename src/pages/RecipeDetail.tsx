@@ -2,7 +2,7 @@ import { DedupeButton } from "../components/DedupeButton";
 import { Beer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { supabase, errMsg, date, sg, STATUS_LABELS, MATERIAL_CATEGORIES, UNITS, loadMaterials, type Row } from "../lib";
+import { supabase, errMsg, date, sg, STATUS_LABELS, MATERIAL_CATEGORIES, UNITS, loadMaterials, isEnded, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
 import { RowsEditor } from "../components/RowsEditor";
@@ -220,8 +220,8 @@ function RecipeBrewDay({ recipe }: { recipe: Row }) {
 }
 
 /** Ordine del processo: cotta → fermentazione → maturazione → imbottigliamento → bevuta. */
-const STAGE = ["pianificato", "cotta", "fermentazione", "maturazione", "imbottigliato", "finito"];
-const stepDate = (b: Row) => (b.status === "finito" ? b.first_tasting_date : b.status === "imbottigliato" ? b.bottling_date
+const STAGE = ["pianificato", "cotta", "fermentazione", "maturazione", "imbottigliato", "finito", "esaurito"];
+const stepDate = (b: Row) => (isEnded(b.status) ? b.first_tasting_date : b.status === "imbottigliato" ? b.bottling_date
   : b.status === "fermentazione" || b.status === "maturazione" ? b.fermentation_start : b.brew_date) ?? b.brew_date ?? null;
 function sortByProcess(rows: Row[]): Row[] {
   const rank = (b: Row) => { const i = STAGE.indexOf(b.status); return i < 0 ? 0 : i; };

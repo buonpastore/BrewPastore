@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.189", date: "15/11/2026 04:45", text: "Pulsanti delle sezioni con 4 o più voci (Produzione, Conti, Utilità) su due colonne. Ruota, cantina, degustazioni e tappi: ci sono tutte le birre dall’imbottigliamento in poi (anche quelle già degustate). Nuovo stato del batch «Esaurita»: la birra non ce l’ha più nessuno e sparisce da tappi, ruota, degustazioni, cantina e batch in corso. Da eseguire: 0019_birra_esaurita.sql" },
   { version: "0.188", date: "15/11/2026 04:20", text: "Nuova sezione Produzione → Cantina: ognuno segna quante bottiglie ha di ogni birra imbottigliata (col tappo), e in «Di tutti» si vede chi ha cosa. Ruota della birra rifatta, più scura e a tema (bordo con lucine, tappo al centro, fette contornate d’oro): solo le birre imbottigliate, di partenza quelle che hai in cantina, e si scelgono facilmente quali metterci. Da eseguire: 0018_cantina.sql" },
   { version: "0.187", date: "15/11/2026 03:55", text: "Nuova utilità «Ruota della birra»: tutte le birre imbottigliate (non finite) su una ruota col colore del loro tappo; tocchi GIRA e la ruota sceglie cosa bere stasera" },
   { version: "0.186", date: "15/11/2026 03:35", text: "Preventivo: accanto a «Espandi tutto» due iconcine per confermare tutti gli oggetti o rimetterli tutti in valutazione" },

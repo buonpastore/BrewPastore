@@ -225,7 +225,7 @@ export function phasesFor(status?: string | null): string[] {
   switch (status) {
     case "fermentazione": case "maturazione": return ["Fermentazione"];
     case "imbottigliato": return ["Imbottigliamento"];
-    case "finito": return ["Imbottigliamento"];
+    case "finito": case "esaurito": return ["Imbottigliamento"];
     default: return ["Acqua", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"];
   }
 }
@@ -297,8 +297,8 @@ export function QuickEntry({ batch, recipe, canEdit, onSaved, onDelete, focusKey
 function phasesReached(b: Row): Set<string> {
   const st = b.status ?? "pianificato";
   const brewed = st !== "pianificato" || Boolean(b.brew_date);
-  const fermented = ["maturazione", "imbottigliato", "finito"].includes(st) || Boolean(b.bottling_date);   // FG: a fermentazione finita
-  const bottled = ["imbottigliato", "finito"].includes(st) || Boolean(b.bottling_date);
+  const fermented = ["maturazione", "imbottigliato", "finito", "esaurito"].includes(st) || Boolean(b.bottling_date);   // FG: a fermentazione finita
+  const bottled = ["imbottigliato", "finito", "esaurito"].includes(st) || Boolean(b.bottling_date);
   const out = new Set<string>();
   if (brewed) ["Acqua", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"].forEach((x) => out.add(x));
   if (fermented) out.add("Fermentazione");

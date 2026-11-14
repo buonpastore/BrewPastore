@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase, errMsg, date, type Row } from "../lib";
+import { isProduced } from "../cellar";
 
 export interface CapColor { key: string; label: string; hex: string }
 /** Colori disponibili all'inizio (se la tabella cap_colors non c'è ancora). */
@@ -113,7 +114,7 @@ export function CapGallery({ limit = 5 }: { limit?: number }) {
     supabase.from("batches").select("*, recipes(name, style)").then(({ data }) => {
       const when = (b: Row) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "");
       // solo birre imbottigliate, la più recente per ricetta, al massimo 5
-      const bottled = (data ?? []).filter((b) => b.cap_color || b.bottling_date || b.bottles_count || b.status === "imbottigliato" || b.status === "finito")
+      const bottled = (data ?? []).filter((b) => b.status !== "esaurito" && (b.cap_color || isProduced(b)))
         .sort((a, b) => when(b).localeCompare(when(a)));
       const seen = new Set<string>(), out: Row[] = [];
       for (const b of bottled) { const k = b.recipe_id ?? b.id; if (seen.has(k)) continue; seen.add(k); out.push(b); }

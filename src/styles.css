@@ -1806,3 +1806,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .cel-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); font-size: .84rem; }
 .cel-chip b { color: var(--gold-2); }
 .wheel-wrap { margin-top: 18px; }
+/* sul telefono, con 4 o più pulsanti: due per riga; se sono dispari l'ultimo prende tutta la riga */
+@media (max-width: 860px) { .section-tabs.odd a:last-child { grid-column: 1 / -1; } }
+.badge.st-esaurito { background: var(--surface-2); color: var(--muted); }
+.nb-chip.on.st-esaurito { background: var(--line-strong); color: var(--text); }

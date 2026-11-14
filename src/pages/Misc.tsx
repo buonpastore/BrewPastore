@@ -9,7 +9,7 @@ import { lastStep } from "../components/PreviousBatches";
 import { getThemePref, setThemePref, sunTimes, type ThemePref } from "../theme";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, type Row } from "../lib";
+import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, isEnded, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ChatPanel } from "../components/ChatPanel";
 import { HistoryList } from "../components/HistoryList";
@@ -91,7 +91,7 @@ export function Dashboard() {
           if (!latest[k] || key(b) > key(latest[k])) latest[k] = b;
         }
         // batch in corso: i terminati (finiti) non si mostrano
-        setActive(Object.values(latest).filter((b) => b.status !== "finito").sort((a, b) => key(b).localeCompare(key(a))));
+        setActive(Object.values(latest).filter((b) => !isEnded(b.status)).sort((a, b) => key(b).localeCompare(key(a))));
       });
     supabase.from("messages").select("*").order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecent(data ?? []));
     if (profile) {

@@ -2,7 +2,7 @@ import { Beer } from "lucide-react";
 import { CapDot } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase, date, sg, eur, errMsg, STATUS_LABELS, type Row } from "../lib";
+import { supabase, date, sg, eur, errMsg, STATUS_LABELS, isEnded, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { deleteBatches } from "../deleteHelpers";
 import { createBatchFromRecipe } from "../newBatch";
@@ -14,7 +14,7 @@ export function Batches() {
   const [choose, setChoose] = useState<Row[] | null>(null);
   const [showDone, setShowDone] = useState(false);
   // birra finita = ricetta che ha batch e sono tutti finiti (bevuti): non la propongo, salvo richiesta
-  const isDone = (r: Row) => ((r.batches ?? []) as Row[]).length > 0 && ((r.batches ?? []) as Row[]).every((b) => b.status === "finito");
+  const isDone = (r: Row) => ((r.batches ?? []) as Row[]).length > 0 && ((r.batches ?? []) as Row[]).every((b) => isEnded(b.status));
   const [busy, setBusy] = useState(false);
   const startNew = async () => {
     const { data } = await supabase.from("recipes").select("*, batches(id, code, status, brew_date, fermentation_start, bottling_date, first_tasting_date, created_at)").eq("archived", false).order("name");
@@ -109,7 +109,7 @@ export function Batches() {
                   <div className="rp-name">{r.name}</div>
                   <div className="muted small">{[r.style, r.batch_size_l && `${String(r.batch_size_l).replace(".", ",")} L`].filter(Boolean).join(" · ")}</div>
                   {/* solo i batch ancora in corso: quelli finiti non servono */}
-                  {((r.batches ?? []) as Row[]).filter((b) => b.status !== "finito").map((b) => (
+                  {((r.batches ?? []) as Row[]).filter((b) => !isEnded(b.status)).map((b) => (
                     <div key={b.id} className="rp-batch">
                       <span className={"badge st-" + b.status}>{STATUS_LABELS[b.status] ?? b.status}</span>
                       <span className="small">{b.code}</span>

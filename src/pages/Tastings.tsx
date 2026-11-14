@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Star, Minus, Plus } from "lucide-react";
 import { CapDot } from "../components/CapColor";
 import { supabase, errMsg, date, type Row } from "../lib";
+import { isProduced, loadTasted } from "../cellar";
 import { useAuth } from "../auth";
 
 export function Stars({ value, onChange, size = 20 }: { value: number; onChange?: (v: number) => void; size?: number }) {
@@ -45,8 +46,10 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
   }, [filter, reload]);
   useEffect(() => {
     // si degustano solo le birre imbottigliate
-    supabase.from("batches").select("id, code, status, bottling_date, bottles_count, cap_color, recipes(name, style)").order("brew_date", { ascending: false, nullsFirst: false })
-      .then(({ data }) => setBatches((data ?? []).filter((b) => b.bottling_date || b.bottles_count || b.status === "imbottigliato" || b.status === "finito")));
+    Promise.all([
+      supabase.from("batches").select("id, code, status, bottling_date, first_tasting_date, bottles_count, cap_color, recipes(name, style)").order("brew_date", { ascending: false, nullsFirst: false }),
+      loadTasted(),
+    ]).then(([{ data }, tasted]) => setBatches((data ?? []).filter((b) => isProduced(b, tasted))));
   }, []);
 
   const remove = async (t: Row) => {
