@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.152", date: "14/11/2026 18:15", text: "Home: «Riconosci le birre dal tappo» è un elenco compatto delle ultime 5 birre imbottigliate, con il tappo piccolo come nel resto dell'app" },
   { version: "0.151", date: "14/11/2026 18:00", text: "Task: quelle terminate restano nell'elenco (segnate come terminate) per una settimana, poi passano nello storico" },
   { version: "0.150", date: "14/11/2026 17:45", text: "Task assegnabili a più persone; in Home compare «Le tue task» con quelle ancora da fare. Da eseguire: 0014_task_piu_persone.sql" },
   { version: "0.149", date: "14/11/2026 17:20", text: "Nuova sezione Task (accanto alla Chat): cose da fare con chi le deve fare, note con foto o file e stato inserita / in corso / terminata; le terminate vanno nello storico. Da eseguire: 0013_task.sql" },

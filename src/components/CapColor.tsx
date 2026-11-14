@@ -106,41 +106,37 @@ export function CapPicker({ batch, canEdit, onSaved }: { batch: Row; canEdit: bo
 }
 
 /** Le ultime birre prodotte con il colore del tappo, per riconoscerle (anche quelle col tappo ancora da scegliere). */
-export function CapGallery({ limit = 6 }: { limit?: number }) {
+export function CapGallery({ limit = 5 }: { limit?: number }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   useCapColors();
   useEffect(() => {
     supabase.from("batches").select("*, recipes(name, style)").then(({ data }) => {
       const when = (b: Row) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "");
-      const made = (data ?? []).filter((b) => b.cap_color || b.bottling_date || b.brew_date || b.bottles_count)
-        .sort((a, b) => Number(Boolean(b.cap_color)) - Number(Boolean(a.cap_color)) || when(b).localeCompare(when(a)));
-      // una per ricetta: l'ultima (prima quelle col tappo)
+      // solo birre imbottigliate, la più recente per ricetta, al massimo 5
+      const bottled = (data ?? []).filter((b) => b.cap_color || b.bottling_date || b.bottles_count || b.status === "imbottigliato" || b.status === "finito")
+        .sort((a, b) => when(b).localeCompare(when(a)));
       const seen = new Set<string>(), out: Row[] = [];
-      for (const b of made) { const k = b.recipe_id ?? b.id; if (seen.has(k)) continue; seen.add(k); out.push(b); }
-      setRows(out.sort((a, b) => when(b).localeCompare(when(a))).slice(0, limit));
+      for (const b of bottled) { const k = b.recipe_id ?? b.id; if (seen.has(k)) continue; seen.add(k); out.push(b); }
+      setRows(out.slice(0, limit));
     });
   }, [limit]);
-  if (rows === null) return null;
+  if (rows === null || !rows.length) return null;
   return (
     <>
       <h2>🍾 Riconosci le birre dal tappo</h2>
-      {rows.length ? (
-        <div className="cap-gallery">
-          {rows.map((b) => {
-            const c = capInfo(b.cap_color);
-            return (
-              <Link key={b.id} to={`/batch/${b.id}`} className={"cap-card" + (c ? "" : " no-cap")}>
-                {c ? <CapIcon hex={c.hex} size={52} title={`Tappo ${c.label.toLowerCase()}`} /> : <CapIcon hex="#8a8276" size={52} unknown title="Tappo da scegliere" />}
-                <span className="cap-text">
-                  <strong>{b.recipes?.name ?? b.code}</strong>
-                  <span className="muted small">{[b.recipes?.style, c ? `tappo ${c.label.toLowerCase()}` : "tappo da scegliere"].filter(Boolean).join(" · ")}</span>
-                  {b.bottling_date && <span className="muted small">imbottigliata il {date(b.bottling_date)}</span>}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      ) : <p className="muted">Ancora nessuna birra prodotta: quando imbottigli, scegli il colore del tappo nel batch.</p>}
+      <div className="cap-rows">
+        {rows.map((b) => {
+          const c = capInfo(b.cap_color);
+          return (
+            <Link key={b.id} to={`/batch/${b.id}`} className="cap-row">
+              {c ? <CapIcon hex={c.hex} size={20} title={`Tappo ${c.label.toLowerCase()}`} /> : <CapIcon hex="#8a8276" size={20} unknown title="Tappo da scegliere" />}
+              <strong>{b.recipes?.name ?? b.code}</strong>
+              <span className="muted small">{b.recipes?.style ?? ""}</span>
+              <span className="muted small cap-row-c">{c ? c.label.toLowerCase() : "tappo ?"}</span>
+            </Link>
+          );
+        })}
+      </div>
     </>
   );
 }

@@ -1468,3 +1468,11 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .tk-add-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; }
 .tk-add-row label.mini-btn { cursor: pointer; }
 a.tk-item:hover { color: var(--text); border-color: var(--line-strong); }
+
+/* home: elenco minuto delle birre imbottigliate con il tappo */
+.cap-rows { display: flex; flex-direction: column; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
+.cap-row { display: grid; grid-template-columns: 20px auto 1fr auto; align-items: center; gap: 10px; padding: 10px 14px; color: var(--text); border-bottom: 1px solid var(--line); }
+.cap-row:last-child { border-bottom: 0; }
+.cap-row:hover { color: var(--text); background: var(--surface-2); }
+.cap-row strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cap-row-c { text-align: right; }
