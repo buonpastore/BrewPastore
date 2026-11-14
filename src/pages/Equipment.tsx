@@ -311,9 +311,9 @@ export function EquipmentQuote() {
 interface DraftItem { code: string; description: string; category: string; quantity: number; unit_price: number; discount_pct: number; vat_pct: number }
 const FIELDS: { key: keyof DraftItem | "total"; label: string; match: RegExp }[] = [
   { key: "code", label: "Codice", match: /^(cod|codice|art\.?|sku|rif)/i },
-  { key: "description", label: "Descrizione *", match: /(descr|articolo|prodotto|voce|item|denominaz)/i },
+  { key: "description", label: "Descrizione *", match: /(descr|articolo|prodotto|oggetto|voce|item|denominaz)/i },
   { key: "category", label: "Categoria", match: /(categ|tipo|gruppo)/i },
-  { key: "quantity", label: "Quantità", match: /(q\.?\s?t[aà]|quant|qty|pz|n\.)/i },
+  { key: "quantity", label: "Quantità", match: /(q\.?\s?t[aà]|quant|qty|pz|n\.|^nr\.?$|^num)/i },
   { key: "unit_price", label: "Prezzo unitario", match: /(prezzo\s*unit|p\.?\s*unit|unitario|€\s*\/|listino|prezzo$|prezzo)/i },
   { key: "total", label: "Totale riga (se manca il prezzo unit.)", match: /(totale|importo|subtot)/i },
   { key: "discount_pct", label: "Sconto %", match: /(sconto|sc\.|disc)/i },
@@ -405,7 +405,7 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
         const ps: string[] = [];
         for (const f of aiPicked) ps.push(await uploadFile(`equipment/${projectId}`, f));
         setAiPath(ps[0]);
-        const text = await textOf(aiPicked, setProgress);
+        const text = await textOf(aiPicked, setProgress, { clean: true });
         if (text != null) {
           // screenshot o testo: lettura sul telefono, senza AI
           const r = parseQuoteText(text);
@@ -427,13 +427,28 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
     if (mapping.description == null) return setError("Indica almeno la colonna della descrizione");
     setError("");
     const out: DraftItem[] = [];
+    // colonne in più del foglio: marca/modello vanno nella descrizione, le note fra parentesi;
+    // se c'è un «Prezzo finale» compilato vale quello al posto del prezzo del preventivo
+    const used = Object.values(mapping);
+    const extraCols = header.map((h, i) => [String(h ?? ""), i] as const).filter(([h, i]) => /^(marca|modello|brand|model)/i.test(h) && !used.includes(i)).map(([, i]) => i);
+    const noteCol = header.findIndex((h, i) => /^note/i.test(String(h ?? "")) && !used.includes(i));
+    const finalCol = header.findIndex((h, i) => /prezzo.*(final|definitiv|effettiv)/i.test(String(h ?? "")) && i !== mapping.unit_price);
+    let grandTotal = 0;
     for (const r of grid.slice(headerRow + 1)) {
       const get = (k: string) => (mapping[k] != null ? r[mapping[k]] : null);
-      const description = String(get("description") ?? "").trim();
-      if (!description) continue;
+      const base = String(get("description") ?? "").trim();
+      if (!base) {   // riga senza descrizione: di solito il totale del foglio
+        const t = toNum(get("total") ?? get("unit_price"));
+        if (t) grandTotal = t;
+        continue;
+      }
+      const extra = extraCols.map((i) => String(r[i] ?? "").trim()).filter(Boolean).join(" ");
+      const note = noteCol >= 0 ? String(r[noteCol] ?? "").trim() : "";
+      const description = [base, extra].filter(Boolean).join(" ") + (note ? ` (${note})` : "");
       const quantity = mapping.quantity != null ? toNum(get("quantity")) || 1 : 1;
       let unit_price = mapping.unit_price != null ? toNum(get("unit_price")) : 0;
       if (!unit_price && mapping.total != null && toNum(get("total"))) unit_price = toNum(get("total")) / quantity;
+      if (finalCol >= 0 && toNum(r[finalCol])) unit_price = toNum(r[finalCol]);
       // salta righe di riepilogo (Totale, Imponibile, IVA...) senza quantità
       if (/^(totale|subtotale|sub-totale|imponibile|iva|total|sconto|trasporto)\b/i.test(description) && (mapping.quantity == null || get("quantity") == null)) continue;
       out.push({
@@ -442,7 +457,9 @@ function ImportQuote({ projectId, quotes, mode, onClose, onDone }: { projectId: 
       });
     }
     const priceHead = String(header[mapping.unit_price ?? mapping.total ?? -1] ?? "");
-    if (/iva\s*(incl|compr)|ivat/i.test(priceHead)) setIncludeVat(true);
+    const sum = out.reduce((t, i) => t + i.quantity * i.unit_price * (1 - i.discount_pct / 100), 0);
+    // se il totale del foglio è la somma semplice delle righe, i prezzi sono già IVA inclusa
+    if (/iva\s*(incl|compr)|ivat/i.test(priceHead) || (grandTotal && Math.abs(sum - grandTotal) < 0.05)) setIncludeVat(true);
     // trasporto / spedizione come riga del foglio → campo trasporto
     const ship = out.filter((i) => /(spedizion|trasport|consegna|corriere)/i.test(i.description));
     if (ship.length) setShipping(ship.reduce((t, i) => t + i.quantity * i.unit_price, 0));

@@ -2,7 +2,7 @@
    testo letto con l'OCR da uno screenshot (es. di un foglio Google) o file CSV/testo. */
 
 export interface QuoteLine { code: string; description: string; category: string; quantity: number; unit_price: number; discount_pct: number; vat_pct: number }
-export interface ParsedQuote { items: QuoteLine[]; shipping: number; includeVat: boolean; skipped: string[] }
+export interface ParsedQuote { items: QuoteLine[]; shipping: number; includeVat: boolean; skipped: string[]; grandTotal: number | null }
 
 const NUM = /^[-+]?€?\s?(\d{1,3}(?:[.\s]\d{3})+|\d+)(?:[.,]\d{1,3})?\s?€?$/;
 const toN = (s: string) => {
@@ -28,7 +28,8 @@ export function parseQuoteText(text: string): ParsedQuote {
   const items: QuoteLine[] = [];
   const skipped: string[] = [];
   let shipping = 0;
-  const includeVat = /iva\s+(inclusa|compresa)|ivat[oi]\b|prezzi\s+lordi/i.test(text);
+  let grandTotal: number | null = null;
+  let includeVat = /iva\s+(inclusa|compresa)|ivat[oi]\b|prezzi\s+lordi/i.test(text);
 
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.replace(/\s+$/, "");
@@ -42,9 +43,14 @@ export function parseQuoteText(text: string): ParsedQuote {
     let qtyPrefix: number | null = null;
     if (parts.length <= 1) {
       // riga senza colonne: numeri solo in fondo, quantità eventualmente in testa («2 x …», «2 …»)
-      const w = line.trim().split(/\s+/).filter((x) => x !== "€");
+      const w = line.trim().split(/\s+/).filter((x) => x !== "€" && x !== "|");
       const tail: string[] = [];
-      while (w.length > 1 && (NUM.test(clean(w[w.length - 1])) || isPct(w[w.length - 1]))) tail.unshift(clean(w.pop()!));
+      // «€ -» (cella vuota nel formato contabilità) vale 0
+      while (w.length > 1 && (NUM.test(clean(w[w.length - 1])) || isPct(w[w.length - 1]) || /^[-–—]$/.test(w[w.length - 1]))) {
+        const c = clean(w.pop()!); tail.unshift(/^[-–—]$/.test(c) ? "0" : c);
+      }
+      // screenshot del foglio: in testa il numero di riga e poi la quantità («12 1 Fasce…»)
+      if (/^\d+$/.test(w[0] ?? "") && /^\d+$/.test(w[1] ?? "") && w.length > 2) w.shift();
       const m = /^(\d+)\s?[x×]?$/i.exec(w[0] ?? "");
       if (m && w.length > 1) { w.shift(); if (/^[x×]$/i.test(w[0])) w.shift(); qtyPrefix = Number(m[1]); }
       words.push(...w);
@@ -60,15 +66,24 @@ export function parseQuoteText(text: string): ParsedQuote {
       }
     }
     const description = words.join(" ").replace(/^[-•*·\s]+/, "").replace(/\s{2,}/g, " ").trim();
-    if (!description || !/[a-zà-ú]{3}/i.test(description)) { if (nums.length) skipped.push(line.trim()); continue; }
+    if (!description || !/[a-zà-ú]{3}/i.test(description)) {
+      if (nums.length) { skipped.push(line.trim()); grandTotal = nums[nums.length - 1] || grandTotal; }   // riga col solo totale
+      continue;
+    }
     if (HEADER.test(description) && !nums.length) continue;
-    if (SUMMARY.test(description)) { skipped.push(line.trim()); continue; }
+    if (SUMMARY.test(description)) { skipped.push(line.trim()); if (/^tot/i.test(description)) grandTotal = nums[nums.length - 1] ?? grandTotal; continue; }
     if (!nums.length) { skipped.push(line.trim()); continue; }
 
     let quantity = qtyPrefix ?? 1, unit_price = 0;
     const firstIsQty = qtyPrefix != null;
     const n = nums;
-    if (n.length >= 3) {
+    // quantità nota e più coppie prezzo/totale (es. «Prezzo Prev, Totale Prev, Prezzo Finale, Totale Finale»):
+    // vale l'ultima coppia compilata, cioè il prezzo finale se c'è, altrimenti quello del preventivo
+    const pairs = firstIsQty ? n.slice(0, -1).map((a, i) => [a, n[i + 1]]).filter(([a, b], i) => i % 2 === 0 && near(a * quantity, b)) : [];
+    if (pairs.length && n.length >= 2) {
+      const filled = pairs.filter(([a]) => a > 0);
+      unit_price = (filled[filled.length - 1] ?? pairs[0])[0];
+    } else if (n.length >= 3) {
       // cerca q × prezzo = totale fra gli ultimi numeri
       const [a, b, c] = n.slice(-3);
       if (near(a * b, c)) { quantity = a; unit_price = b; }
@@ -92,7 +107,10 @@ export function parseQuoteText(text: string): ParsedQuote {
     if (SHIPPING.test(description) && n.length <= 2 && quantity === 1) { shipping += unit_price; continue; }
     items.push({ code: "", description, category: "", quantity, unit_price: Math.round(unit_price * 100) / 100, discount_pct, vat_pct });
   }
-  return { items, shipping: Math.round(shipping * 100) / 100, includeVat, skipped };
+  // se il totale del foglio è la somma semplice delle righe, i prezzi sono già IVA inclusa
+  const sum = items.reduce((t, i) => t + i.quantity * i.unit_price * (1 - i.discount_pct / 100), 0);
+  if (grandTotal && sum > 0 && (near(sum, grandTotal) || near(sum + shipping, grandTotal))) includeVat = true;
+  return { items, shipping: Math.round(shipping * 100) / 100, includeVat, skipped, grandTotal };
 }
 
 /** Legge un CSV/TSV (es. foglio Google scaricato come .csv) in una griglia. */
