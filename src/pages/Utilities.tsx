@@ -11,6 +11,7 @@ export function Utilities() {
   const { tool } = useParams();
   if (tool === "carbonazione") return <Carbonation />;
   if (tool === "ph") return <PhAdjust />;
+  if (tool === "densita") return <GravityFix />;
   if (tool === "timer") return <HopTimer />;
   if (tool === "ruota") return <BeerWheel />;
   return <BottleCount />;
@@ -212,6 +213,84 @@ function PhAdjust() {
         </div>
       )}
       <p className="muted small">Il bicarbonato <strong>alza</strong> il pH, l'acido lattico lo <strong>abbassa</strong>. Dosi indicative per mash di malti chiari: con malti scuri serve meno acido.</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Correzione della densità (OG) a fine bollitura                      */
+/* ------------------------------------------------------------------ */
+// punti di densità per kg in 1 litro (PPG × 8,3454): quanto alza 1 kg sciolto in 1 L
+const SUGARS: { key: string; label: string; ppg: number; note?: string }[] = [
+  { key: "saccarosio", label: "Zucchero bianco (saccarosio)", ppg: 46 },
+  { key: "destrosio", label: "Destrosio", ppg: 42 },
+  { key: "dme", label: "Estratto di malto secco (DME)", ppg: 44, note: "aggiunge anche corpo e colore" },
+  { key: "lme", label: "Estratto di malto liquido", ppg: 36 },
+  { key: "miele", label: "Miele", ppg: 35 },
+];
+
+function Stepper({ label, value, step, digits, onChange, unit, gravity }: { label: string; value: number; step: number; digits: number; onChange: (n: number) => void; unit?: string; gravity?: boolean }) {
+  // la densità si scrive come sul densimetro: 1.050
+  const fmt = (v: number) => (gravity ? v.toFixed(3) : num(v, digits));
+  const [text, setText] = useState(fmt(value));
+  useEffect(() => setText(fmt(value)), [value, digits]);
+  const set = (n: number) => { const v = Math.max(0, Math.round(n / step) * step); onChange(Number(v.toFixed(digits))); };
+  return (
+    <div className="ut-counter">
+      <small>{label}</small>
+      <div className="bf-row">
+        <button type="button" className="bf-btn" onClick={() => set(value - step)}><Minus size={20} /></button>
+        <div className="bf-input"><input inputMode="decimal" value={text} onChange={(e) => setText(e.target.value)} onBlur={() => set(Number(text.trim().replace(",", ".")) || 0)} />{unit && <span className="bf-unit">{unit}</span>}</div>
+        <button type="button" className="bf-btn" onClick={() => set(value + step)}><Plus size={20} /></button>
+      </div>
+    </div>
+  );
+}
+
+function GravityFix() {
+  const current = useCurrentBatch();
+  const [liters, setLiters] = useState<number | null>(null);
+  const [measured, setMeasured] = useState<number | null>(null);
+  const [target, setTarget] = useState<number | null>(null);
+  const [sugar, setSugar] = useState("saccarosio");
+  // valori di partenza dal batch in corso (litri nel fermentatore, densità misurata e obiettivo della ricetta)
+  const L = liters ?? Number(current?.volume_fermenter_l ?? current?.recipes?.batch_size_l ?? 20);
+  const T = target ?? Number(current?.recipes?.target_og ?? 1.05);
+  const M = measured ?? Number(current?.original_gravity ?? Math.round((T - 0.005) * 1000) / 1000);
+  const s = SUGARS.find((x) => x.key === sugar) ?? SUGARS[0];
+  const pts = Math.round((T - M) * 1000 * 10) / 10;          // punti mancanti (es. 1.050 − 1.045 = 5)
+  const grams = pts > 0 ? (pts * L / (s.ppg * 8.3454)) * 1000 : 0;
+  // se è più alta: acqua da aggiungere per scendere all'obiettivo (facoltativo)
+  const water = pts < 0 && T > 1 ? L * ((M - 1) / (T - 1)) - L : 0;
+  const og = (v: number) => v.toFixed(3);
+  return (
+    <div>
+      <h1>Correzione della densità</h1>
+      <p className="muted">A fine bollitura, se la densità (OG) è più bassa di quella voluta: quanto zucchero aggiungere al mosto.</p>
+      {current && <p className="muted small">Valori di partenza dal batch <strong>{current.code}</strong>{current.recipes?.name ? ` (${current.recipes.name})` : ""}: cambiali con − e +.</p>}
+      <div className="ut-steppers">
+        <Stepper label="Litri di mosto nel fermentatore" value={L} step={0.5} digits={1} onChange={setLiters} unit="L" />
+        <Stepper label="Densità misurata" value={M} step={0.001} digits={3} onChange={setMeasured} gravity />
+        <Stepper label="Densità che vuoi" value={T} step={0.001} digits={3} onChange={setTarget} gravity />
+      </div>
+      <label className="block"><span>Cosa aggiungi</span>
+        <select value={sugar} onChange={(e) => setSugar(e.target.value)}>{SUGARS.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}</select>
+      </label>
+      {pts > 0 ? (
+        <div className="ut-result">
+          <div><small>Mancano {num(pts, 0)} punti ({og(M)} → {og(T)})</small><strong>{num(grams, 0)} g di {s.label.split(" (")[0].toLowerCase()}</strong></div>
+          <div><small>cioè circa</small><strong>{num(grams / L, 1)} g per litro</strong></div>
+          <div className="ut-miss">Sciogli lo zucchero in poco mosto caldo (o pochissima acqua bollita), versalo nel fermentatore e mescola bene prima di inoculare il lievito.{s.note ? ` Il ${s.label.split(" (")[0].toLowerCase()} ${s.note}.` : ""}</div>
+        </div>
+      ) : pts < 0 ? (
+        <div className="ut-result">
+          <div className="ut-ok">✓ La densità è più alta di quella voluta: va bene così.</div>
+          {water > 0.05 && <div><small>Se vuoi proprio scendere a {og(T)}</small><strong>aggiungi {num(water, 1)} L di acqua</strong></div>}
+        </div>
+      ) : (
+        <div className="ut-result"><div className="ut-ok">✓ La densità è giusta.</div></div>
+      )}
+      <p className="muted small">Stima: 1 g di zucchero bianco per litro alza la densità di circa 0,4 punti. Misura a 20 °C (o correggi con la temperatura).</p>
     </div>
   );
 }
