@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.184", date: "15/11/2026 03:05", text: "Progetto impianto: tolta la sezione vuota «Dati del progetto»" },
   { version: "0.183", date: "15/11/2026 02:55", text: "Preventivo: oggetti visibili tutti insieme, per tipologia o per fornitore (un solo livello alla volta). Tipologie in ordine Boil, Ferm, Bottle, Tool e poi le altre per importo; fornitori dal più caro. Anche le tipologie si confermano col cerchietto" },
   { version: "0.182", date: "15/11/2026 02:35", text: "Preventivo: nel dettaglio di un oggetto matita e cestino stanno accanto ai dati, senza scritte, per occupare meno spazio" },
   { version: "0.181", date: "15/11/2026 02:25", text: "Preventivo: cambiando vista degli oggetti la pagina non si sposta più (il posto di «Espandi tutto» resta anche nella vista «Tutti»)" },

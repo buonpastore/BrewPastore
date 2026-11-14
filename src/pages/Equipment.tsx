@@ -193,15 +193,6 @@ export function EquipmentProject() {
       )}
       {comparing && quotes.length >= 2 && <QuoteCompare quotes={quotes} soci={soci} />}
 
-      <details className="panel qv-more">
-        <summary>Dati del progetto</summary>
-        <RecordForm table="equipment_projects" row={project} canEdit={isAdmin} onSaved={setProject} sections={[{ fields: [
-          { key: "name", label: "Nome", required: true },
-          { key: "status", label: "Stato", type: "select", required: true, options: Object.entries(PROJECT_STATUS).map(([value, label]) => ({ value, label })) },
-          { key: "budget", label: "Budget €", type: "number", render: (v) => eur(v as number) },
-          { key: "description", label: "Obiettivi / requisiti", type: "textarea" },
-        ] }]} />
-      </details>
       {isAdmin && (
         <button className="btn danger" style={{ width: "100%", marginTop: 4 }} onClick={async () => {
           if (!confirm(`Eliminare tutto il progetto «${project.name}» con i suoi ${quotes.length} preventivi e i file?`)) return;
