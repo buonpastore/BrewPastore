@@ -1656,3 +1656,6 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .cmp-item { padding: 8px 2px 8px 20px; font-size: .82rem; background: var(--surface-2); }
 .cmp-item em { font-style: normal; }
 .cmp-table { font-size: .84rem; }
+
+/* niente pecora sullo sfondo dell’app (resta solo lo sfondo a raggi) */
+.app::before { display: none; }
