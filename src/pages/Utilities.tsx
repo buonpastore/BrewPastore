@@ -152,8 +152,12 @@ function Carbonation() {
           </select>
         </label>
       </div>
+      <div className="ut-co2">
+        <div className="ut-co2-head"><span>Carbonazione voluta</span><strong>{num(vol, 1)} vol</strong></div>
+        <input type="range" min={Math.max(1, range[0] - 0.4)} max={range[1] + 0.4} step={0.1} value={vol} onChange={(e) => setCo2(Number(e.target.value))} />
+        <div className="ut-co2-range"><span>più piatta</span><span className="muted small">tipico dello stile {num(range[0], 1)}–{num(range[1], 1)}</span><span>più frizzante</span></div>
+      </div>
       <div className="ut-steppers">
-        <Stepper label={`Carbonazione voluta (tipico dello stile ${num(range[0], 1)}–${num(range[1], 1)} vol)`} value={vol} step={0.1} digits={1} onChange={setCo2} unit="vol" />
         <Stepper label="Temperatura massima della birra in fermentazione" value={t} step={1} digits={0} onChange={setTemp} unit="°C" />
         <Stepper label="Litri da imbottigliare" value={L} step={0.5} digits={1} onChange={setLiters} unit="L" />
       </div>
@@ -189,9 +193,12 @@ function PhAdjust() {
       <div className="ut-steppers">
         <Stepper label="Litri di acqua nel mash" value={L} step={0.5} digits={1} onChange={setLiters} unit="L" />
         <Stepper label="pH misurato adesso" value={now} step={0.05} digits={2} onChange={setPh} />
-        <Stepper label="pH che vuoi" value={want} step={0.05} digits={2} onChange={setTarget} />
       </div>
-      <div className="row-actions">{[5.2, 5.3, 5.4, 5.5].map((v) => <button key={v} className={"mini-btn" + (Math.abs(target - v) < 0.001 ? " on" : "")} onClick={() => setTarget(v)}>{num(v, 1)}</button>)}</div>
+      <div className="ut-co2">
+        <div className="ut-co2-head"><span>pH che vuoi</span><strong>{num(want, 2)}</strong></div>
+        <input type="range" min={5} max={5.8} step={0.05} value={want} onChange={(e) => setTarget(Number(e.target.value))} />
+        <div className="ut-co2-range"><span>5,0 più acido</span><span className="muted small">ideale 5,2–5,5</span><span>5,8</span></div>
+      </div>
       {!now || !L ? <p className="muted">Inserisci litri e pH misurato.</p> : Math.abs(diff) < 0.03 ? (
         <div className="ut-result"><div className="ut-ok">✓ Il pH va già bene.</div></div>
       ) : (
