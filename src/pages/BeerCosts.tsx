@@ -59,7 +59,10 @@ export function BeerCosts() {
     const sorted = [...all].sort((a, b) => key(b).localeCompare(key(a)));
     const ref = sorted.find(isBottled) ?? sorted[0];
     const recipeIngs = rIngs.filter((i) => i.recipe_id === r.id);
-    const ings = recipeIngs.length ? recipeIngs : ref ? ingsOf(ref) : [];
+    const base = recipeIngs.length ? recipeIngs : ref ? ingsOf(ref) : [];
+    // in ogni birra usiamo sempre 5 g di Irish moss, anche se non è scritto nella ricetta
+    const ings = base.some((i) => /irish|alghe/i.test(i.name ?? "")) ? base
+      : [...base, { id: "irish-moss-fisso", name: "Irish moss", category: "additivo", quantity: 5, unit: "g", step: "15 min", fixed: true }];
     const list = ref ? [ref] : [];
     // corrente: solo quella del batch della cottura (dove avete inserito i kWh), non degli altri batch
     // corrente e acqua dal batch della cottura (dove avete inserito i dati), non dagli altri batch
@@ -175,11 +178,11 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
 
   // materie prime raggruppate per nome e unità
   const needed = neededTotals(ings, mats);
-  const groups = new Map<string, { name: string; unit: string; qty: number; cost: number | null; mat: Row | null; category: string; guessed?: number; basis?: PriceBasis }>();
+  const groups = new Map<string, { name: string; unit: string; qty: number; cost: number | null; mat: Row | null; category: string; guessed?: number; basis?: PriceBasis; fixed?: boolean }>();
   for (const i of ings) {
     const { cost, mat, guessed, basis, unitCost } = ingredientCost(i, mats, needed);
     const k = `${String(i.name).toLowerCase()}|${i.unit}`;
-    const g = groups.get(k) ?? { name: i.name, unit: i.unit, qty: 0, cost: 0, mat: mat ? { ...mat, used_unit_cost: unitCost ?? mat.avg_unit_cost } : null, category: i.category, guessed, basis };
+    const g = groups.get(k) ?? { name: i.name, unit: i.unit, qty: 0, cost: 0, mat: mat ? { ...mat, used_unit_cost: unitCost ?? mat.avg_unit_cost } : null, category: i.category, guessed, basis, fixed: Boolean(i.fixed) };
     g.qty += Number(i.quantity ?? 0);
     g.cost = cost == null || g.cost == null ? null : g.cost + cost;
     groups.set(k, g);
@@ -226,7 +229,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
             {sortByCat([...groups.values()]).map((g) => (
               <Fragment key={g.name + g.unit}>
               <tr className={g.mat ? "bc-ing-row" : ""} onClick={() => g.mat && setOpenIng(openIng === g.name + g.unit ? null : g.name + g.unit)}>
-                <td><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.mat ? (openIng === g.name + g.unit ? "▾ " : "▸ ") : ""}{g.name}</span></td>
+                <td><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.mat ? (openIng === g.name + g.unit ? "▾ " : "▸ ") : ""}{g.name}</span>{g.fixed && <div className="muted small">sempre usato (fisso)</div>}</td>
                 <td className="nowrap">{g.category === "lievito" ? yeastQty(g.qty, g.unit) : `${num(g.qty, 3)} ${g.unit}`}</td>
                 {(
                   <>
