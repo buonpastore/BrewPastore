@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.200", date: "15/11/2026 08:20", text: "Ogni birra ha un colore fisso (giallo, ciano, magenta, viola, poi si ricomincia, in ordine alfabetico delle ricette), lo stesso in Produzione e nella corona di Gira la bottiglia. Nella corona i nomi sono bianchi e più piccoli, così stanno dentro e non finiscono sulla banda colorata. Schede e riquadri dell’app ora girano su quattro colori" },
   { version: "0.199", date: "15/11/2026 08:00", text: "Gira la bottiglia: bottiglia più bella (vetro ambrato con riflesso, collo lungo, anello e tappo a corona) e al centro un bollino tondo con scritto «Gira», che resta fermo e dritto mentre la bottiglia gira" },
   { version: "0.198", date: "15/11/2026 07:40", text: "Dentro il batch, sotto Cotta, Fermentata, Imbottigliata e Degustata c’è anche «Esaurita»: la imposti con un tocco (chiede conferma) e ritoccandola la birra torna degustata" },
   { version: "0.197", date: "15/11/2026 07:25", text: "Nuovo quarto colore dell’app, un viola lavanda che sta bene con giallo, ciano e magenta: lo hanno Utilità nel menu in basso, Cantina, Preventivi, Timer, lo stato Degustata e la quarta tappa del batch. Dalla quinta voce si ricomincia dal giallo" },

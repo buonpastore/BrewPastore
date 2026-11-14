@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
-import { type Row } from "../lib";
+import { loadRecipeColors, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { CapDot, CapIcon, capInfo, useCapColors } from "../components/CapColor";
 import { loadCellar, loadProduced } from "../cellar";
@@ -45,6 +45,7 @@ export function BeerWheel() {
   useCapColors();
   const { session } = useAuth();
   const [all, setAll] = useState<Row[] | null>(null);
+  const [recipeColors, setRecipeColors] = useState<Record<string, string>>({});
   const [mineIds, setMineIds] = useState<Set<string> | null>(null);
   const [excluded, setExcludedRaw] = useState<Set<string>>(() => { try { return new Set(JSON.parse(localStorage.getItem(KEY) ?? "[]")); } catch { return new Set(); } });
   const setExcluded = (s: Set<string>) => { setExcludedRaw(s); try { localStorage.setItem(KEY, JSON.stringify([...s])); } catch { /* niente */ } };
@@ -59,6 +60,7 @@ export function BeerWheel() {
   const setMuted = (m: boolean) => { setMutedRaw(m); try { localStorage.setItem(MUTE_KEY, m ? "1" : "0"); } catch { /* niente */ } };
 
   useEffect(() => {
+    loadRecipeColors().then(setRecipeColors);
     Promise.all([loadProduced(), loadCellar()]).then(([bs, cellar]) => {
       // una sola voce per ricetta (il batch imbottigliato più recente)
       const seen = new Set<string>(); const out: Row[] = [];
@@ -128,13 +130,8 @@ export function BeerWheel() {
     const p = (r: number, a: number) => `${(r * Math.cos(a)).toFixed(2)} ${(r * Math.sin(a)).toFixed(2)}`;
     return `M ${p(r1, a0)} A ${r1} ${r1} 0 ${L} 1 ${p(r1, a1)} L ${p(r0, a1)} A ${r0} ${r0} 0 ${L} 0 ${p(r0, a0)} Z`;
   };
-  // colore della birra = colore del suo tappo (schiarito se è troppo scuro per il fondo nero)
-  const colorOf = (b: Row, i: number) => {
-    const hex = capInfo(b.cap_color)?.hex;
-    if (!hex) return accents[i];
-    const v = parseInt(hex.replace("#", ""), 16), lum = ((v >> 16) * 299 + ((v >> 8) & 255) * 587 + (v & 255) * 114) / 1000;
-    return lum < 90 ? `color-mix(in srgb, ${hex} 60%, #fff)` : hex;
-  };
+  // colore della birra = lo stesso della sua ricetta in Produzione
+  const colorOf = (b: Row, i: number) => recipeColors[b.recipe_id] ?? accents[i];
 
   // fascetta colorata sul bordo di ogni fetta
   const arc = (i: number) => {
@@ -187,16 +184,24 @@ export function BeerWheel() {
                 const c = colorOf(b, i);
                 const win = winner?.id === b.id;
                 const a = (mid - 90) * Math.PI / 180;
-                const R = 80;
+                const R = n <= 2 ? 74 : 72;
                 const lines = splitName(nameOf(b));
-                const fs = n <= 4 ? 10 : n <= 6 ? 8.8 : n <= 8 ? 7.8 : 6.8;
+                // il nome deve stare dentro la banda colorata (raggio 90) e nello spicchio
+                let fs = n <= 4 ? 9.5 : n <= 6 ? 8.5 : n <= 8 ? 7.6 : 6.8;
+                const longest = Math.max(...lines.map((l) => l.length));
+                const fits = (f: number) => {
+                  const w = 0.56 * f * longest / 2, hh = lines.length * f * 1.1 / 2;
+                  const cx = R * Math.cos(a), cy = R * Math.sin(a);
+                  return [[-w, -hh], [w, -hh], [-w, hh], [w, hh]].every(([dx, dy]) => Math.hypot(cx + dx, cy + dy) <= 88);
+                };
+                while (fs > 5.5 && !fits(fs)) fs -= 0.3;
                 const h = lines.length * fs * 1.1;
                 return (
                   <g key={b.id} className={win ? "ring-win" : ""} style={{ color: c }}>
                     <path d={band(i, 92, 104)} style={{ fill: c }} className="ring-band" />
                     {n > 1 && <line x1={0} y1={-58} x2={0} y2={-104} transform={`rotate(${i * seg})`} className="ring-sep" />}
                     <g transform={`translate(${R * Math.cos(a)} ${R * Math.sin(a)})`}>
-                      <text textAnchor="middle" fontSize={fs} className="ring-text" style={{ fill: c }}>
+                      <text textAnchor="middle" fontSize={fs} className="ring-text">
                         {lines.map((l, k) => <tspan key={k} x="0" y={-h / 2 + fs * 0.85 + k * fs * 1.1}>{l}</tspan>)}
                       </text>
                     </g>

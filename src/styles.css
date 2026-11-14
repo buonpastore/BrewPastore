@@ -1843,9 +1843,9 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ring-band { opacity: .9; }
 .ring-sep { stroke: var(--line-strong); stroke-width: .8; }
 .ring-inner { fill: none; stroke: var(--line); stroke-width: .8; stroke-dasharray: 2 3; }
-.ring-text { font-family: var(--sans); font-weight: 700; }
+.ring-text { font-family: var(--sans); font-weight: 700; fill: var(--text); }
 .ring-win .ring-band { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
-.ring-win .ring-text { font-weight: 900; text-decoration: underline; }
+.ring-win .ring-text { font-weight: 900; fill: var(--gold-2); }
 .bottle-btn { position: absolute; top: 50%; left: 50%; width: 62%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 0; background: none; padding: 0; cursor: pointer; border-radius: 50%; }
 .bottle-btn:disabled { cursor: default; }
 .bottle { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); }
@@ -1868,3 +1868,15 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .timeline > div.done:nth-child(2)::before { background: var(--teal); border-color: var(--teal); box-shadow: 0 0 0 4px rgba(18, 160, 129, .18); }
 .timeline > div.done:nth-child(3)::before { background: var(--magenta); border-color: var(--magenta); box-shadow: 0 0 0 4px rgba(220, 59, 90, .18); }
 .timeline > div.done:nth-child(4)::before { background: var(--violet); border-color: var(--violet); box-shadow: 0 0 0 4px color-mix(in srgb, var(--violet) 20%, transparent); }
+
+/* schede: ciclo di quattro colori (giallo, ciano, magenta, viola) */
+.cards > .card:nth-child(4n+1)::before { background: var(--gold); }
+.cards > .card:nth-child(4n+2)::before { background: var(--teal); }
+.cards > .card:nth-child(4n+3)::before { background: var(--magenta); }
+.cards > .card:nth-child(4n+4)::before { background: var(--violet); }
+.kpis > .kpi:nth-child(4n+1)::after { background: var(--gold); }
+.kpis > .kpi:nth-child(4n+2)::after { background: var(--teal); }
+.kpis > .kpi:nth-child(4n+3)::after { background: var(--magenta); }
+.kpis > .kpi:nth-child(4n+4)::after { background: var(--violet); }
+/* ricette: colore fisso della birra (anche filtrando l'elenco) */
+.cards > .card.rc-card::before { background: var(--rc); }
