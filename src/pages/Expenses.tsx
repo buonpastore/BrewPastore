@@ -151,6 +151,8 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
   const [day, setDay] = useState(new Date().toISOString().slice(0, 10));
   const [paidBy, setPaidBy] = useState(me);
   const [participants, setParticipants] = useState<string[]>(profiles.map((p) => p.id));
+  const [mode, setMode] = useState<"equal" | "custom">("equal");
+  const [custom, setCustom] = useState<Record<string, string>>({});
   const [receipt, setReceipt] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -164,15 +166,21 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
     if (!description) return setError("Scrivi cos'è la spesa");
     if (!total) return setError("Inserisci l'importo");
     if (!participants.length) return setError("Scegli chi partecipa");
+    if (mode === "custom") {
+      const sum = participants.reduce((t, id) => t + (Number((custom[id] ?? "0").replace(",", ".")) || 0), 0);
+      if (Math.abs(sum - total) > 0.01) return setError(`Le quote sommano ${eur(sum)} invece di ${eur(total)}`);
+    }
     setBusy(true);
     try {
       const receipt_path = receipt ? await uploadFile(`expenses/${me}`, receipt) : null;
       const { data, error } = await supabase.from("expenses").insert({ description, amount: total, expense_date: day, paid_by: paidBy, receipt_path }).select().single();
       if (error) throw error;
-      // parti uguali; i centesimi di resto li prende chi ha pagato (o il primo)
+      // parti uguali (i centesimi di resto li prende chi ha pagato) oppure divisione personalizzata
       const rest = Math.round((total - each * n) * 100) / 100;
       const restTo = participants.includes(paidBy) ? paidBy : participants[0];
-      const { error: e2 } = await supabase.from("expense_shares").insert(participants.map((id) => ({ expense_id: data.id, user_id: id, amount: Math.round((each + (id === restTo ? rest : 0)) * 100) / 100 })));
+      const rows = participants.map((id) => ({ expense_id: data.id, user_id: id,
+        amount: mode === "custom" ? Math.round((Number((custom[id] ?? "0").replace(",", ".")) || 0) * 100) / 100 : Math.round((each + (id === restTo ? rest : 0)) * 100) / 100 }));
+      const { error: e2 } = await supabase.from("expense_shares").insert(rows);
       if (e2) throw e2;
       onSaved(); onClose();
     } catch (x) { setError(errMsg(x)); }
@@ -197,7 +205,11 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
             </label>
           )}
         </div>
-        <span className="nb-label">Si divide tra</span>
+        <span className="nb-label">Divisione</span>
+        <div className="xp-types two">
+          <button type="button" className={"pay-method" + (mode === "equal" ? " on" : "")} onClick={() => setMode("equal")}>Parti uguali</button>
+          <button type="button" className={"pay-method" + (mode === "custom" ? " on" : "")} onClick={() => setMode("custom")}>Personalizzata</button>
+        </div>
         <div className="xp-people">
           {profiles.map((p) => (
             <label key={p.id} className={"xp-person" + (participants.includes(p.id) ? " on" : "")}>
@@ -206,7 +218,15 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
             </label>
           ))}
         </div>
-        {total > 0 && <p className="muted small">{eur(total)} ÷ {n} = <strong>{eur(each)}</strong> a testa</p>}
+        {mode === "equal" && total > 0 && <p className="muted small">{eur(total)} ÷ {n} = <strong>{eur(each)}</strong> a testa</p>}
+        {mode === "custom" && (
+          <div className="form-grid">
+            {profiles.filter((p) => participants.includes(p.id)).map((p) => (
+              <label key={p.id}><span>Quota di {p.display_name} €</span>
+                <input inputMode="decimal" value={custom[p.id] ?? ""} placeholder={total ? String(each).replace(".", ",") : "0,00"} onChange={(e) => setCustom({ ...custom, [p.id]: e.target.value })} /></label>
+            ))}
+          </div>
+        )}
         <label className="block"><span>Scontrino (facoltativo)</span><input type="file" accept="image/*,application/pdf" onChange={(e) => setReceipt(e.target.files?.[0] ?? null)} /></label>
         {error && <p className="error">{error}</p>}
         <div className="qe-sheet-btns">

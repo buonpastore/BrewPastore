@@ -1370,3 +1370,5 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .xp-person { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 99px; border: 1px solid var(--line-strong); background: var(--surface-2); cursor: pointer; }
 .xp-person.on { border-color: var(--gold); }
 .cap-chip > button:last-child { margin-left: auto; }
+
+.xp-types.two { grid-template-columns: 1fr 1fr; }
