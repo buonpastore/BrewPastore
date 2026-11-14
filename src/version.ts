@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.178", date: "15/11/2026 01:50", text: "Confronto preventivi più chiaro: niente testo lungo, solo chi costa meno e di quanto, il totale a parità di oggetti, gli oggetti che mancano da una parte e dall’altra e una tabella degli oggetti in comune con il prezzo più basso evidenziato e la differenza" },
   { version: "0.177", date: "15/11/2026 01:30", text: "Preventivi: il fornitore si conferma col cerchietto sulla sua riga (conferma tutti i suoi oggetti; ritoccandolo tornano in valutazione). Tolto il pulsante «Conferma tutto»" },
   { version: "0.176", date: "15/11/2026 01:20", text: "Materie prime e acquisti: tolte le spiegazioni tecniche su come si calcola il costo medio" },
   { version: "0.175", date: "15/11/2026 01:10", text: "Confronto preventivi rifatto: una valutazione scritta dice quale conviene e di quanto (anche a testa), quali oggetti mancano e quanto pesano sulla differenza, quanto costerebbero a parità di oggetti, dove i prezzi cambiano di più, modelli e quantità diverse e prezzi mancanti, con un consiglio finale. Il dettaglio numerico è in fondo, chiuso" },

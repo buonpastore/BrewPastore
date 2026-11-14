@@ -1684,3 +1684,28 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .pv-line .pv-row.lvl1 { flex: 1; min-width: 0; padding-left: 4px; }
 .pv-check { margin-left: 10px; }
 .pv-check.on { color: var(--teal); }
+
+/* confronto: verdetto e tabelle */
+.cmp .cmp-verdict { margin: 12px 0; padding: 12px 14px; border-radius: 14px; background: rgba(237, 165, 18, .1); border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--line)); font-weight: 600; color: var(--text); font-size: .98rem; line-height: 1.45; }
+.cmp .cmp-verdict strong { color: var(--gold-2); }
+.cmp-same-set { display: grid; grid-template-columns: auto 1fr 1fr; gap: 4px 12px; align-items: center; padding: 10px 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); margin-bottom: 12px; }
+.cmp-same-set > span { font-weight: 700; font-size: .88rem; }
+.cmp-same-set > div { display: flex; flex-direction: column; text-align: right; min-width: 0; }
+.cmp-same-set small { color: var(--muted); font-size: .72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-same-set strong { font-variant-numeric: tabular-nums; }
+.cmp-same-set strong.best { color: var(--teal); }
+.cmp-same-set em { grid-column: 1 / -1; font-style: normal; font-size: .74rem; color: var(--muted); }
+.cmp-miss-box h4 { display: flex; justify-content: space-between; gap: 8px; }
+.cmp-miss-box h4 span { color: var(--text); font-variant-numeric: tabular-nums; }
+.cmp-box { padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--teal) 35%, var(--line)); background: var(--surface); margin-bottom: 12px; }
+.cmp-box h4 { margin: 0 0 6px; font-size: .92rem; color: var(--teal); }
+.cmp-pt { display: flex; flex-direction: column; font-size: .86rem; }
+.cmp-pt-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, minmax(58px, auto)); gap: 8px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); text-align: right; }
+.cmp-pt-row > :first-child { text-align: left; }
+.cmp-pt-row .cheaper { color: var(--teal); font-weight: 700; }
+.cmp-pt-row .cmp-name { display: block; }
+.cmp-model { display: block; color: var(--gold); font-size: .72rem; }
+.cmp-equal { margin: 8px 0 0; font-size: .84rem; color: var(--muted); }
+.cmp-equal strong { color: var(--text); }
+.cmp-warn { display: flex; gap: 8px; align-items: flex-start; font-size: .84rem; color: var(--muted); margin: 0 0 10px; }
+.cmp-warn svg { flex: none; color: var(--gold); margin-top: 1px; }

@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronRight, Circle, CircleAlert, CircleCheck, Info, Lightbulb, ShoppingCart, TriangleAlert } from "lucide-react";
-import { analyze, insights, type CmpItem } from "../quoteCompare";
+import { ChevronRight, Circle, CircleCheck, ShoppingCart, TriangleAlert } from "lucide-react";
+import { analyze, type CmpItem } from "../quoteCompare";
 import readXlsxFile, { readSheetNames } from "read-excel-file";
 import { supabase, uploadFile, parseQuote, openFile, errMsg, eur, date, num, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -237,8 +237,6 @@ function QuoteCompare({ quotes, soci }: { quotes: Row[]; soci: number }) {
   const cats = [...new Set([...A, ...B].map(catOf))].sort((x, y) => (x === "Senza categoria" ? 1 : y === "Senza categoria" ? -1 : x.localeCompare(y)));
   const delta = (v: number) => <span className={"cmp-d" + (Math.abs(v) < 0.005 ? "" : v < 0 ? " less" : " more")}>{Math.abs(v) < 0.005 ? "=" : (v > 0 ? "+" : "−") + eur(Math.abs(v))}</span>;
   const r = analyze(A as CmpItem[], B as CmpItem[]);
-  const ev = insights(r, nA, nB, soci);
-  const TONE = { good: <CircleCheck size={18} />, bad: <CircleAlert size={18} />, warn: <TriangleAlert size={18} />, info: <Info size={18} /> };
   const short = (n: string) => (n.length > 12 ? n.slice(0, 11) + "…" : n);
 
   return (
@@ -255,23 +253,58 @@ function QuoteCompare({ quotes, soci }: { quotes: Row[]; soci: number }) {
             <div className="cmp-diff"><span>Differenza</span><strong>{delta(d)}</strong><small>{delta(d / soci)} a testa</small></div>
           </div>
 
-          <div className="cmp-eval">
-            <h3>Valutazione</h3>
-            <p className="cmp-verdict">{ev.verdict}</p>
-            <ul className="cmp-points">
-              {ev.points.map((p, i) => <li key={i} className={"tone-" + p.tone}>{TONE[p.tone]}<span>{p.text}</span></li>)}
-            </ul>
-            <p className="cmp-advice"><Lightbulb size={18} /><span>{ev.advice}</span></p>
-          </div>
+          <p className="cmp-verdict">
+            {Math.abs(d) < 0.5 ? <>Costano uguale: <strong>{eur(ta)}</strong></>
+              : <><strong>{d < 0 ? nB : nA}</strong> costa <strong>{eur(Math.abs(d))}</strong> in meno (−{Math.round(Math.abs(d) / Math.max(ta, tb) * 100)}%) · {eur(Math.abs(d) / soci)} a testa</>}
+          </p>
+          {(r.onlyA.length > 0 || r.onlyB.length > 0) && (
+            <div className="cmp-same-set">
+              <span>A parità di oggetti</span>
+              <div><small>{nA}</small><strong className={r.fullA < r.fullB - 0.5 ? "best" : ""}>{eur(r.fullA)}</strong></div>
+              <div><small>{nB}</small><strong className={r.fullB < r.fullA - 0.5 ? "best" : ""}>{eur(r.fullB)}</strong></div>
+              <em>aggiungendo a ciascuno gli oggetti che gli mancano, al prezzo dell'altro</em>
+            </div>
+          )}
           {(r.onlyA.length > 0 || r.onlyB.length > 0) && (
             <div className="cmp-miss">
               {[[nB, r.onlyA, "a"], [nA, r.onlyB, "b"]].map(([who, ps, k]) => (ps as typeof r.onlyA).length > 0 && (
                 <div key={k as string} className="cmp-miss-box">
-                  <h4>Mancano in «{who as string}»</h4>
-                  {(ps as typeof r.onlyA).map((p) => <div key={p.name} className="cmp-miss-row"><span>{p.name}<small>{p.category}</small></span><strong>{eur(p.a.total || p.b.total)}</strong></div>)}
+                  <h4>Mancano in «{who as string}» <span>{eur((ps as typeof r.onlyA).reduce((t, p) => t + (p.a.total || p.b.total), 0))}</span></h4>
+                  {(ps as typeof r.onlyA).map((p) => <div key={p.name} className="cmp-miss-row"><span>{p.name}<small>{p.category}</small></span><strong>{(p.a.total || p.b.total) ? eur(p.a.total || p.b.total) : <em className="muted">senza prezzo</em>}</strong></div>)}
                 </div>
               ))}
             </div>
+          )}
+          {(() => {
+            const both = [...r.same, ...r.modelChanged].map((p) => ({ p, dd: p.b.total - p.a.total }));
+            const diff = both.filter((x) => Math.abs(x.dd) >= 0.5).sort((x, y) => Math.abs(y.dd) - Math.abs(x.dd));
+            const equal = both.filter((x) => Math.abs(x.dd) < 0.5);
+            if (!both.length) return null;
+            return (
+              <div className="cmp-box">
+                <h4>In tutti e due</h4>
+                {diff.length > 0 && (
+                  <div className="cmp-pt">
+                    <div className="cmp-pt-row cmp-h"><span>Oggetto</span><span>{short(nA)}</span><span>{short(nB)}</span><span>Diff.</span></div>
+                    {diff.map(({ p, dd }) => (
+                      <div key={p.name + p.kind} className="cmp-pt-row">
+                        <span className="cmp-name">{p.name}
+                          {p.kind === "modello" && <small className="cmp-model">modello diverso: {p.modelA} / {p.modelB}</small>}
+                          {p.a.qty !== p.b.qty && <small className="cmp-model">quantità diverse: {num(p.a.qty)} / {num(p.b.qty)}</small>}
+                        </span>
+                        <span className={dd > 0 ? "cheaper" : ""}>{p.a.total ? eur(p.a.total) : "—"}</span>
+                        <span className={dd < 0 ? "cheaper" : ""}>{p.b.total ? eur(p.b.total) : "—"}</span>
+                        {delta(dd)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {equal.length > 0 && <p className="cmp-equal"><strong>Stesso prezzo:</strong> {equal.map((x) => x.p.name).join(", ")}</p>}
+              </div>
+            );
+          })()}
+          {(r.zeroA.length > 0 || r.zeroB.length > 0) && (
+            <p className="cmp-warn"><TriangleAlert size={16} /> Senza prezzo, contati 0 €: {[...r.zeroA.map((n) => `${n} (${nA})`), ...r.zeroB.map((n) => `${n} (${nB})`)].join(", ")}</p>
           )}
           <details className="cmp-more">
             <summary>Dettaglio per tipologia e oggetto</summary>
