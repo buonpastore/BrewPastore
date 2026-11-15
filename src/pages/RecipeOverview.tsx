@@ -50,7 +50,7 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
   const structured = descParts.length > 1 && descParts.every((p) => /^[A-Za-zÀ-ú ]{3,20}:\s*\S/.test(p));
 
   // procedimento: righe "1. Mash: …" → passaggi
-  const steps = String(recipe.procedure ?? "").split(/\n+/).map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean);
+  const steps = withLiveWater(recipe, String(recipe.procedure ?? "").split(/\n+/).map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean));
 
   const phases = mashPhases(steps.find((x) => /^mash/i.test(x)) ?? "");
   const boilStep = steps.find((x) => /^bollitura/i.test(x)) ?? "";
@@ -153,7 +153,7 @@ export function RecipeOverview({ recipe }: { recipe: Row }) {
           <p className="ov-text pre">{notes}</p>
         </>
       )}
-      {!steps.length && <p className="muted small">Nessun procedimento: usa «Genera riassunto del procedimento» oppure importa la ricetta da testo.</p>}
+      {!steps.length && <p className="muted small">Nessun procedimento: usa «Genera riassunto» oppure importa la ricetta da testo.</p>}
       <StyleCard recipe={recipe} abv={abv} />
     </div>
   );
@@ -189,6 +189,26 @@ function mashPhases(mash: string): { name: string; temp: string; min: string | n
 
 const lc = (x: string) => (x ? x.charAt(0).toLowerCase() + x.slice(1) : x);
 const after = (s: string) => s.replace(/^[^:]*:\s*/, "").replace(/\.$/, "").trim();
+
+/** Il procedimento salvato riporta i litri d'acqua di quando è stato scritto: uso sempre quelli attuali della ricetta. */
+function withLiveWater(r: Row, steps: string[]): string[] {
+  const fmt = (x: unknown) => String(Number(x)).replace(".", ",");
+  const live = [r.mash_water_l != null && `${fmt(r.mash_water_l)} L per il mash`, r.sparge_water_l != null && `${fmt(r.sparge_water_l)} L per lo sparge`].filter(Boolean) as string[];
+  if (!live.length || !steps.length) return steps;
+  let hasWater = false;
+  const out = steps.map((st) => {
+    if (/^acqua/i.test(st)) {
+      hasWater = true;
+      const rest = st.replace(/^[^:]*:\s*/, "").replace(/\.$/, "").split(/,\s*/).filter((x) => x && !/\bL per\b/.test(x));
+      return `Acqua: ${[...live, ...rest].join(", ")}.`;
+    }
+    if (/^sparge/i.test(st) && r.sparge_water_l != null) {
+      return /con\s+[\d.,]+\s*L/i.test(st) ? st.replace(/con\s+[\d.,]+\s*L/i, `con ${fmt(r.sparge_water_l)} L`) : st.replace(/^Sparge/i, `Sparge con ${fmt(r.sparge_water_l)} L`);
+    }
+    return st;
+  });
+  return hasWater ? out : [`Acqua: ${live.join(", ")}.`, ...out];
+}
 
 /** Resoconto discorsivo del procedimento, un paragrafo per fase. */
 function narrate(r: Row, steps: string[]): string[] {
