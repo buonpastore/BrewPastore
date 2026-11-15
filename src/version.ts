@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.219", date: "15/11/2026 12:55", text: "Costi birre: il simbolo dello stato (✓ verde, clessidra o X) è allineato a destra, così non si confonde col tappo" },
   { version: "0.218", date: "15/11/2026 12:45", text: "Conta bottiglie: tolto il campo «Litri della prossima cotta» e il conto di quelle che mancano; restano i tre totali" },
   { version: "0.217", date: "15/11/2026 12:35", text: "Conta bottiglie: ognuno vede solo le sue 66 cl e, sotto il proprio nome, apre le 33 cl se le ha. In fondo tre riquadri: totale da 66, totale da 33 e totale di tutti (bottiglie e litri)" },
   { version: "0.216", date: "15/11/2026 12:20", text: "Conta bottiglie più corto: di partenza solo le bottiglie da 66 cl; sotto c’è «Mostra anche le bottiglie da 33 cl» per aprirle (l’app ricorda la scelta)" },

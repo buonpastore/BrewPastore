@@ -1953,3 +1953,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ut-more.small { width: auto; margin: 2px 0 0; padding: 6px 10px; font-size: .8rem; align-self: flex-start; }
 .ut-result .ut-total { grid-column: 1 / -1; }
 .ut-result > div > span.muted { display: block; margin-top: 2px; }
+/* costi birre: stato (✓ / clessidra / X) allineato a destra, lontano dal tappo */
+.bc-title { flex: 1 1 auto; min-width: 0; align-self: stretch; }
+.bc-state { margin-left: auto; display: inline-flex; align-items: center; }
+.bc-title .bc-sub { flex-basis: 100%; padding-left: 26px; }

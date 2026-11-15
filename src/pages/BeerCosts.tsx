@@ -95,7 +95,7 @@ export function BeerCosts() {
                   {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   <strong>{recipe.name}</strong>
                   <CapDot color={[...all].filter((b) => b.cap_color).sort((x, y) => String(y.bottling_date ?? y.brew_date ?? "").localeCompare(String(x.bottling_date ?? x.brew_date ?? "")))[0]?.cap_color} size={20} />
-                  {list.length > 0 && <StateIcon sum={sum} costs={costs} />}
+                  {list.length > 0 && <span className="bc-state"><StateIcon sum={sum} costs={costs} /></span>}
                   <span className="muted small bc-sub">
                     {list.length ? `${sum.liters ? `${num(sum.liters, 1)} L` : "litri ?"}${sum.bottles ? ` · ${sum.bottles} bottiglie` : ""}` : "non ancora cotta"}
                   </span>
