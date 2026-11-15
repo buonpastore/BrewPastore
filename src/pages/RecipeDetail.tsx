@@ -56,6 +56,8 @@ export function RecipeDetail() {
   const [tab, setTab] = useState("scheda");
   const [importing, setImporting] = useState(false);
   const [pasted, setPasted] = useState<File[] | undefined>();
+  const [completing, setCompleting] = useState(false);
+  const [completeFiles, setCompleteFiles] = useState<File[] | undefined>();
   const [deleting, setDeleting] = useState(false);
   const [editIng, setEditIng] = useState(false);
   const [editScheda, setEditScheda] = useState(sp.get("edit") === "1");
@@ -198,7 +200,22 @@ export function RecipeDetail() {
         )}
         {tab === "acqua" && <RecipeWater recipe={recipe} canEdit={isAdmin} onSaved={setRecipe} />}
         {tab === "cottura" && <RecipeBrewDay recipe={recipe} />}
-        {tab === "documenti" && <DocumentsPanel recipeId={recipe.id} />}
+        {tab === "documenti" && (
+          <>
+            {isAdmin && !completing && (
+              <div className="ing-import" style={{ marginTop: 0, marginBottom: 16 }}>
+                <h3>Completa i dati da un altro documento</h3>
+                <p className="muted small">Manca qualcosa? Carica un altro testo, file o screenshot: riempio solo i dati che mancano e aggiungo gli ingredienti nuovi.</p>
+                <FilePicker compact allowText accept="image/*,application/pdf,.txt,.md" title="📋 Incolla qui" hint="screenshot, file o testo"
+                  textPlaceholder="Incolla qui il testo" onFiles={(f) => { setCompleteFiles(f); setCompleting(true); }} />
+              </div>
+            )}
+            {completing && <ImportRecipe recipeId={recipe.id} complete initialFiles={completeFiles}
+              onClose={() => { setCompleting(false); setCompleteFiles(undefined); }}
+              onDone={() => { setReloadIng((x) => x + 1); setViewKey((x) => x + 1); supabase.from("recipes").select("*").eq("id", recipe.id).single().then(({ data }) => data && setRecipe(data)); }} />}
+            <DocumentsPanel key={`docs-${reloadIng}`} recipeId={recipe.id} />
+          </>
+        )}
       </div>
       {isAdmin && (
         <div className="half-actions bottom-delete">

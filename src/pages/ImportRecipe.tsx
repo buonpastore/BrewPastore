@@ -15,10 +15,12 @@ interface Props {
   onDone?: () => void;
   /** screenshot già incollati nella pagina: la lettura parte subito */
   initialFiles?: File[];
+  /** completa una ricetta esistente: riempie solo i dati che mancano e aggiunge solo gli ingredienti nuovi */
+  complete?: boolean;
 }
 
 /** Carica uno screenshot (es. chat con un'AI) e crea/compila una ricetta. */
-export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props) {
+export function ImportRecipe({ onClose, recipeId, onDone, initialFiles, complete }: Props) {
   const nav = useNavigate();
   const [step, setStep] = useState<"upload" | "reading" | "review" | "saving">("upload");
   const [data, setData] = useState<ParsedRecipe | null>(null);
@@ -26,7 +28,17 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
   const [picked, setPicked] = useState<File[]>(initialFiles ?? []);
   const [fillFields, setFillFields] = useState(!recipeId);
   const [existing, setExisting] = useState(0);
-  const [replace, setReplace] = useState(true);
+  const [replace, setReplace] = useState(!complete);
+  const [cur, setCur] = useState<{ recipe: Record<string, unknown>; names: Set<string> } | null>(null);
+  const keyOfName = (n: string) => n.toLowerCase().replace(/^(?:luppolo|malto|lievito)\s+/, "").replace(/[^a-z0-9]/g, "");
+  useEffect(() => {
+    if (!complete || !recipeId) return;
+    Promise.all([
+      supabase.from("recipes").select("*").eq("id", recipeId).single(),
+      supabase.from("recipe_ingredients").select("name").eq("recipe_id", recipeId),
+    ]).then(([r, i]) => setCur({ recipe: r.data ?? {}, names: new Set((i.data ?? []).map((x) => keyOfName(x.name ?? ""))) }));
+  }, [complete, recipeId]);
+  const has = (k: string) => complete && cur != null && cur.recipe[k] != null && cur.recipe[k] !== "";
   useEffect(() => {
     if (!recipeId) return;
     supabase.from("recipe_ingredients").select("id", { count: "exact", head: true }).eq("recipe_id", recipeId)
@@ -60,16 +72,19 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
         }
       }
       // il nome della ricetta lo date voi: non lo prendo dal foglio
-      setData(got ? { ...got, name: recipeId ? got.name : "", ingredients: sortByCat(got.ingredients ?? []) } : got);   // malti, luppoli, lieviti, resto
+      // per completare: solo gli ingredienti che la ricetta non ha ancora
+      const ings = sortByCat(got?.ingredients ?? []).filter((i) => !complete || !cur || !cur.names.has(keyOfName(i.name)));
+      setData(got ? { ...got, name: recipeId ? got.name : "", ingredients: ings } : got);   // malti, luppoli, lieviti, resto
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
   };
 
   const started = useRef(false);
   useEffect(() => {
+    if (complete && !cur) return;   // per completare aspetto di sapere cosa c'è già nella ricetta
     if (initialFiles?.length && !started.current) { started.current = true; read(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cur]);
 
   const setIng = (i: number, k: string, v: unknown) => {
     if (!data) return;
@@ -96,8 +111,9 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
         }
         if (error) throw error;
         id = r!.id;
-      } else if (fillFields) {
-        const patch = Object.fromEntries(Object.entries(fields).filter(([k, v]) => v != null && k !== "name"));
+      } else if (fillFields || complete) {
+        // completando: tocco solo i dati che nella ricetta mancano
+        const patch = Object.fromEntries(Object.entries(fields).filter(([k, v]) => v != null && v !== "" && k !== "name" && !(complete && has(k))));
         let { error } = await supabase.from("recipes").update(patch).eq("id", id);
         if (error && isMissingWater(error)) {
           waterSkipped = true;
@@ -131,7 +147,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
   return (
     <div className="modal-backdrop">
       <div className="modal wide">
-        <h2>📸 Importa ricetta</h2>
+        <h2>{complete ? "🧩 Completa i dati della ricetta" : "📸 Importa ricetta"}</h2>
         {step === "upload" && (
           <>
             <p>Incolla lo screenshot di una chat con un'AI (anche più screenshot se la ricetta è lunga), la foto di un foglio o un PDF. L'AI estrarrà ingredienti e parametri: potrai controllarli prima di salvare.</p>
@@ -151,18 +167,21 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
                 ["mash_temp_c", "Mash °C"], ["mash_time_min", "Mash min"], ["boil_time_min", "Bollitura min"],
                 ["mash_water_l", "Acqua mash L"], ["sparge_water_l", "Acqua sparge L"],
               ] as [keyof ParsedRecipe, string][]).map(([k, label]) => (
-                <label key={k} className="param"><span>{label}</span>
-                  <input type="number" step="any" value={(data[k] as number | null) ?? ""}
-                    onChange={(e) => setData({ ...data, [k]: e.target.value === "" ? null : Number(e.target.value) })} />
+                <label key={k} className={"param" + (has(k as string) ? " has" : "")}><span>{label}</span>
+                  {has(k as string)
+                    ? <input disabled value={`c'è già: ${String(cur!.recipe[k as string]).replace(".", ",")}`} />
+                    : <input type="number" step="any" value={(data[k] as number | null) ?? ""}
+                        onChange={(e) => setData({ ...data, [k]: e.target.value === "" ? null : Number(e.target.value) })} />}
                 </label>
               ))}
-              {recipeId && existing > 0 && (
+              {complete && <p className="muted small wide">Riempio solo i dati che mancano: quelli che ci sono già restano come sono. Sotto trovi solo gli ingredienti nuovi.</p>}
+              {recipeId && !complete && existing > 0 && (
                 <label className="check wide">
                   <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
                   sostituisci i {existing} ingredienti attuali (se togli la spunta vengono aggiunti in fondo)
                 </label>
               )}
-              {recipeId && (
+              {recipeId && !complete && (
                 <label className="check wide"><input type="checkbox" checked={fillFields} onChange={(e) => setFillFields(e.target.checked)} /> aggiorna anche i parametri della ricetta (OG, FG, IBU, mash…)</label>
               )}
             </div>

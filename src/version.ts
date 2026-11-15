@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.235", date: "15/11/2026 18:40", text: "Ricetta → Documenti: «Completa i dati da un altro documento». Carichi un altro testo, file o screenshot e l’app riempie solo i dati che mancano (quelli già presenti restano, con «c’è già») e aggiunge solo gli ingredienti nuovi; il documento resta tra quelli della ricetta" },
   { version: "0.234", date: "15/11/2026 18:15", text: "Scheda della ricetta: il procedimento e il suo riassunto usano sempre l’acqua di mash e di sparge attuale della ricetta, non i litri di quando era stato scritto" },
   { version: "0.233", date: "15/11/2026 18:00", text: "Nuova ricetta in una sola finestra: in alto incolla, screenshot, file o testo per importarla, sotto «Inserisci a mano». Acqua della ricetta: mash e sparge con − e + (partono da 20 L e 15 L) e «Usa questi valori» largo quanto il riquadro" },
   { version: "0.232", date: "15/11/2026 17:40", text: "Ricetta più ordinata: nella scheda «Modifica scheda» e «Genera riassunto» affiancati e larghi uguali; negli ingredienti Modifica, Pulisci e Doppioni tre pulsanti uguali su una riga (anche nei batch); nella cottura il riepilogo è in quattro riquadri: litri, mash, bollitura e luppoli" },

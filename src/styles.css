@@ -2047,3 +2047,4 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .choose-or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .82rem; margin: 4px 0; }
 .choose-or::before, .choose-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .water-inputs { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.param.has input { color: var(--muted); font-size: .82rem; }
