@@ -34,7 +34,7 @@ export function detectCapsInPixels(data: Uint8ClampedArray, w: number, h: number
   for (let i = 0, p = 0; i < w * h; i++, p += 4) {
     const [hh, s, v] = hsv(data[p], data[p + 1], data[p + 2]);
     let best = -1;
-    if (s > 0.38 && v > 0.28 && chroma.length) {
+    if (s > 0.45 && v > 0.3 && chroma.length) {
       let bd = 999;
       for (const k of chroma) { const d = hueDist(hh, k.h); if (d < bd) { bd = d; best = ks.indexOf(k); } }
       // abbastanza vicino come tinta e non troppo più scuro del tappo (il legno marrone non è un tappo arancione)
@@ -69,19 +69,20 @@ export function detectCapsInPixels(data: Uint8ClampedArray, w: number, h: number
     comps.push({ k, area, sx, sy, minx, maxx, miny, maxy });
   }
   const minArea = Math.max(18, w * h * 0.0006);
-  // le macchie troppo allungate o troppo vuote non sono tappi (bordi, scritte, etichette)
+  // un tappo visto di fronte è un tondo pieno: quasi tutta l'ellisse che lo contiene è del suo colore
+  // (le scritte, i bordi delle etichette e i riflessi sono irregolari, allungati o bucati)
   const round = comps.filter((c) => {
     if (c.area < minArea) return false;
     const bw = c.maxx - c.minx + 1, bh = c.maxy - c.miny + 1;
     const ratio = Math.max(bw, bh) / Math.min(bw, bh);
-    const fill = c.area / (bw * bh);
-    return fill > 0.35 && (ratio < 2.2 || c.area > minArea * 6);
+    const ellipse = c.area / (Math.PI / 4 * bw * bh);   // 1 = disco perfetto
+    return ratio <= 1.45 && ellipse >= 0.72 && ellipse <= 1.15;
   });
   const sizes = round.map((c) => c.area).sort((a, b) => a - b);
   const median = sizes.length ? sizes[Math.floor(sizes.length / 2)] : 0;
   // un tappo ha più o meno la stessa grandezza degli altri: le macchie molto più grandi (pavimento, etichette)
   // o molto più piccole (riflessi) non sono tappi; una macchia vale al massimo UN tappo
-  const caps = round.filter((c) => c.area >= median * 0.3 && c.area <= median * 3)
+  const caps = round.filter((c) => c.area >= median * 0.4 && c.area <= median * 2.5)
     .map((c) => ({ key: ks[c.k].key, x: c.sx / c.area, y: c.sy / c.area, r: Math.sqrt(c.area / Math.PI), area: c.area }))
     .sort((a, b) => b.area - a.area);
   // due macchie una sull'altra (es. un tappo rosso con il bordo arancio) sono lo stesso tappo: tengo la più grande

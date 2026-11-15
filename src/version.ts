@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.226", date: "15/11/2026 15:25", text: "Riconoscimento tappi più severo: conta solo i tondi pieni di colore deciso, non schiacciati e grandi come gli altri tappi; etichette, scritte, legno e riflessi non vengono più presi" },
   { version: "0.225", date: "15/11/2026 15:10", text: "Cantina, riconosci dalla foto: non conta più il pavimento o le etichette come tanti tappi (le macchie molto più grandi di un tappo vengono scartate e ogni macchia vale al massimo un tappo); un tappo con il bordo di un altro colore conta una volta sola" },
   { version: "0.224", date: "15/11/2026 14:50", text: "Ricette: nuova vista compatta (solo nome, tappo e stile, righe basse) oltre a quella estesa. In tutte le pagine i pulsanti Compatta/Estesa sono due iconcine accanto al titolo o alla ricerca, senza occupare una riga" },
   { version: "0.223", date: "15/11/2026 14:25", text: "Regola dei pulsanti: per creare si trova in alto, per eliminare sempre in fondo. Acquisti e fatture: «Importa un acquisto» in cima all’elenco ed «Elimina acquisto» in fondo all’ordine; batch: «Elimina batch» in fondo alla pagina; ricetta: «Elimina ricetta» da solo in fondo" },
