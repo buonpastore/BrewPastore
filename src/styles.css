@@ -1980,3 +1980,10 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .accent-swatch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
 .accent-name { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .accent-name small { color: var(--muted); font-size: .76rem; font-family: ui-monospace, monospace; }
+/* prova: pulsanti di sezione tutti su una riga, più piccoli */
+.section-tabs.one-row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 5px; overflow: visible; }
+.section-tabs.one-row a { flex-direction: column; justify-content: center; gap: 3px; padding: 6px 2px; min-height: 48px; font-size: .7rem; text-align: center; white-space: nowrap; border-radius: 12px; }
+.section-tabs.one-row a svg { width: 17px; height: 17px; }
+.section-tabs.one-row .st-long { display: none; }
+.section-tabs.one-row .st-short { display: block; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+@media (min-width: 861px) { .section-tabs.one-row { max-width: 720px; } .section-tabs.one-row a { font-size: .78rem; min-height: 54px; } }

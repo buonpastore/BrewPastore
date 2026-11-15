@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.222", date: "15/11/2026 14:05", text: "Prova: i pulsanti in alto di ogni sezione (Produzione, Economia, Attività, Utilità) sono tutti su una riga, più piccoli" },
   { version: "0.221", date: "15/11/2026 13:50", text: "Impostazioni → Aspetto: i cinque colori dell’app (giallo, ciano, magenta, viola, verde luppolo) si possono cambiare toccandoli, uno per uno o con «Ripristina i colori originali». La scelta vale per il proprio telefono" },
   { version: "0.220", date: "15/11/2026 13:30", text: "«Conti» ora si chiama «Economia» e ha una nuova sezione «Ricavi»: scegli una birra imbottigliata o degustata, metti il prezzo di vendita (con − e +, si salva per ogni birra) e vedi il costo a bottiglia, quante bottiglie servono per andare in pari e, spostando il pallino sulle bottiglie vendute, incasso, guadagno e quota a testa. Le Spese condivise si sono spostate in Attività (Task, Spese, Chat). Da eseguire: 0022_prezzo_vendita.sql" },
   { version: "0.219", date: "15/11/2026 12:55", text: "Costi birre: il simbolo dello stato (✓ verde, clessidra o X) è allineato a destra, così non si confonde col tappo" },

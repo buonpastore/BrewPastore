@@ -18,6 +18,9 @@ import { VERSION_LABEL } from "../version";
 interface Tab { to: string; label: string; short?: string; icon: LucideIcon; color: string; also?: string[] }
 interface Group { key: string; label: string; icon: LucideIcon; to: string; color: string; tabs?: Tab[] }
 
+/** Pulsanti di sezione tutti su una riga, più piccoli (prova; false = due per riga). */
+const ONE_ROW = true;
+
 export const GROUPS: Group[] = [
   { key: "home", label: "Home", icon: House, to: "/", color: "var(--text)" },
   {
@@ -154,7 +157,8 @@ export function Layout() {
         {current.tabs && (
           <>
             <div className="section-title">{current.label}</div>
-            <nav className={"section-tabs" + (current.tabs.length >= 4 ? " two-cols" : "") + (current.tabs.length >= 4 && current.tabs.length % 2 ? " odd" : "")} style={{ ["--n" as string]: current.tabs.length >= 4 ? 2 : current.tabs.length }}>
+            <nav className={"section-tabs" + (ONE_ROW ? " one-row" : (current.tabs.length >= 4 ? " two-cols" : "") + (current.tabs.length >= 4 && current.tabs.length % 2 ? " odd" : ""))}
+              style={{ ["--n" as string]: ONE_ROW ? current.tabs.length : current.tabs.length >= 4 ? 2 : current.tabs.length }}>
               {current.tabs.map(({ to, label, short, icon: Icon, color }) => (
                 <NavLink key={to} to={to} style={{ ["--c" as string]: color }} className={tabActive({ to, label, icon: Icon, color, also: current.tabs!.find((t) => t.to === to)?.also }, loc.pathname) ? "active" : ""}>
                   <Icon size={16} /> <span className="st-long">{label}</span><span className="st-short">{short ?? label}</span>
