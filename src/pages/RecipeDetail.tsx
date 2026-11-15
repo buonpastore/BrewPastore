@@ -129,7 +129,7 @@ export function RecipeDetail() {
           <>
             <RecipeOverview recipe={recipe} />
             {isAdmin && (
-              <div className="row-actions" style={{ marginTop: 16 }}>
+              <div className="half-actions" style={{ marginTop: 16 }}>
                 <button className="btn" onClick={() => setEditScheda(true)}>✏️ Modifica scheda</button>
                 <button className="btn" onClick={async () => {
               const { data: ings } = await supabase.from("recipe_ingredients").select("*").eq("recipe_id", recipe.id).order("sort_order");
@@ -142,7 +142,7 @@ export function RecipeDetail() {
               const { data, error } = await supabase.from("recipes").update({ procedure: text }).eq("id", recipe.id).select().single();
               if (error) return alert(errMsg(error));
               setRecipe(data);
-            }}>📝 Genera riassunto del procedimento</button>
+            }}>📝 Genera riassunto</button>
               </div>
             )}
           </>
@@ -151,8 +151,8 @@ export function RecipeDetail() {
           <>
             <IngredientsView table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} volume={recipe.batch_size_l} reloadKey={`${reloadIng}-${viewKey}`} />
             {isAdmin && (
-              <div className="ing-tools">
-                <button className={"mini-btn" + (editIng ? " on" : "")} onClick={() => setEditIng(!editIng)}>✏️ <span>{editIng ? "Chiudi modifica" : "Modifica ingredienti"}</span></button>
+              <div className="ing-tools three">
+                <button className={"mini-btn" + (editIng ? " on" : "")} onClick={() => setEditIng(!editIng)}>✏️ <span>{editIng ? "Chiudi" : "Modifica"}</span></button>
                 <CleanNamesButton table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} onDone={() => setReloadIng((x) => x + 1)} />
                 <DedupeButton table="recipe_ingredients" parentKey="recipe_id" parentId={recipe.id} onDone={() => setReloadIng((x) => x + 1)} />
               </div>

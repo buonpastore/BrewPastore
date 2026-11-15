@@ -21,5 +21,5 @@ export function DedupeButton({ table, parentKey, parentId, onDone }: { table: st
       onDone();
     } catch (e) { alert(errMsg(e)); } finally { setBusy(false); }
   };
-  return <button className="mini-btn" disabled={busy} onClick={run} title="Togli gli ingredienti ripetuti">♊ <span>{busy ? "Controllo…" : "Togli doppioni"}</span></button>;
+  return <button className="mini-btn" disabled={busy} onClick={run} title="Togli gli ingredienti ripetuti">♊ <span>{busy ? "Controllo…" : "Doppioni"}</span></button>;
 }

@@ -2029,3 +2029,18 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .water-eq a { display: inline-flex; align-items: center; gap: 4px; }
 .half-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .half-actions .btn { width: 100%; justify-content: center; }
+/* ricetta: tre pulsanti uguali per gli ingredienti */
+.ing-tools.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ing-tools.three .mini-btn { width: 100%; justify-content: center; }
+/* cottura: riepilogo in riquadri */
+.bd-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }
+.bd-kpis > div { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); border-top: 3px solid var(--c); min-width: 0; }
+.bd-kpis svg { color: var(--c); margin-bottom: 2px; }
+.bd-kpis small { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+.bd-kpis strong { font-size: 1.02rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bd-kpis span { color: var(--muted); font-size: .76rem; min-height: 1em; }
+@media (max-width: 520px) { .bd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ing-tools.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ing-tools.two .mini-btn { width: 100%; justify-content: center; }
+.half-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.half-actions .btn { min-width: 0; padding-left: 8px; padding-right: 8px; white-space: normal; line-height: 1.2; }

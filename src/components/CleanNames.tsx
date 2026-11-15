@@ -7,7 +7,7 @@ export function CleanNamesButton({ table, parentKey, parentId, onDone }: { table
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button className="mini-btn" onClick={() => setOpen(true)} title="Togli le descrizioni dai nomi degli ingredienti">🧹 <span>Pulisci nomi</span></button>
+      <button className="mini-btn" onClick={() => setOpen(true)} title="Togli le descrizioni dai nomi degli ingredienti">🧹 <span>Pulisci</span></button>
       {open && <CleanNamesDialog table={table} parentKey={parentKey} parentId={parentId} onClose={() => setOpen(false)} onDone={onDone} />}
     </>
   );

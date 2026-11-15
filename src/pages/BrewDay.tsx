@@ -1,4 +1,4 @@
-import { Droplets, Wheat, ShowerHead, Flame, Wind, Snowflake, FlaskConical, ScrollText } from "lucide-react";
+import { Droplets, Wheat, ShowerHead, Flame, Wind, Snowflake, FlaskConical, ScrollText, Beer, Leaf } from "lucide-react";
 import type { ReactNode } from "react";
 import { num, type Row } from "../lib";
 import { nameColor, sortByCat } from "../categories";
@@ -80,11 +80,11 @@ export function BrewDay(p: Props) {
 
   return (
     <div>
-      <div className="bd-summary">
-        {p.volume ? <span>🍺 {num(p.volume, 1)} L</span> : null}
-        {p.mashTemp ? <span>🌾 Mash {num(p.mashTemp, 1)} °C × {p.mashTime ?? "?"} min</span> : null}
-        {boil ? <span>🔥 Bollitura {boil} min</span> : null}
-        {hopTotal > 0 && <span>🌿 Luppoli {num(hopTotal, 0)} g{p.volume ? ` (${num(hopTotal / Number(p.volume), 1)} g/L)` : ""}</span>}
+      <div className="bd-kpis">
+        <div style={{ ["--c" as string]: "var(--gold)" }}><Beer size={18} /><small>Birra</small><strong>{p.volume ? `${num(p.volume, 1)} L` : "—"}</strong></div>
+        <div style={{ ["--c" as string]: "var(--teal)" }}><Wheat size={18} /><small>Mash</small><strong>{p.mashTemp ? `${num(p.mashTemp, 1)} °C` : "—"}</strong><span>{p.mashTime ? `${p.mashTime} min` : ""}</span></div>
+        <div style={{ ["--c" as string]: "var(--magenta)" }}><Flame size={18} /><small>Bollitura</small><strong>{boil ? `${boil} min` : "—"}</strong></div>
+        <div style={{ ["--c" as string]: "var(--violet)" }}><Leaf size={18} /><small>Luppoli</small><strong>{hopTotal > 0 ? `${num(hopTotal, 0)} g` : "—"}</strong><span>{hopTotal > 0 && p.volume ? `${num(hopTotal / Number(p.volume), 1)} g/L` : ""}</span></div>
       </div>
       <ol className="brewday">
         <Step icon={<Droplets size={18} />} color="var(--teal)" title="Preparazione acqua"
