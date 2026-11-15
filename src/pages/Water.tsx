@@ -38,10 +38,10 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
   const evap = eq.boilOff * boil / 60;
   const absorbed = malt * eq.absorption;
   const total = vol + eq.losses + evap + absorbed;
-  const calcMash = malt * eq.ratio;
-  const calcSparge = Math.max(0, total - calcMash);
+  const calcMash = Math.round(malt * eq.ratio * 2) / 2;
+  const calcSparge = Math.max(0, Math.round((total - calcMash) * 2) / 2);
   const preBoil = vol + eq.losses + evap;
-  const r1 = (n: number) => Math.round(n * 10) / 10;
+  const r1 = (n: number) => Math.round(n * 2) / 2;   // al mezzo litro
 
   const save = async (m: number | null, s: number | null) => {
     setError(""); setMsg("");
@@ -56,6 +56,15 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
 
   const savedM = recipe.mash_water_l != null ? Number(recipe.mash_water_l) : null;
   const savedS = recipe.sparge_water_l != null ? Number(recipe.sparge_water_l) : null;
+  // nelle caselle: i valori salvati; se mancano, quelli calcolati (arrotondati al mezzo litro)
+  const canCalc = vol > 0 && malt > 0;
+  const showM = savedM ?? (canCalc ? calcMash : null), showS = savedS ?? (canCalc ? calcSparge : null);
+  const calcTag = (saved: number | null) => (saved == null && canCalc ? " · calcolata" : "");
+  useEffect(() => {
+    if (!canCalc) return;
+    setMash((m) => (m === "" || m == null ? String(calcMash) : m));
+    setSparge((x) => (x === "" || x == null ? String(calcSparge) : x));
+  }, [canCalc, calcMash, calcSparge]);
 
   return (
     <div>
@@ -63,19 +72,19 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
         <div className="water-card" style={{ ["--c" as string]: "var(--gold)" }}>
           <Droplets size={22} />
           <span className="muted small">Acqua di mash (ammostamento)</span>
-          <strong>{savedM != null ? `${num(savedM, 1)} L` : "—"}</strong>
-          <span className="muted small">{savedM != null && malt ? `${num(savedM / malt, 2)} L per kg di malto` : "dove metti i grani"}</span>
+          <strong>{showM != null ? `${num(showM, 1)} L` : "—"}</strong>
+          <span className="muted small">{showM != null && malt ? `${num(showM / malt, 2)} L per kg di malto` : "dove metti i grani"}{calcTag(savedM)}</span>
         </div>
         <div className="water-card" style={{ ["--c" as string]: "var(--teal)" }}>
           <ShowerHead size={22} />
           <span className="muted small">Acqua di sparge (risciacquo)</span>
-          <strong>{savedS != null ? `${num(savedS, 1)} L` : "—"}</strong>
-          <span className="muted small">a 76–78 °C</span>
+          <strong>{showS != null ? `${num(showS, 1)} L` : "—"}</strong>
+          <span className="muted small">a 76–78 °C{calcTag(savedS)}</span>
         </div>
         <div className="water-card" style={{ ["--c" as string]: "var(--magenta)" }}>
           <span className="water-total">Σ</span>
           <span className="muted small">Acqua totale</span>
-          <strong>{savedM != null || savedS != null ? `${num((savedM ?? 0) + (savedS ?? 0), 1)} L` : "—"}</strong>
+          <strong>{showM != null || showS != null ? `${num((showM ?? 0) + (showS ?? 0), 1)} L` : "—"}</strong>
           <span className="muted small">{vol ? `per ${num(vol, 1)} L di birra` : ""}</span>
         </div>
       </div>
@@ -106,10 +115,10 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
                 <tr><td>+ perdite</td><td>{num(eq.losses, 1)} L</td></tr>
                 <tr><td>+ evaporazione ({boil} min × {num(eq.boilOff, 1)} L/h)</td><td>{num(evap, 1)} L</td></tr>
                 <tr><td>+ assorbita dai grani ({num(malt, 2)} kg × {num(eq.absorption, 1)} L/kg)</td><td>{num(absorbed, 1)} L</td></tr>
-                <tr className="tot"><td>Acqua totale</td><td>{num(total, 1)} L</td></tr>
+                <tr className="tot"><td>Acqua totale</td><td>{num(calcMash + calcSparge, 1)} L</td></tr>
                 <tr><td>🟡 Mash: {num(malt, 2)} kg × {num(eq.ratio, 1)} L/kg</td><td><strong>{num(calcMash, 1)} L</strong></td></tr>
                 <tr><td>🔵 Sparge: totale − mash</td><td><strong>{num(calcSparge, 1)} L</strong></td></tr>
-                <tr><td className="muted">Volume pre-bollitura atteso</td><td className="muted">{num(preBoil, 1)} L</td></tr>
+                <tr><td className="muted">Volume pre-bollitura atteso</td><td className="muted">{num(r1(preBoil), 1)} L</td></tr>
               </tbody>
             </table>
             {canEdit && <button className="btn" onClick={() => save(r1(calcMash), r1(calcSparge))}>Usa questi valori ({num(r1(calcMash), 1)} L + {num(r1(calcSparge), 1)} L)</button>}

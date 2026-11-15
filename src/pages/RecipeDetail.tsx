@@ -174,6 +174,8 @@ export function RecipeDetail() {
           </>
         )}
         {tab === "batch" && (
+          <>
+          {isAdmin && <button className="btn primary full-w" style={{ marginBottom: 12 }} onClick={newBatch}><Beer size={18} /> Nuovo batch da questa ricetta</button>}
           <div className="table-wrap">
             <table className="batch-list compact">
               <thead><tr><th>Batch</th><th>Stato</th><th>Dati</th></tr></thead>
@@ -192,18 +194,18 @@ export function RecipeDetail() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         {tab === "acqua" && <RecipeWater recipe={recipe} canEdit={isAdmin} onSaved={setRecipe} />}
         {tab === "cottura" && <RecipeBrewDay recipe={recipe} />}
         {tab === "documenti" && <DocumentsPanel recipeId={recipe.id} />}
       </div>
       {isAdmin && (
-        <div className="row-actions recipe-actions">
-          <button className="btn primary" onClick={newBatch}><Beer size={18} /> Nuovo batch da questa ricetta</button>
+        <div className="half-actions bottom-delete">
           <button className="btn" onClick={duplicate}>⧉ Duplica</button>
+          <button className="btn danger" onClick={() => setDeleting(true)}>🗑️ Elimina</button>
         </div>
       )}
-      {isAdmin && <button className="btn danger full-w bottom-delete" onClick={() => setDeleting(true)}>🗑️ Elimina ricetta</button>}
     </div>
   );
 }
