@@ -261,13 +261,19 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   const lines = raw.split(/\r?\n/).map((l) => l.replace(/^\s*(?:[-*•+]|\d+[.)])\s+/, "").replace(/^#+\s*/, "").trim()).filter(Boolean);
   const find = (rx: RegExp) => { const m = raw.match(rx); return m ? m : null; };
 
-  const RANGE = "(?:\\s*[–—-]\\s*(1[.,]\\d{3}))?";
-  const og = find(new RegExp(`\\b(?:OG|O\\.G\\.|densit[aà] iniziale|gravity iniziale)\\b[^\\d\\n]{0,30}(1[.,]\\d{3})${RANGE}`, "i"));
-  const fg = find(new RegExp(`\\b(?:FG|F\\.G\\.|densit[aà] finale|gravity finale)\\b[^\\d\\n]{0,30}(1[.,]\\d{3})${RANGE}`, "i"));
+  // densità scritta 1.062, 1,062 oppure 1062 (come sui fogli dei kit)
+  const SG = "(1[.,]?0\\d{2})";
+  const RANGE = `(?:\\s*[–—-]\\s*${SG})?`;
+  const og = find(new RegExp(`(?:\\b[O0]G\\b|\\b[O0]\\.\\s?G\\.?|densit[aà] iniziale|gravity iniziale|original gravity)[^\\d\\n]{0,30}${SG}${RANGE}`, "i"))
+    // «si dovrebbero ottenere circa 23 litri alla densità di 1062» (nel fermentatore)
+    ?? find(new RegExp(`otten[a-z]*[^\\n]{0,40}?densit[aà][^\\d\\n]{0,15}${SG}`, "i"))
+    ?? find(new RegExp(`fermentatore[^\\n]{0,60}?densit[aà][^\\d\\n]{0,15}${SG}`, "i"));
+  const fg = find(new RegExp(`(?:\\bFG\\b|\\bF\\.\\s?G\\.?|densit[aà] finale|gravity finale|final gravity)[^\\d\\n]{0,30}${SG}${RANGE}`, "i"));
   const ibu = find(/\bIBU\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)(?:\s*[–—-]\s*(\d{1,3}(?:[.,]\d)?))?|(\d{1,3}(?:[.,]\d)?)\s*IBU\b/i);
   const ebc = find(/\bEBC\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)(?:\s*[–—-]\s*(\d{1,3}(?:[.,]\d)?))?|(\d{1,3}(?:[.,]\d)?)\s*EBC\b/i);
   const srm = find(/\bSRM\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)|(\d{1,3}(?:[.,]\d)?)\s*SRM\b/i);
-  const vol = find(/(?:volume|batch|lotto|litri finali|in fermentatore|per)\b[^\d\n]{0,25}(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i) ?? find(/\b(\d{1,3}(?:[.,]\d)?)\s*(?:l|litri)\s*(?:di birra|finali|batch)/i);
+  const vol = find(/otten[a-z]*\s*(?:circa\s*)?(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i)   // «si dovrebbero ottenere circa 23 litri»
+    ?? find(/(?:volume|batch|lotto|litri finali|in fermentatore|per)\b[^\d\n]{0,25}(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i) ?? find(/\b(\d{1,3}(?:[.,]\d)?)\s*(?:l|litri)\s*(?:di birra|finali|batch)/i);
   const eff = find(/efficien[a-z]*\b[^\d\n]{0,15}(\d{2}(?:[.,]\d)?)\s*%/i);
   const mash = find(/(?:mash(?!\s*out)|ammostamento|infusione|single infusion|saccarificazione)[^\n]{0,60}?(\d{2}(?:[.,]\d)?)\s*°\s*C?[^\n]{0,30}?(\d{2,3})\s*(?:min|minuti|')/i)
     ?? find(/(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:per|x|×)?\s*(\d{1,3})\s*(?:min|minuti|')/i);
@@ -284,6 +290,7 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   const ingredients: TextRecipe["ingredients"] = [];
   const INSTRUCTION = /^(?:quando|dopo|inizio|fine|durante|al termine|terminata)\b|\b(?:aggiunger[ei]|aggiungi|inserire|preparare|raffreddare|trasferire|mantenere|portare|riscaldare|misurare|prelevare|lasciare|avvio|spegnere|mescolare|controllare|ossigenare|inoculare|registrare|calcolare|utilizzare|attendere|verificare|sollevare|abbassare|procedere)\b/i;
   const boilMin = (() => { const b = raw.match(/bollitura[^\n\d]{0,25}(\d{2,3})\s*(?:min|minuti|')/i) ?? raw.match(/(\d{2,3})\s*(?:min|minuti)\s*(?:di\s*)?bollitura/i); return b ? Number(b[1]) : null; })();
+  const tableItems = new Set<TextRecipe["ingredients"][number]>();
   const keyOf = (n: string) => n.toLowerCase().replace(/^(?:luppolo|malto|lievito)\s+/, "").replace(/[^a-z0-9]/g, "");
   for (const l of lines) {
     if (SKIP_LINE.test(l)) continue;
@@ -301,8 +308,20 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
       continue;
     }
     // tabelle markdown: | Malto Pils | 5 kg | mash |
-    const line = l.includes("|") ? l.split("|").map((c) => c.trim()).filter(Boolean).join(" ") : l;
+    let line = l.includes("|") ? l.split("|").map((c) => c.trim()).filter(Boolean).join(" ") : l;
     if (/^[-:\s|]+$/.test(line)) continue;
+    // tabella dei kit (es. Mr Malt): «Malto d'ORZO Pilsner   kg 3,25» → unità prima della quantità
+    const tab = line.match(/^(.*?[A-Za-zÀ-ú®™')].*?)\s+(kg|g|gr|grammi|l|ml)\s*[il]?\s*(\d+(?:[.,]\d+)?)\s*$/i);
+    let fromTable = false;
+    if (tab && /[a-zà-ú]{3}/i.test(tab[1])) {
+      const nm = tab[1]
+        .replace(/^(?:[^A-Za-zÀ-ú]*[A-Za-zÀ-ú]{1,2}\b[\s.:;,|]+)+(?=[A-Za-zÀ-ú]{3})/, "")   // lettere sporche dell'OCR in testa
+        .replace(/^[^A-Za-zÀ-ú]+/, "")
+        .replace(/\bd['’]\s?orzo\b/i, "").replace(/\bd['’]\s?frumento\b/i, "di frumento")
+        .replace(/^luppolo\s+in\s+pellets?\b/i, "Luppolo").replace(/^in\s+pellets?\b/i, "Luppolo")
+        .replace(/[®™]|['’]!?(?=\s|$)/g, "").replace(/\s{2,}/g, " ").trim();
+      line = `${nm} ${tab[3]} ${tab[2]}`; fromTable = true;
+    }
     const q = line.match(QTY);
     if (!q) continue;
     if (/^(ecco|ricetta|per\b|questa|una\b|un\b|ti\b|di seguito)/i.test(line)) continue;
@@ -322,7 +341,23 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     }
     name = tidyName(name, category);
     if (!name) continue;
-    ingredients.push({ name: name.charAt(0).toUpperCase() + name.slice(1), category, quantity, unit, step: stepOf(line, category) });
+    // lettere sporche dell'OCR in testa («I Lievito…») e simboli in coda («SafLager'!»)
+    name = name.replace(/^(?:[A-Za-z]{1,2}[\s.:;|]+)+(?=[A-ZÀ-Ú][a-zà-ú])/, "").replace(/[®™]|['’]!?(?=\s|$)/g, "").replace(/\s{2,}/g, " ").trim();
+    const item = { name: name.charAt(0).toUpperCase() + name.slice(1), category, quantity, unit, step: stepOf(line, category) };
+    ingredients.push(item);
+    if (fromTable) tableItems.add(item);
+  }
+  // se c'è la tabella degli ingredienti, l'elenco è quella (più il lievito);
+  // dal resto del testo (es. «1ª gittata di luppolo Northern Brewer 14 g - 90 min») prendo solo i minuti
+  if (tableItems.size >= 3) {
+    const words = (n: string) => n.toLowerCase().replace(/\(.*?\)/g, " ").split(/[^a-zà-ú0-9]+/).filter((w) => w.length >= 4 && !/^(luppolo|malto|pellets|orzo|lievito|secco|gittata|whirlpool)$/.test(w));
+    for (const it of ingredients) {
+      if (tableItems.has(it) || !it.step) continue;
+      const hit = [...tableItems].find((t) => !t.step && words(t.name).some((w) => it.name.toLowerCase().includes(w)));
+      if (hit) hit.step = it.step;
+    }
+    const keep = ingredients.filter((i) => tableItems.has(i) || (i.category === "lievito" && !ingredients.some((t) => tableItems.has(t) && t.category === "lievito")));
+    ingredients.length = 0; ingredients.push(...keep);
   }
 
   // ingredienti elencati due volte (es. tabella + procedimento): ne tengo uno solo
@@ -353,7 +388,8 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   const mid = (m: RegExpMatchArray | null, dec: number) => {
     if (!m) return null;
     const a = m[1] ?? m[3]; if (a == null) return null;
-    const v = m[2] != null && m[1] != null ? (num(m[1]) + num(m[2])) / 2 : num(a);
+    const sgv = (x: string) => { const n = num(x); return dec === 3 && n > 100 ? n / 1000 : n; };   // 1062 → 1,062
+    const v = m[2] != null && m[1] != null ? (sgv(m[1]) + sgv(m[2])) / 2 : sgv(a);
     const f = 10 ** dec; return Math.round(v * f) / f;
   };
   // dati per il riassunto del procedimento

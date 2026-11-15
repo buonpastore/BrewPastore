@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.227", date: "15/11/2026 15:55", text: "Import ricetta da foto: il nome resta vuoto e lo scrivete voi. Riconosce le densità scritte senza punto (1062) e «O.G./F.G.», i litri e la densità in frasi come «si dovrebbero ottenere circa 23 litri alla densità di 1062» e «densità finale sia circa 1015». Legge le tabelle ingredienti dei kit con l’unità prima della quantità (kg 3,25) e ripulisce i nomi (Malto Pilsner, Luppolo Northern Brewer)" },
   { version: "0.226", date: "15/11/2026 15:25", text: "Riconoscimento tappi più severo: conta solo i tondi pieni di colore deciso, non schiacciati e grandi come gli altri tappi; etichette, scritte, legno e riflessi non vengono più presi" },
   { version: "0.225", date: "15/11/2026 15:10", text: "Cantina, riconosci dalla foto: non conta più il pavimento o le etichette come tanti tappi (le macchie molto più grandi di un tappo vengono scartate e ogni macchia vale al massimo un tappo); un tappo con il bordo di un altro colore conta una volta sola" },
   { version: "0.224", date: "15/11/2026 14:50", text: "Ricette: nuova vista compatta (solo nome, tappo e stile, righe basse) oltre a quella estesa. In tutte le pagine i pulsanti Compatta/Estesa sono due iconcine accanto al titolo o alla ricerca, senza occupare una riga" },

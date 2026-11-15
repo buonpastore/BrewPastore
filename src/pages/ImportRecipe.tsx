@@ -59,7 +59,8 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
           setWarn("Non ho trovato ingredienti nel testo: controlla che si legga bene, oppure aggiungili a mano qui sotto.");
         }
       }
-      setData(got ? { ...got, ingredients: sortByCat(got.ingredients ?? []) } : got);   // malti, luppoli, lieviti, resto
+      // il nome della ricetta lo date voi: non lo prendo dal foglio
+      setData(got ? { ...got, name: recipeId ? got.name : "", ingredients: sortByCat(got.ingredients ?? []) } : got);   // malti, luppoli, lieviti, resto
       setStep("review");
     } catch (e) { setError(errMsg(e)); setStep("upload"); }
   };
@@ -85,7 +86,8 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
       if (fields.notes && /^Lett[ao] direttamente dal testo/i.test(fields.notes)) fields.notes = null;
       let id = recipeId;
       if (!id) {
-        const rec = { ...fields, name: fields.name || "Ricetta importata" };
+        if (!fields.name?.trim()) { setStep("review"); setError("Scrivi il nome della ricetta"); return; }
+        const rec = { ...fields, name: fields.name.trim() };
         let { data: r, error } = await supabase.from("recipes").insert(rec).select().single();
         if (error && isMissingWater(error)) {
           // database non ancora aggiornato (file 0006): salva senza i campi dell'acqua
@@ -142,7 +144,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles }: Props)
         {(step === "review" || step === "saving") && data && (
           <>
             <div className="form-grid">
-              {!recipeId && <label><span>Nome</span><input value={data.name ?? ""} onChange={(e) => setData({ ...data, name: e.target.value })} /></label>}
+              {!recipeId && <label><span>Nome della ricetta *</span><input value={data.name ?? ""} placeholder="Scrivilo tu, es. Bibock" onChange={(e) => setData({ ...data, name: e.target.value })} /></label>}
               <label><span>Stile</span><FieldInput f={{ key: "style", label: "Stile", type: "select", options: STYLE_OPTIONS, allowCustom: true }} value={data.style ?? ""} onChange={(v) => setData({ ...data, style: (v as string) || null })} /></label>
               {([
                 ["batch_size_l", "Litri"], ["target_og", "OG"], ["target_fg", "FG"], ["target_ibu", "IBU"], ["target_ebc", "EBC"],
