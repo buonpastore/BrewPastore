@@ -35,10 +35,8 @@ function useCurrentBatch() {
 /* ------------------------------------------------------------------ */
 function BottleCount() {
   const { profiles, profile, isAdmin } = useAuth();
-  const current = useCurrentBatch();
   const [rows, setRows] = useState<Record<string, { b33: number; b66: number }>>({});
   const [err, setErr] = useState("");
-  const [target, setTarget] = useState<string>("");
   // per ognuno di partenza solo le bottiglie da 66 cl; quelle da 33 si aprono sotto il suo nome
   const [open33, setOpen33] = useState<Set<string>>(new Set());
   const toggle33 = (id: string) => setOpen33((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -48,7 +46,6 @@ function BottleCount() {
       setRows(Object.fromEntries((data ?? []).map((r) => [r.user_id, { b33: r.b33, b66: r.b66 }])));
     });
   }, []);
-  const liters = Number(target.replace(",", ".")) || Number(current?.volume_fermenter_l ?? current?.recipes?.batch_size_l ?? 23);
 
   const save = async (uid: string, v: { b33: number; b66: number }) => {
     setRows((r) => ({ ...r, [uid]: v }));
@@ -57,7 +54,6 @@ function BottleCount() {
   };
   const tot33 = Object.values(rows).reduce((t, r) => t + r.b33, 0), tot66 = Object.values(rows).reduce((t, r) => t + r.b66, 0);
   const covered = tot33 * 0.33 + tot66 * 0.66;
-  const missing = Math.max(0, liters - covered);
 
   return (
     <div>
@@ -85,13 +81,6 @@ function BottleCount() {
         <div><small>Bottiglie da 66 cl</small><strong>{tot66}</strong><span className="muted small">{num(tot66 * 0.66, 1)} L</span></div>
         <div><small>Bottiglie da 33 cl</small><strong>{tot33}</strong><span className="muted small">{num(tot33 * 0.33, 1)} L</span></div>
         <div className="ut-total"><small>Totale di tutti</small><strong>{tot66 + tot33} bottiglie · {num(covered, 1)} L</strong></div>
-        <label className="ut-target"><small>Litri della prossima cotta</small>
-          <input inputMode="decimal" value={target} placeholder={num(liters, 1)} onChange={(e) => setTarget(e.target.value)} /></label>
-        <div className={missing > 0 ? "ut-miss" : "ut-ok"}>
-          {missing > 0
-            ? <>Mancano <strong>{num(missing, 1)} L</strong>: servono ancora <strong>{Math.ceil(missing / 0.66)}</strong> bottiglie da 66 cl oppure <strong>{Math.ceil(missing / 0.33)}</strong> da 33 cl.</>
-            : <>✓ Bottiglie sufficienti, ne avanzano per {num(covered - liters, 1)} L.</>}
-        </div>
       </div>
       <button className="btn btn-wide ut-reset" onClick={async () => {
         const who = isAdmin ? profiles.map((p) => p.id) : profile ? [profile.id] : [];
