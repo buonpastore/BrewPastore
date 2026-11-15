@@ -1,3 +1,4 @@
+import { ViewToggle } from "../components/ViewToggle";
 import { Beer } from "lucide-react";
 import { CapDot } from "../components/CapColor";
 import { useEffect, useState } from "react";
@@ -51,14 +52,11 @@ export function Batches() {
   const list = rows.filter((r) => !status || normStatus(r.status) === status);
   return (
     <div>
-      <div className="page-head">
+      <div className="page-head head-with-toggle">
         <h1>Batch</h1>
+        <ViewToggle value={full ? "estesa" : "compatta"} onChange={setView} />
       </div>
       {isAdmin && <button className="btn primary btn-wide" disabled={busy} onClick={startNew}>{busy ? "Creo…" : <><Beer size={20} /> Nuovo batch</>}</button>}
-      <div className="view-switch" role="group" aria-label="Visualizzazione">
-        <button className={"mini-btn" + (!full ? " on" : "")} onClick={() => setView("compatta")}>☰ <span>Compatta</span></button>
-        <button className={"mini-btn" + (full ? " on" : "")} onClick={() => setView("estesa")}>▦ <span>Estesa</span></button>
-      </div>
       <div className="toolbar">
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tutti gli stati</option>

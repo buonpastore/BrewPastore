@@ -1,3 +1,4 @@
+import { ViewToggle } from "../components/ViewToggle";
 import { Fragment, useEffect, useState } from "react";
 import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, fmtUnitPrice, fmtBaseQty, toBase, type Row } from "../lib";
 import { deleteMaterialsWithoutPurchases } from "../rebuild";
@@ -174,15 +175,12 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div>
-      <div className="page-head">
-        {!embedded && <h1>Materie prime e costi medi</h1>}
-      </div>
-      <div className="view-switch" role="group" aria-label="Visualizzazione">
-        <button className={"mini-btn" + (!full ? " on" : "")} onClick={() => setView("compatta")}>☰ <span>Compatta</span></button>
-        <button className={"mini-btn" + (full ? " on" : "")} onClick={() => setView("estesa")}>▦ <span>Estesa</span></button>
+      {!embedded && <div className="page-head"><h1>Materie prime e costi medi</h1></div>}
+      <div className="search-row">
+        <input placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <ViewToggle value={full ? "estesa" : "compatta"} onChange={setView} />
       </div>
       <div className="toolbar">
-        <input placeholder="Cerca…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={cat} onChange={(e) => setCat(e.target.value)}>
           <option value="">Tutte le categorie</option>
           {MATERIAL_CATEGORIES.map((c) => <option key={c}>{c}</option>)}

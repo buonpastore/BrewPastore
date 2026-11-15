@@ -1,3 +1,4 @@
+import { ViewToggle, useViewMode } from "../components/ViewToggle";
 import { BookOpen, Beer, Leaf } from "lucide-react";
 import { CapDot, useCapColors } from "../components/CapColor";
 import { useEffect, useState } from "react";
@@ -35,14 +36,16 @@ export function Recipes() {
     nav(`/ricette/${data.id}?edit=1`);
   };
 
+  const [view, setView] = useViewMode("pastorizia-ricette-vista");
   const list = rows.filter((r) => (showArchived || !r.archived) && (!style || r.style === style) && (r.name + " " + (r.style ?? "")).toLowerCase().includes(q.toLowerCase()));
   const usedStyles = [...new Set(rows.map((r) => r.style).filter(Boolean))] as string[];
   const styleChoices = [...STYLE_OPTIONS.filter((o) => !o.disabled && usedStyles.includes(o.value)).map((o) => o.value), ...usedStyles.filter((s) => !STYLE_OPTIONS.some((o) => o.value === s))];
 
   return (
     <div>
-      <div className="page-head">
+      <div className="page-head head-with-toggle">
         <h1>Ricette</h1>
+        <ViewToggle value={view} onChange={setView} />
       </div>
       {isAdmin && <button className="btn primary btn-wide" onClick={() => setChoosing(true)}><BookOpen size={20} /> Nuova ricetta</button>}
       <div className="toolbar">
@@ -72,7 +75,7 @@ export function Recipes() {
           </div>
         </div>
       )}
-      <div className="cards">
+      <div className={"cards" + (view === "compatta" ? " rc-compact" : "")}>
         {list.map((r) => {
           const last = (r.batches as Row[]).map((b) => b.brew_date).filter(Boolean).sort().pop();
           return (

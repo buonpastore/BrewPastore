@@ -1,3 +1,4 @@
+import { ViewToggle } from "../components/ViewToggle";
 import { textOf } from "../ocr";
 import { sortByCat, nameColor, catColor, catLabel, catRank } from "../categories";
 import { useEffect, useRef, useState } from "react";
@@ -87,9 +88,9 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
           )}
         </div>
       )}
-      <div className="view-switch" role="group" aria-label="Visualizzazione">
-        <button className={"mini-btn" + (!full ? " on" : "")} onClick={() => setView("compatta")}>☰ <span>Compatta</span></button>
-        <button className={"mini-btn" + (full ? " on" : "")} onClick={() => setView("estesa")}>▦ <span>Estesa</span></button>
+      <div className="list-head">
+        <span>{rows.length} {rows.length === 1 ? "ordine" : "ordini"}</span>
+        <ViewToggle value={full ? "estesa" : "compatta"} onChange={setView} />
       </div>
       <div className={"pu-list" + (full ? " full" : "")}>
         {rows.map((p) => {

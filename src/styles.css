@@ -1989,3 +1989,19 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 @media (min-width: 861px) { .section-tabs.one-row { max-width: 720px; } .section-tabs.one-row a { font-size: .78rem; min-height: 54px; } }
 .bottom-delete { margin-top: 18px; }
 .ing-import + .view-switch { margin-top: 16px; }
+
+/* compatta / estesa: due iconcine, non una riga intera */
+.view-toggle { display: inline-flex; flex: none; border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.view-toggle button { width: 38px; height: 34px; display: grid; place-items: center; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0; }
+.view-toggle button + button { border-left: 1px solid var(--line-strong); }
+.view-toggle button.on { background: var(--gold); color: #1f1500; }
+.head-with-toggle { display: flex !important; flex-direction: row !important; align-items: center; justify-content: space-between; gap: 10px; }
+.search-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.search-row input { flex: 1; min-width: 0; }
+.list-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 14px 0 8px; color: var(--muted); font-size: .86rem; font-weight: 600; }
+/* ricette compatte: solo nome, tappo e stile */
+.cards.rc-compact { gap: 8px; }
+.cards.rc-compact > .card { padding: 10px 14px 10px 16px; }
+.cards.rc-compact .rc-traits, .cards.rc-compact .card > .muted.small { display: none; }
+.cards.rc-compact .rc-title { margin: 0; font-size: 1rem; }
+.cards.rc-compact .rc-style { margin: 2px 0 0; font-size: .85rem; }

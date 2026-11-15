@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.224", date: "15/11/2026 14:50", text: "Ricette: nuova vista compatta (solo nome, tappo e stile, righe basse) oltre a quella estesa. In tutte le pagine i pulsanti Compatta/Estesa sono due iconcine accanto al titolo o alla ricerca, senza occupare una riga" },
   { version: "0.223", date: "15/11/2026 14:25", text: "Regola dei pulsanti: per creare si trova in alto, per eliminare sempre in fondo. Acquisti e fatture: «Importa un acquisto» in cima all’elenco ed «Elimina acquisto» in fondo all’ordine; batch: «Elimina batch» in fondo alla pagina; ricetta: «Elimina ricetta» da solo in fondo" },
   { version: "0.222", date: "15/11/2026 14:05", text: "Prova: i pulsanti in alto di ogni sezione (Produzione, Economia, Attività, Utilità) sono tutti su una riga, più piccoli" },
   { version: "0.221", date: "15/11/2026 13:50", text: "Impostazioni → Aspetto: i cinque colori dell’app (giallo, ciano, magenta, viola, verde luppolo) si possono cambiare toccandoli, uno per uno o con «Ripristina i colori originali». La scelta vale per il proprio telefono" },
