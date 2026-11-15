@@ -2044,3 +2044,6 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ing-tools.two .mini-btn { width: 100%; justify-content: center; }
 .half-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .half-actions .btn { min-width: 0; padding-left: 8px; padding-right: 8px; white-space: normal; line-height: 1.2; }
+.choose-or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .82rem; margin: 4px 0; }
+.choose-or::before, .choose-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.water-inputs { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }

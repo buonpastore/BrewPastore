@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Droplets, ShowerHead, Calculator, Settings2 } from "lucide-react";
 import { supabase, errMsg, num, type Row } from "../lib";
+import { Stepper } from "../components/Stepper";
 
 const KEY = "brewpastore-impianto";
 interface Equip { ratio: number; boilOff: number; absorption: number; losses: number }
@@ -60,11 +61,11 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
   const canCalc = vol > 0 && malt > 0;
   const showM = savedM ?? (canCalc ? calcMash : null), showS = savedS ?? (canCalc ? calcSparge : null);
   const calcTag = (saved: number | null) => (saved == null && canCalc ? " · calcolata" : "");
+  // nei campi da salvare: di partenza 20 L di mash e 15 L di sparge (poi si aggiusta con − e +)
   useEffect(() => {
-    if (!canCalc) return;
-    setMash((m) => (m === "" || m == null ? String(calcMash) : m));
-    setSparge((x) => (x === "" || x == null ? String(calcSparge) : x));
-  }, [canCalc, calcMash, calcSparge]);
+    setMash((m) => (m === "" || m == null ? "20" : m));
+    setSparge((x) => (x === "" || x == null ? "15" : x));
+  }, []);
 
   return (
     <div>
@@ -90,10 +91,12 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
       </div>
 
       {canEdit && (
-        <div className="inline-form">
-          <label><span>Acqua di mash (L)</span><input type="number" step="0.1" value={mash} onChange={(e) => setMash(e.target.value)} /></label>
-          <label><span>Acqua di sparge (L)</span><input type="number" step="0.1" value={sparge} onChange={(e) => setSparge(e.target.value)} /></label>
-          <button className="btn primary" onClick={() => save(mash === "" ? null : Number(mash), sparge === "" ? null : Number(sparge))}>Salva</button>
+        <div className="water-inputs">
+          <div className="ut-steppers">
+            <Stepper label="Acqua di mash" value={Number(mash) || 0} step={0.5} digits={1} unit="L" onChange={(v) => setMash(String(v))} />
+            <Stepper label="Acqua di sparge" value={Number(sparge) || 0} step={0.5} digits={1} unit="L" onChange={(v) => setSparge(String(v))} />
+          </div>
+          <button className="btn primary full-w" onClick={() => save(mash === "" ? null : Number(mash), sparge === "" ? null : Number(sparge))}>Salva</button>
           {msg && <span className="ok small">{msg}</span>}
         </div>
       )}
@@ -121,7 +124,7 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
                 <tr><td className="muted">Volume pre-bollitura atteso</td><td className="muted">{num(r1(preBoil), 1)} L</td></tr>
               </tbody>
             </table>
-            {canEdit && <button className="btn" onClick={() => save(r1(calcMash), r1(calcSparge))}>Usa questi valori ({num(r1(calcMash), 1)} L + {num(r1(calcSparge), 1)} L)</button>}
+            {canEdit && <button className="btn full-w" onClick={() => save(r1(calcMash), r1(calcSparge))}>Usa questi valori ({num(r1(calcMash), 1)} L + {num(r1(calcSparge), 1)} L)</button>}
           </>
         )}
       </div>

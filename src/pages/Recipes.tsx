@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase, errMsg, num, date, accentAt, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ImportRecipe } from "./ImportRecipe";
+import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
 import { abvOf, ebcColor, ebcName, ibuName, cleanDescription } from "../beerLook";
 
@@ -18,6 +19,7 @@ export function Recipes() {
   const [style, setStyle] = useState("");
   const [importing, setImporting] = useState(false);
   const [choosing, setChoosing] = useState(false);
+  const [picked, setPicked] = useState<File[] | undefined>();
   useCapColors();
   // colore del tappo dell'ultimo batch imbottigliato della ricetta
   const capOf = (r: Row) => [...((r.batches ?? []) as Row[])].filter((b) => b.cap_color)
@@ -58,15 +60,16 @@ export function Recipes() {
         )}
         <label className="check"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> mostra archiviate</label>
       </div>
-      {importing && <ImportRecipe onClose={() => setImporting(false)} />}
+      {importing && <ImportRecipe initialFiles={picked} onClose={() => { setImporting(false); setPicked(undefined); }} />}
       {choosing && (
         <div className="modal-backdrop" onClick={() => setChoosing(false)}>
           <div className="modal choose-modal" onClick={(e) => e.stopPropagation()}>
             <h2>Nuova ricetta</h2>
-            <button className="choose-btn" onClick={() => { setChoosing(false); setImporting(true); }}>
-              <span className="choose-ico">📸</span>
-              <span><strong>Importa</strong><span className="muted small">da screenshot, file o testo copiato</span></span>
-            </button>
+            {/* tutto in una finestra: importa (incolla, screenshot, file, testo) oppure scrivila a mano */}
+            <FilePicker compact allowText accept="image/*,application/pdf,.txt,.md" title="📋 Importa una ricetta"
+              hint="incolla, oppure scegli screenshot, file o testo" textPlaceholder="Incolla qui il testo della ricetta"
+              onFiles={(f) => { setPicked(f); setChoosing(false); setImporting(true); }} />
+            <div className="choose-or"><span>oppure</span></div>
             <button className="choose-btn" onClick={() => { setChoosing(false); create(); }}>
               <span className="choose-ico">✍️</span>
               <span><strong>Inserisci a mano</strong><span className="muted small">parti da una ricetta vuota</span></span>
