@@ -79,14 +79,19 @@ export function detectCapsInPixels(data: Uint8ClampedArray, w: number, h: number
   });
   const sizes = round.map((c) => c.area).sort((a, b) => a - b);
   const median = sizes.length ? sizes[Math.floor(sizes.length / 2)] : 0;
+  // un tappo ha più o meno la stessa grandezza degli altri: le macchie molto più grandi (pavimento, etichette)
+  // o molto più piccole (riflessi) non sono tappi; una macchia vale al massimo UN tappo
+  const caps = round.filter((c) => c.area >= median * 0.3 && c.area <= median * 3)
+    .map((c) => ({ key: ks[c.k].key, x: c.sx / c.area, y: c.sy / c.area, r: Math.sqrt(c.area / Math.PI), area: c.area }))
+    .sort((a, b) => b.area - a.area);
+  // due macchie una sull'altra (es. un tappo rosso con il bordo arancio) sono lo stesso tappo: tengo la più grande
+  const kept: typeof caps = [];
+  for (const c of caps) if (!kept.some((k) => Math.hypot(k.x - c.x, k.y - c.y) < Math.max(k.r, c.r) * 1.2)) kept.push(c);
   const counts: Record<string, number> = {};
   const marks: CapMark[] = [];
-  for (const c of round) {
-    if (c.area < median * 0.3) continue;
-    const n = c.area > median * 1.6 ? Math.max(1, Math.round(c.area / median)) : 1;   // tappi attaccati
-    const key = ks[c.k].key;
-    counts[key] = (counts[key] ?? 0) + n;
-    marks.push({ key, x: c.sx / c.area, y: c.sy / c.area, r: Math.sqrt(c.area / Math.PI), n });
+  for (const c of kept) {
+    counts[c.key] = (counts[c.key] ?? 0) + 1;
+    marks.push({ key: c.key, x: c.x, y: c.y, r: c.r, n: 1 });
   }
   return { counts, marks, width: w, height: h };
 }
