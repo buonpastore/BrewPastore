@@ -1971,3 +1971,12 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .rv-even.bad svg { color: var(--magenta); }
 .rv-pos strong, .rv-pos-t { color: var(--teal); }
 .rv-neg strong, .rv-neg-t { color: var(--magenta); }
+
+/* impostazioni: i cinque colori */
+.accent-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 14px; }
+.accent-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; }
+.accent-n { width: 18px; color: var(--muted); font-weight: 700; text-align: center; }
+.accent-swatch { position: relative; width: 40px; height: 40px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--line-strong); overflow: hidden; }
+.accent-swatch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.accent-name { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.accent-name small { color: var(--muted); font-size: .76rem; font-family: ui-monospace, monospace; }

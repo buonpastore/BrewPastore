@@ -1,12 +1,12 @@
 import { whoOf } from "./Tasks";
-import { LogIn, Minus, Plus, Camera } from "lucide-react";
+import { LogIn, Minus, Plus, Camera, RotateCcw } from "lucide-react";
 import { UserAvatar } from "../components/UserAvatar";
 import { loginAs } from "../impersonate";
 import { Tabs } from "../components/Layout";
 import { CapColorsSettings } from "../components/CapColor";
 import { CapGallery, CapDot } from "../components/CapColor";
 import { lastStep } from "../components/PreviousBatches";
-import { getThemePref, setThemePref, sunTimes, type ThemePref } from "../theme";
+import { getThemePref, setThemePref, sunTimes, type ThemePref, ACCENT_KEYS, ACCENT_LABELS, ACCENT_DEFAULTS, getAccents, setAccent, resetAccents, type AccentKey } from "../theme";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, normStatus, statusLabel, type Row } from "../lib";
@@ -229,6 +229,32 @@ function ThemePicker() {
   );
 }
 
+function AccentPicker() {
+  const [map, setMap] = useState(getAccents());
+  const change = (k: AccentKey, v: string | null) => { setAccent(k, v); setMap(getAccents()); };
+  const changed = Object.keys(map).length > 0;
+  return (
+    <div className="panel">
+      <h2>Colori dell'app</h2>
+      <p className="muted small">I cinque colori usati in menu, pulsanti, stati e birre, sempre in quest'ordine. Tocca un colore per cambiarlo: vale solo su questo telefono o computer.</p>
+      <div className="accent-list">
+        {ACCENT_KEYS.map((k, i) => {
+          const v = map[k] ?? ACCENT_DEFAULTS[k];
+          return (
+            <label key={k} className="accent-row">
+              <span className="accent-n">{i + 1}</span>
+              <span className="accent-swatch" style={{ background: v }}><input type="color" value={v} onChange={(e) => change(k, e.target.value)} aria-label={`Cambia ${ACCENT_LABELS[k]}`} /></span>
+              <span className="accent-name"><strong>{ACCENT_LABELS[k]}</strong><small>{v.toUpperCase()}{map[k] ? " · cambiato" : ""}</small></span>
+              {map[k] && <button type="button" className="mini-btn" onClick={(e) => { e.preventDefault(); change(k, null); }}>Originale</button>}
+            </label>
+          );
+        })}
+      </div>
+      <button className="btn full-w" disabled={!changed} onClick={() => { resetAccents(); setMap({}); }}><RotateCcw size={16} /> Ripristina i colori originali</button>
+    </div>
+  );
+}
+
 export function Settings() {
   const { isAdmin, profiles, profile } = useAuth();
   const [settingsTab, setSettingsTab] = useState(() => (/versioni|storico/.test(window.location.hash) ? "app" : "utente"));
@@ -276,6 +302,7 @@ export function Settings() {
       {tab === "aspetto" && (
         <>
           <ThemePicker />
+          <AccentPicker />
         </>
       )}
       {tab === "costi" && (() => {

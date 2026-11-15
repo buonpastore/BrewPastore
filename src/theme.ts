@@ -45,6 +45,44 @@ export function setThemePref(p: ThemePref) {
 /** Applica subito il tema e lo ricontrolla ogni minuto (per il cambio automatico). */
 export function startTheme() {
   applyTheme();
+  applyAccents();
   window.setInterval(applyTheme, 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) applyTheme(); });
+}
+
+/* ------------------------------------------------------------------ */
+/* I cinque colori dell'app (modificabili da ognuno, su questo telefono) */
+/* ------------------------------------------------------------------ */
+export const ACCENT_KEYS = ["gold", "teal", "magenta", "violet", "hop"] as const;
+export type AccentKey = (typeof ACCENT_KEYS)[number];
+export const ACCENT_LABELS: Record<AccentKey, string> = { gold: "Giallo", teal: "Ciano", magenta: "Magenta", violet: "Viola", hop: "Verde luppolo" };
+/** Colori originali (tema scuro). */
+export const ACCENT_DEFAULTS: Record<AccentKey, string> = { gold: "#eda512", teal: "#12a081", magenta: "#dc3b5a", violet: "#9d82f2", hop: "#a9bd1c" };
+const AKEY = "pastorizia-colori";
+
+export function getAccents(): Partial<Record<AccentKey, string>> {
+  try { return JSON.parse(localStorage.getItem(AKEY) ?? "{}"); } catch { return {}; }
+}
+
+/** Applica i colori scelti (quelli non cambiati restano gli originali del tema). */
+export function applyAccents(map = getAccents()) {
+  const st = document.documentElement.style;
+  for (const k of ACCENT_KEYS) {
+    const v = map[k];
+    if (v) st.setProperty(`--${k}`, v); else st.removeProperty(`--${k}`);
+  }
+  // il giallo chiaro dei testi segue il giallo scelto
+  if (map.gold) st.setProperty("--gold-2", `color-mix(in srgb, ${map.gold} 72%, #fff)`); else st.removeProperty("--gold-2");
+}
+
+export function setAccent(k: AccentKey, v: string | null) {
+  const m = getAccents();
+  if (v && v.toLowerCase() !== ACCENT_DEFAULTS[k]) m[k] = v; else delete m[k];
+  try { localStorage.setItem(AKEY, JSON.stringify(m)); } catch { /* niente */ }
+  applyAccents(m);
+}
+
+export function resetAccents() {
+  try { localStorage.removeItem(AKEY); } catch { /* niente */ }
+  applyAccents({});
 }
