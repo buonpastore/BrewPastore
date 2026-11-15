@@ -1957,3 +1957,17 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .bc-title { flex: 1 1 auto; min-width: 0; align-self: stretch; }
 .bc-state { margin-left: auto; display: inline-flex; align-items: center; }
 .bc-title .bc-sub { flex-basis: 100%; padding-left: 26px; }
+
+/* economia: ricavi */
+.rv-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 10px 0 14px; }
+.rv-beer { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+.rv-beer span { display: flex; flex-direction: column; min-width: 0; }
+.rv-beer small { color: var(--muted); font-size: .74rem; }
+.rv-beer.on { border-color: var(--gold); background: rgba(237, 165, 18, .12); }
+.rv-est { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--gold); }
+.rv-even { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--teal) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--teal) 40%, var(--line)); margin-bottom: 14px; line-height: 1.45; }
+.rv-even svg { flex: none; color: var(--teal); margin-top: 2px; }
+.rv-even.bad { background: color-mix(in srgb, var(--magenta) 12%, var(--surface)); border-color: color-mix(in srgb, var(--magenta) 40%, var(--line)); }
+.rv-even.bad svg { color: var(--magenta); }
+.rv-pos strong, .rv-pos-t { color: var(--teal); }
+.rv-neg strong, .rv-neg-t { color: var(--magenta); }

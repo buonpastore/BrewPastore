@@ -7,7 +7,7 @@ import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
   Calculator, ClipboardList, LayoutGrid, Milk, Sparkles, FlaskConical, Timer,
-  Disc3, Warehouse, Gauge,
+  Disc3, Warehouse, Gauge, TrendingUp,
 } from "lucide-react";
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
@@ -30,19 +30,20 @@ export const GROUPS: Group[] = [
     ],
   },
   {
-    key: "conti", label: "Conti", icon: Coins, to: "/costi", color: "var(--teal)",
+    key: "conti", label: "Economia", icon: Coins, to: "/costi", color: "var(--teal)",
     tabs: [
       { to: "/costi", label: "Costi birre", short: "Costi", icon: Calculator, color: "var(--gold)" },
       { to: "/materie-prime", label: "Materie prime", short: "Materie", icon: Wheat, color: "var(--teal)", also: ["/acquisti"] },
-      { to: "/spese", label: "Spese condivise", short: "Spese", icon: Wallet, color: "var(--magenta)" },
+      { to: "/ricavi", label: "Ricavi", short: "Ricavi", icon: TrendingUp, color: "var(--magenta)" },
       { to: "/impianto", label: "Preventivi impianto", short: "Preventivi", icon: Wrench, color: "var(--violet)" },
     ],
   },
   {
     key: "chat", label: "Attività", icon: MessageCircle, to: "/task", color: "var(--magenta)",
     tabs: [
-      { to: "/task", label: "Task", short: "Task", icon: ClipboardList, color: "var(--teal)" },
-      { to: "/chat", label: "Chat", icon: MessageCircle, color: "var(--gold)" },
+      { to: "/task", label: "Task", short: "Task", icon: ClipboardList, color: "var(--gold)" },
+      { to: "/spese", label: "Spese condivise", short: "Spese", icon: Wallet, color: "var(--teal)" },
+      { to: "/chat", label: "Chat", icon: MessageCircle, color: "var(--magenta)" },
     ],
   },
   {

@@ -5,6 +5,7 @@ import { supabase, errMsg, num, PRIMING_FACTORS, residualCo2, isEnded, type Row 
 import { useAuth } from "../auth";
 import { STYLE_CO2, findStyle } from "../styleGuide";
 import { BeerWheel } from "./BeerWheel";
+import { Stepper } from "../components/Stepper";
 
 /** Utilità: conta bottiglie, carbonazione, correzione del pH, timer dei luppoli. */
 export function Utilities() {
@@ -229,24 +230,6 @@ const SUGARS: { key: string; label: string; ppg: number; note?: string }[] = [
   { key: "lme", label: "Estratto di malto liquido", ppg: 36 },
   { key: "miele", label: "Miele", ppg: 35 },
 ];
-
-function Stepper({ label, value, step, digits, onChange, unit, gravity }: { label: string; value: number; step: number; digits: number; onChange: (n: number) => void; unit?: string; gravity?: boolean }) {
-  // la densità si scrive come sul densimetro: 1.050
-  const fmt = (v: number) => (gravity ? v.toFixed(3) : num(v, digits));
-  const [text, setText] = useState(fmt(value));
-  useEffect(() => setText(fmt(value)), [value, digits]);
-  const set = (n: number) => { const v = Math.max(0, Math.round(n / step) * step); onChange(Number(v.toFixed(digits))); };
-  return (
-    <div className="ut-counter">
-      <small>{label}</small>
-      <div className="bf-row">
-        <button type="button" className="bf-btn" onClick={() => set(value - step)}><Minus size={20} /></button>
-        <div className="bf-input"><input inputMode="decimal" value={text} onChange={(e) => setText(e.target.value)} onBlur={() => set(Number(text.trim().replace(",", ".")) || 0)} />{unit && <span className="bf-unit">{unit}</span>}</div>
-        <button type="button" className="bf-btn" onClick={() => set(value + step)}><Plus size={20} /></button>
-      </div>
-    </div>
-  );
-}
 
 function GravityFix() {
   const current = useCurrentBatch();

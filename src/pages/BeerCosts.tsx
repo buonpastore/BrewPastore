@@ -7,16 +7,14 @@ import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from
 import { useAuth } from "../auth";
 import { type PriceBasis, neededTotals, piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
-/** Conti → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
-export function BeerCosts() {
-  const [sp] = useSearchParams();
-  const [data, setData] = useState<{ recipes: Row[]; batches: Row[]; bIngs: Row[]; rIngs: Row[]; extras: Row[]; mats: Row[]; lines: Row[]; energy: number; water: number; cfg: BottlePrices } | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
-  const [reload, setReload] = useState(0);
+export type CostData = { recipes: Row[]; batches: Row[]; bIngs: Row[]; rIngs: Row[]; extras: Row[]; mats: Row[]; lines: Row[]; energy: number; water: number; cfg: BottlePrices };
 
+/** Dati per calcolare i costi delle birre (gli stessi in Costi birre e in Ricavi). */
+export function useCostData(reload = 0): CostData | null {
+  const [data, setData] = useState<CostData | null>(null);
   useEffect(() => {
     Promise.all([
-      supabase.from("recipes").select("id, name, style, archived, batch_size_l, mash_water_l, sparge_water_l, mash_temp_c, mash_time_min, boil_time_min").order("name"),
+      supabase.from("recipes").select("*").order("name"),
       supabase.from("batches").select("*"),
       supabase.from("batch_ingredients").select("*"),
       supabase.from("recipe_ingredients").select("*"),
@@ -40,14 +38,14 @@ export function BeerCosts() {
         last_unit_cost: last[x.material_id]?.unit ?? null, last_qty: last[x.material_id]?.qty ?? null, last_date: last[x.material_id]?.date ?? null }));
       const val = (k: string) => Number((st.data ?? []).find((x) => x.key === k)?.value ?? 0);
       setData({ recipes: r.data ?? [], batches: b.data ?? [], bIngs: bi.data ?? [], rIngs: ri.data ?? [], extras: e.data ?? [], mats: matsRows, lines, energy: val("energy_price_kwh"), water: val("water_price_l"), cfg: bottlePricesFrom(st.data ?? []) });
-      const want = (b.data ?? []).find((x) => x.id === sp.get("batch"));
-      if (want) setOpen(want.recipe_id);
     });
-  }, [sp, reload]);
+  }, [reload]);
+  return data;
+}
 
-  if (!data) return <div><h1>Costi delle birre</h1><p className="muted">Caricamento…</p></div>;
-  const { recipes, batches, bIngs, rIngs, extras, mats, lines } = data;
-
+/** Costo di ogni birra (una per ricetta): totale, al litro e a bottiglia. */
+export function beersOf(data: CostData) {
+  const { recipes, batches, bIngs, rIngs, extras, mats } = data;
   // ingredienti di un batch; se il batch non li ha, uso quelli della ricetta
   const ingsOf = (b: Row) => { const own = bIngs.filter((i) => i.batch_id === b.id); return own.length ? own : rIngs.filter((i) => i.recipe_id === b.recipe_id); };
 
@@ -78,6 +76,23 @@ export function BeerCosts() {
   }).filter((x) => x.list.length || !x.recipe.archived)
     .sort((a, b) => Number(b.list.length > 0) - Number(a.list.length > 0) || a.recipe.name.localeCompare(b.recipe.name, "it"));
 
+  return beers;
+}
+
+/** Economia → Costi birre: quanto costa ogni birra (tutti i suoi batch insieme), in totale, al litro e a bottiglia. */
+export function BeerCosts() {
+  const [sp] = useSearchParams();
+  const [open, setOpen] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
+  const data = useCostData(reload);
+  useEffect(() => {
+    const want = data?.batches.find((x) => x.id === sp.get("batch"));
+    if (want) setOpen(want.recipe_id);
+  }, [sp, data]);
+
+  if (!data) return <div><h1>Costi delle birre</h1><p className="muted">Caricamento…</p></div>;
+  const { extras, mats, lines } = data;
+  const beers = beersOf(data);
   const cp = capUnitPrice(mats);
 
   return (

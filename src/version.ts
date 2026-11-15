@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.220", date: "15/11/2026 13:30", text: "«Conti» ora si chiama «Economia» e ha una nuova sezione «Ricavi»: scegli una birra imbottigliata o degustata, metti il prezzo di vendita (con − e +, si salva per ogni birra) e vedi il costo a bottiglia, quante bottiglie servono per andare in pari e, spostando il pallino sulle bottiglie vendute, incasso, guadagno e quota a testa. Le Spese condivise si sono spostate in Attività (Task, Spese, Chat). Da eseguire: 0022_prezzo_vendita.sql" },
   { version: "0.219", date: "15/11/2026 12:55", text: "Costi birre: il simbolo dello stato (✓ verde, clessidra o X) è allineato a destra, così non si confonde col tappo" },
   { version: "0.218", date: "15/11/2026 12:45", text: "Conta bottiglie: tolto il campo «Litri della prossima cotta» e il conto di quelle che mancano; restano i tre totali" },
   { version: "0.217", date: "15/11/2026 12:35", text: "Conta bottiglie: ognuno vede solo le sue 66 cl e, sotto il proprio nome, apre le 33 cl se le ha. In fondo tre riquadri: totale da 66, totale da 33 e totale di tutti (bottiglie e litri)" },
