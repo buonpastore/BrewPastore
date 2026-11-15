@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { Camera, Check, Minus, Plus, RotateCcw, Trash2, User, Users, X } from "lucide-react";
 import { detectCaps, type CapResult } from "../capDetect";
 import { supabase, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -91,8 +91,8 @@ export function Cellar() {
     <div>
       <h1>Cantina</h1>
       <div className="pv-views cel-tabs">
-        <button className={"pv-view" + (tab === "mie" ? " on" : "")} onClick={() => setTab("mie")}>Le mie · {myTotal}</button>
-        <button className={"pv-view" + (tab === "tutti" ? " on" : "")} onClick={() => setTab("tutti")}>Di tutti · {(cellar ?? []).filter((c) => beer(c.batch_id)).reduce((t, c) => t + c.bottles, 0)}</button>
+        <button className={"pv-view" + (tab === "mie" ? " on" : "")} onClick={() => setTab("mie")}><User size={15} /> Le mie · {myTotal}</button>
+        <button className={"pv-view" + (tab === "tutti" ? " on" : "")} onClick={() => setTab("tutti")}><Users size={15} /> Di tutti · {(cellar ?? []).filter((c) => beer(c.batch_id)).reduce((t, c) => t + c.bottles, 0)}</button>
       </div>
 
       {tab === "mie" && (
@@ -130,9 +130,9 @@ export function Cellar() {
                   </button>
                 ))}
               </div>
-              <button className="btn full-w" onClick={() => setAdding(false)}>Annulla</button>
+              <button className="btn full-w" onClick={() => setAdding(false)}><X size={17} /> Annulla</button>
             </div>
-          ) : <button className="btn primary full-w" onClick={() => setAdding(true)}>+ Aggiungi una birra</button>)}
+          ) : <button className="btn primary full-w" onClick={() => setAdding(true)}><Plus size={18} /> Aggiungi una birra</button>)}
           {!beers.length && <p className="note">Non ci sono ancora batch imbottigliati.</p>}
 
           {beers.length > 0 && !scan && (
@@ -166,8 +166,8 @@ export function Cellar() {
               )}
               <p className="muted small">Controlla i numeri: confermando, queste birre nella tua cantina prendono questi valori.</p>
               <div className="row-actions">
-                {Object.keys(scan.counts).length > 0 && <button className="btn primary" onClick={applyScan}>Metti nella mia cantina</button>}
-                <button className="btn" onClick={() => setScan(null)}>Annulla</button>
+                {Object.keys(scan.counts).length > 0 && <button className="btn primary" onClick={applyScan}><Check size={17} /> Metti nella mia cantina</button>}
+                <button className="btn" onClick={() => setScan(null)}><X size={17} /> Annulla</button>
               </div>
             </div>
           )}

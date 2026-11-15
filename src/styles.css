@@ -2048,3 +2048,9 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .choose-or::before, .choose-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .water-inputs { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
 .param.has input { color: var(--muted); font-size: .82rem; }
+/* pulsanti con icona: icona e testo centrati */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn.full-w { display: flex; }
+.pv-view { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.btn svg, .mini-btn svg, .pv-view svg { flex: none; }
+.cel-tools .btn { padding-left: 8px; padding-right: 8px; }
