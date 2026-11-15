@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.237", date: "15/11/2026 19:15", text: "Completa i dati della ricetta: funziona anche con un testo senza ingredienti (solo mash, acqua, bollitura, IBU…), il pulsante diventa «Aggiorna la ricetta». Il mash si legge in molti più modi: «66 °C per 60 minuti», tabelle «67 °C | 60 min», «65 °C x 45 min», «60 min a 66 °C» e più soste (durata = somma senza il mash-out)" },
   { version: "0.236", date: "15/11/2026 18:55", text: "Cantina: ogni pulsante ha la sua iconcina (Le mie, Di tutti, Aggiungi una birra, Riconosci dalla foto, Azzera tutte, Metti nella mia cantina, Annulla). In tutta l’app le icone dei pulsanti non spariscono più quando il testo è lungo" },
   { version: "0.235", date: "15/11/2026 18:40", text: "Ricetta → Documenti: «Completa i dati da un altro documento». Carichi un altro testo, file o screenshot e l’app riempie solo i dati che mancano (quelli già presenti restano, con «c’è già») e aggiunge solo gli ingredienti nuovi; il documento resta tra quelli della ricetta" },
   { version: "0.234", date: "15/11/2026 18:15", text: "Scheda della ricetta: il procedimento e il suo riassunto usano sempre l’acqua di mash e di sparge attuale della ricetta, non i litri di quando era stato scritto" },

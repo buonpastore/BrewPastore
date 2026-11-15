@@ -60,7 +60,8 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles, complete
       const text = await textOf(picked, setProgress);
       if (text) {
         local = parseRecipeText(text, [...OUR_STYLES, ...FAMOUS_STYLES]);
-        if (local.ingredients.length) parsed = local;
+        // per completare una ricetta bastano anche solo dei dati (mash, acqua, bollitura, IBU…), senza ingredienti
+        if (local.ingredients.length || complete) parsed = local;
       }
       let got: ParsedRecipe | null = parsed;
       if (!got) {
@@ -174,7 +175,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles, complete
                         onChange={(e) => setData({ ...data, [k]: e.target.value === "" ? null : Number(e.target.value) })} />}
                 </label>
               ))}
-              {complete && <p className="muted small wide">Riempio solo i dati che mancano: quelli che ci sono già restano come sono. Sotto trovi solo gli ingredienti nuovi.</p>}
+              {complete && <p className="muted small wide">Riempio solo i dati che mancano: quelli che ci sono già restano come sono. Se vuoi cambiarne uno, svuotalo prima nella scheda della ricetta. Sotto trovi solo gli ingredienti nuovi.</p>}
               {recipeId && !complete && existing > 0 && (
                 <label className="check wide">
                   <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} />
@@ -209,7 +210,7 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles, complete
         {error && <p className="error">{error}</p>}
         <div className="row-actions">
           {step === "upload" && picked.length > 0 && <button className="btn primary" onClick={read}>🔎 Leggi {picked.length > 1 ? `${picked.length} screenshot` : "la ricetta"}</button>}
-          {step === "review" && <button className="btn primary" onClick={save}>Salva {data?.ingredients.length} ingredienti</button>}
+          {step === "review" && <button className="btn primary" onClick={save}>{complete ? `Aggiorna la ricetta${data?.ingredients.length ? ` (+${data.ingredients.length} ingredienti)` : ""}` : `Salva ${data?.ingredients.length} ingredienti`}</button>}
           {step === "saving" && <button className="btn primary" disabled>Salvo…</button>}
           <button className="btn" onClick={onClose}>Chiudi</button>
         </div>

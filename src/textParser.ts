@@ -283,11 +283,20 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     .filter((m): m is RegExpMatchArray => !!m && !/fermentaz|inizio|intermedia|finale|whirlpool|raffredd/i.test(m[1]))
     .map((m) => `${m[1].trim()} ${m[2]} °C × ${m[3]} min`);
   // schema di ammostamento a tabella: «66°C - 20 min» (più soste)
-  const steps = [...raw.matchAll(/(\d{2}(?:[.,]\d)?)\s*°\s*C\s*[-–—]\s*(\d{1,3})\s*(?:min|minuti|')/gi)]
-    .map((m) => ({ t: num(m[1]), min: Number(m[2]) })).filter((x) => x.t >= 40 && x.t <= 80 && x.min > 0 && x.min <= 120);
+  // soste del mash scritte in tanti modi: «66°C - 20 min», «66 °C | 60 min», «66°C per 60 minuti», «66 °C x 60'», «60 min a 66 °C»
+  // (tranne le righe di sparge, whirlpool, bollitura, raffreddamento, fermentazione)
+  const NOT_MASH = /sparge|risciacqu|whirlpool|hop\s?stand|bollitur|boil|raffredd|ferment|dry|lievit|imbottigl|carbonaz|priming|acqua per il risciacquo/i;
+  const steps: { t: number; min: number }[] = [];
+  // conta solo la parola sospetta subito prima del numero (nelle foto a due colonne l'OCR mette testi diversi sulla stessa riga)
+  const near = (l: string, i: number) => NOT_MASH.test(l.slice(Math.max(0, i - 28), i));
+  for (const l of raw.split(/\r?\n/)) {
+    for (const m of l.matchAll(/(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:[-–—|:,x×]|per|for)?\s*(\d{1,3})\s*(?:min|minuti|mins|')/gi)) if (!near(l, m.index ?? 0)) steps.push({ t: num(m[1]), min: Number(m[2]) });
+    for (const m of l.matchAll(/(\d{1,3})\s*(?:min|minuti|mins|')\s*(?:a|at|@)\s*(\d{2}(?:[.,]\d)?)\s*°/gi)) if (!near(l, m.index ?? 0)) steps.push({ t: num(m[2]), min: Number(m[1]) });
+  }
+  steps.splice(0, steps.length, ...steps.filter((x, i, a) => x.t >= 40 && x.t <= 80 && x.min > 0 && x.min <= 120 && a.findIndex((y) => y.t === x.t && y.min === x.min) === i));
   if (steps.length >= 2 && !mashSteps.length) mashSteps.push(...steps.map((x) => `${x.t >= 75 ? "Mash-out" : "Sosta"} ${String(x.t).replace(".", ",")} °C × ${x.min} min`));
   // durata = somma delle soste (senza il mash-out); temperatura = la sosta principale di saccarificazione (62–70 °C)
-  const mashFromSteps = steps.length >= 2 ? (() => {
+  const mashFromSteps = steps.length >= 1 ? (() => {
     const rest = steps.filter((x) => x.t < 75);
     const main = [...rest].filter((x) => x.t >= 62 && x.t <= 70).sort((a, b) => b.min - a.min)[0] ?? [...rest].sort((a, b) => b.min - a.min)[0];
     return main ? { temp: main.t, time: rest.reduce((t, x) => t + x.min, 0) } : null;
