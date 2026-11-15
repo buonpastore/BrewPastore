@@ -39,9 +39,9 @@ function BottleCount() {
   const [rows, setRows] = useState<Record<string, { b33: number; b66: number }>>({});
   const [err, setErr] = useState("");
   const [target, setTarget] = useState<string>("");
-  // di partenza solo le bottiglie da 66 cl; quelle da 33 si aprono a richiesta
-  const [show33, setShow33Raw] = useState(() => { try { return localStorage.getItem("pastorizia-conta-33") === "1"; } catch { return false; } });
-  const setShow33 = (v: boolean) => { setShow33Raw(v); try { localStorage.setItem("pastorizia-conta-33", v ? "1" : "0"); } catch { /* niente */ } };
+  // per ognuno di partenza solo le bottiglie da 66 cl; quelle da 33 si aprono sotto il suo nome
+  const [open33, setOpen33] = useState<Set<string>>(new Set());
+  const toggle33 = (id: string) => setOpen33((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   useEffect(() => {
     supabase.from("bottle_stock").select("*").then(({ data, error }) => {
       if (error) return setErr(/bottle_stock|relation|schema cache/i.test(error.message) ? "Manca un aggiornamento del database: esegui su Supabase il file 0012_conta_bottiglie.sql." : errMsg(error));
@@ -72,23 +72,24 @@ function BottleCount() {
             <div key={p.id} className="ut-person">
               <strong>{p.display_name}{p.id === profile?.id ? " (tu)" : ""}</strong>
               <Counter label="da 66 cl" value={v.b66} disabled={!mine} onChange={(n) => save(p.id, { ...v, b66: n })} />
-              {show33 && <Counter label="da 33 cl" value={v.b33} disabled={!mine} onChange={(n) => save(p.id, { ...v, b33: n })} />}
+              {open33.has(p.id) && <Counter label="da 33 cl" value={v.b33} disabled={!mine} onChange={(n) => save(p.id, { ...v, b33: n })} />}
+              <button className="ut-more small" onClick={() => toggle33(p.id)}>
+                {open33.has(p.id) ? <><ChevronUp size={15} /> Nascondi le 33 cl</> : <><ChevronDown size={15} /> Bottiglie da 33 cl{v.b33 ? ` (${v.b33})` : ""}</>}
+              </button>
               <span className="muted small">{num(v.b33 * 0.33 + v.b66 * 0.66, 1)} L</span>
             </div>
           );
         })}
       </div>
-      <button className="ut-more" onClick={() => setShow33(!show33)}>
-        {show33 ? <><ChevronUp size={16} /> Nascondi le bottiglie da 33 cl</> : <><ChevronDown size={16} /> Mostra anche le bottiglie da 33 cl{tot33 ? ` (${tot33} segnate)` : ""}</>}
-      </button>
       <div className="ut-result">
-        <div><small>Bottiglie</small><strong>{tot66} × 66 cl{tot33 || show33 ? ` · ${tot33} × 33 cl` : ""}</strong></div>
-        <div><small>Litri coperti</small><strong>{num(covered, 1)} L</strong></div>
+        <div><small>Bottiglie da 66 cl</small><strong>{tot66}</strong><span className="muted small">{num(tot66 * 0.66, 1)} L</span></div>
+        <div><small>Bottiglie da 33 cl</small><strong>{tot33}</strong><span className="muted small">{num(tot33 * 0.33, 1)} L</span></div>
+        <div className="ut-total"><small>Totale di tutti</small><strong>{tot66 + tot33} bottiglie · {num(covered, 1)} L</strong></div>
         <label className="ut-target"><small>Litri della prossima cotta</small>
           <input inputMode="decimal" value={target} placeholder={num(liters, 1)} onChange={(e) => setTarget(e.target.value)} /></label>
         <div className={missing > 0 ? "ut-miss" : "ut-ok"}>
           {missing > 0
-            ? <>Mancano <strong>{num(missing, 1)} L</strong>: servono ancora <strong>{Math.ceil(missing / 0.66)}</strong> bottiglie da 66 cl{show33 ? <> oppure <strong>{Math.ceil(missing / 0.33)}</strong> da 33 cl</> : null}.</>
+            ? <>Mancano <strong>{num(missing, 1)} L</strong>: servono ancora <strong>{Math.ceil(missing / 0.66)}</strong> bottiglie da 66 cl oppure <strong>{Math.ceil(missing / 0.33)}</strong> da 33 cl.</>
             : <>✓ Bottiglie sufficienti, ne avanzano per {num(covered - liters, 1)} L.</>}
         </div>
       </div>

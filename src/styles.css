@@ -1950,3 +1950,6 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .poll-modal label.block, .poll-modal label.block input { width: 100%; }
 .poll-modal label.block { display: flex; flex-direction: column; gap: 6px; }
 .ut-more { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin: 4px 0 14px; padding: 10px; border-radius: 12px; border: 1px dashed var(--line-strong); background: none; color: var(--muted); font: 600 .88rem var(--sans); cursor: pointer; }
+.ut-more.small { width: auto; margin: 2px 0 0; padding: 6px 10px; font-size: .8rem; align-self: flex-start; }
+.ut-result .ut-total { grid-column: 1 / -1; }
+.ut-result > div > span.muted { display: block; margin-top: 2px; }
