@@ -282,6 +282,16 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     .map((l) => l.match(/^([A-Za-zÀ-ú' ]{3,30}?)\s+(\d{2}(?:[.,]\d)?)\s*°\s*C\s+(\d{1,3})\s*(?:min|minuti|')/i))
     .filter((m): m is RegExpMatchArray => !!m && !/fermentaz|inizio|intermedia|finale|whirlpool|raffredd/i.test(m[1]))
     .map((m) => `${m[1].trim()} ${m[2]} °C × ${m[3]} min`);
+  // schema di ammostamento a tabella: «66°C - 20 min» (più soste)
+  const steps = [...raw.matchAll(/(\d{2}(?:[.,]\d)?)\s*°\s*C\s*[-–—]\s*(\d{1,3})\s*(?:min|minuti|')/gi)]
+    .map((m) => ({ t: num(m[1]), min: Number(m[2]) })).filter((x) => x.t >= 40 && x.t <= 80 && x.min > 0 && x.min <= 120);
+  if (steps.length >= 2 && !mashSteps.length) mashSteps.push(...steps.map((x) => `${x.t >= 75 ? "Mash-out" : "Sosta"} ${String(x.t).replace(".", ",")} °C × ${x.min} min`));
+  // durata = somma delle soste (senza il mash-out); temperatura = la sosta principale di saccarificazione (62–70 °C)
+  const mashFromSteps = steps.length >= 2 ? (() => {
+    const rest = steps.filter((x) => x.t < 75);
+    const main = [...rest].filter((x) => x.t >= 62 && x.t <= 70).sort((a, b) => b.min - a.min)[0] ?? [...rest].sort((a, b) => b.min - a.min)[0];
+    return main ? { temp: main.t, time: rest.reduce((t, x) => t + x.min, 0) } : null;
+  })() : null;
   const mashW = find(/(?:acqua\s*(?:di|del|per(?: il| lo)?)?\s*)(?:mash|ammostamento|infusione|impasto)\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i)
     ?? find(/(?:mash|ammostamento)\s*(?:water|acqua)?\s*[:=]\s*(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
   const spargeW = find(/sparge\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
@@ -406,7 +416,7 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     .map((m) => `${m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase()}: ${m[2].trim().replace(/\.$/, "")}`)
     .filter((p, i, a) => a.findIndex((q) => q.split(":")[0] === p.split(":")[0]) === i);   // una sola voce per tipo
   const procedure = ingredients.length ? buildProcedure({
-    mashTemp: mash ? num(mash[1]) : null, mashTime: mash ? num(mash[2]) : null, mashSteps,
+    mashTemp: mashFromSteps?.temp ?? (mash ? num(mash[1]) : null), mashTime: mashFromSteps?.time ?? (mash ? num(mash[2]) : null), mashSteps,
     boil: g(boil), mashWater: g(mashW), spargeWater: g(spargeW), spargeTemp: spT ? num(spT[1]) : null,
     coolTemp: cool ? num(cool[1]) : null, fermProfile, carbonation: carb ? carb[1].replace(/\s+/g, " ").replace(/vol[a-z]*/i, "volumi").replace(/CO2/, "CO₂") : null,
     ingredients,
@@ -416,8 +426,8 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     name, style, description: profile.length ? profile.join(" · ") : null,
     batch_size_l: g(vol),
     boil_time_min: g(boil),
-    mash_temp_c: mash ? num(mash[1]) : null,
-    mash_time_min: mash ? num(mash[2]) : null,
+    mash_temp_c: mashFromSteps?.temp ?? (mash ? num(mash[1]) : null),
+    mash_time_min: mashFromSteps?.time ?? (mash ? num(mash[2]) : null),
     target_og: mid(og, 3), target_fg: mid(fg, 3), target_ibu: mid(ibu, 0),
     target_ebc: ebc ? mid(ebc, 0) : srm ? Math.round(g(srm)! * 1.97) : null,
     efficiency_pct: g(eff),
