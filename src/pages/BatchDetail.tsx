@@ -258,7 +258,6 @@ export function BatchDetail() {
           <h1>{batch.code} <span className={"badge st-" + batch.status}>{statusLabel(batch.status)}</span></h1>
           {recipe && <div className="muted">Ricetta: <Link to={`/ricette/${recipe.id}`}>{recipe.name}</Link> · obiettivo OG {sg(recipe.target_og)} / FG {sg(recipe.target_fg)}</div>}
         </div>
-        {isAdmin && <button className="mini-btn" onClick={() => setDeleting(true)}>🗑️ <span>Elimina batch</span></button>}
       </div>
       {isAdmin && (
         <div className="quick-status">
@@ -356,6 +355,7 @@ export function BatchDetail() {
         {tab === "chat" && <ChatPanel batchId={batch.id} />}
         {tab === "storico" && <HistoryList relatedTo={{ id: batch.id, key: "batch_id" }} />}
       </div>
+      {isAdmin && tab !== "dati" && <button className="btn danger full-w bottom-delete" onClick={() => setDeleting(true)}>🗑️ Elimina batch</button>}
     </div>
   );
 }

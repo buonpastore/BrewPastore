@@ -67,6 +67,26 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
   return (
     <div>
       {!embedded && <div className="page-head"><h1>Acquisti materie prime</h1></div>}
+      {isAdmin && (
+        <div className="ing-import">
+          <h3>Importa un acquisto</h3>
+          {!importing && (
+            <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
+              title="📋 Incolla qui" hint="fattura, screenshot, scontrino o testo" />
+          )}
+          <div className="pu-tools">
+            <button className="btn" onClick={manual}>✏️ Inserimento manuale</button>
+            <button className="btn" disabled={rebuilding !== null} onClick={rebuild}>♻️ {rebuilding ?? "Rileggi tutti gli ordini salvati"}</button>
+          </div>
+          {report && (
+            <div className="rebuild-report">
+              {report.ok.map((x) => <div key={x} className="ok small">✓ {x}</div>)}
+              {report.skipped.map((x) => <div key={x} className="muted small">– {x}</div>)}
+              {report.errors.map((x) => <div key={x} className="error small">✗ {x}</div>)}
+            </div>
+          )}
+        </div>
+      )}
       <div className="view-switch" role="group" aria-label="Visualizzazione">
         <button className={"mini-btn" + (!full ? " on" : "")} onClick={() => setView("compatta")}>☰ <span>Compatta</span></button>
         <button className={"mini-btn" + (full ? " on" : "")} onClick={() => setView("estesa")}>▦ <span>Estesa</span></button>
@@ -111,26 +131,6 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
         })}
         {!rows.length && <p className="muted">Nessun acquisto. Importane uno qui sotto (es. il PDF o il testo dell'ordine Mr Malt).</p>}
       </div>
-      {isAdmin && (
-        <div className="ing-import">
-          <h3>Importa un acquisto</h3>
-          {!importing && (
-            <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
-              title="📋 Incolla qui" hint="fattura, screenshot, scontrino o testo" />
-          )}
-          <div className="pu-tools">
-            <button className="btn" onClick={manual}>✏️ Inserimento manuale</button>
-            <button className="btn" disabled={rebuilding !== null} onClick={rebuild}>♻️ {rebuilding ?? "Rileggi tutti gli ordini salvati"}</button>
-          </div>
-          {report && (
-            <div className="rebuild-report">
-              {report.ok.map((x) => <div key={x} className="ok small">✓ {x}</div>)}
-              {report.skipped.map((x) => <div key={x} className="muted small">– {x}</div>)}
-              {report.errors.map((x) => <div key={x} className="error small">✗ {x}</div>)}
-            </div>
-          )}
-        </div>
-      )}
       {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}
     </div>
   );
@@ -330,7 +330,6 @@ export function PurchaseDetail() {
           <Link to="/materie-prime?vista=acquisti" className="muted small">← Acquisti</Link>
           <h1>{p.supplier} <span className="muted">{date(p.purchase_date)}</span></h1>
         </div>
-        {isAdmin && <button className="btn danger" onClick={remove}>Elimina acquisto</button>}
       </div>
       <div className="panel">
         <RecordForm table="purchases" row={p} canEdit={isAdmin} onSaved={setP} sections={[{ fields: [
@@ -365,6 +364,7 @@ export function PurchaseDetail() {
         <h2>Documenti</h2>
         <DocumentsPanel purchaseId={p.id} />
       </div>
+      {isAdmin && <button className="btn danger full-w bottom-delete" onClick={remove}>🗑️ Elimina acquisto</button>}
     </div>
   );
 }

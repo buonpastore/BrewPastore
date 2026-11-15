@@ -1987,3 +1987,5 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .section-tabs.one-row .st-long { display: none; }
 .section-tabs.one-row .st-short { display: block; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 @media (min-width: 861px) { .section-tabs.one-row { max-width: 720px; } .section-tabs.one-row a { font-size: .78rem; min-height: 54px; } }
+.bottom-delete { margin-top: 18px; }
+.ing-import + .view-switch { margin-top: 16px; }

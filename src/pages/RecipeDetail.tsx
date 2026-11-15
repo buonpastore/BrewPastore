@@ -201,9 +201,9 @@ export function RecipeDetail() {
         <div className="row-actions recipe-actions">
           <button className="btn primary" onClick={newBatch}><Beer size={18} /> Nuovo batch da questa ricetta</button>
           <button className="btn" onClick={duplicate}>⧉ Duplica</button>
-          <button className="btn danger" onClick={() => setDeleting(true)}>🗑️ Elimina</button>
         </div>
       )}
+      {isAdmin && <button className="btn danger full-w bottom-delete" onClick={() => setDeleting(true)}>🗑️ Elimina ricetta</button>}
     </div>
   );
 }
