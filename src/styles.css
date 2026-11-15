@@ -2005,3 +2005,22 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .cards.rc-compact .rc-traits, .cards.rc-compact .card > .muted.small { display: none; }
 .cards.rc-compact .rc-title { margin: 0; font-size: 1rem; }
 .cards.rc-compact .rc-style { margin: 2px 0 0; font-size: .85rem; }
+/* ricavi: tabelline */
+.rv-h { margin: 18px 0 8px; font-size: 1rem; }
+.rv-table { width: 100%; border-collapse: collapse; font-size: .9rem; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
+.rv-table td { padding: 9px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+.rv-table tr:first-child td { border-top: 0; }
+.rv-table td:first-child { color: var(--muted); }
+.rv-table td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rv-table td small { font-weight: 500; color: var(--muted); font-size: .76rem; }
+.rv-table .pos { color: var(--teal); }
+.rv-table .neg { color: var(--magenta); }
+.rv-table tr.rv-key td { background: var(--surface-2); color: var(--text); font-size: .96rem; }
+.rv-hg { color: var(--gold); margin-left: 6px; vertical-align: -2px; }
+.rv-analysis td:last-child { text-align: left; }
+.rv-analysis td:last-child small { display: block; margin-top: 2px; }
+.rv-analysis td:first-child { width: 42%; }
+.rv-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--muted); vertical-align: 1px; }
+.tone-ok .rv-dot { background: var(--teal); }
+.tone-warn .rv-dot { background: var(--gold); }
+.tone-bad .rv-dot { background: var(--magenta); }
