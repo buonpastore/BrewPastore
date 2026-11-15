@@ -257,7 +257,7 @@ function AccentPicker() {
 
 export function Settings() {
   const { isAdmin, profiles, profile } = useAuth();
-  const [settingsTab, setSettingsTab] = useState(() => (/versioni|storico/.test(window.location.hash) ? "app" : "utente"));
+  const [settingsTab, setSettingsTab] = useState(() => (/versioni|storico/.test(window.location.hash) ? "app" : /impianto/.test(window.location.hash) ? "impianto" : "utente"));
   const [settings, setSettings] = useState<Row[]>([]);
   const [name, setName] = useState(profile?.display_name ?? "");
   // il profilo arriva dopo il primo disegno: riempio il nome appena è pronto
@@ -284,7 +284,7 @@ export function Settings() {
       </div>
       <Tabs grid active={tab} onChange={(k) => setSettingsTab(k)} tabs={[
         ["utente", "Utente"], ["aspetto", "Aspetto"], ["costi", "Costi fissi"],
-        ["tappi", "Tappi"], ["utenti", "Soci"], ["app", "App e storico"],
+        ["impianto", "Impianto"], ["tappi", "Tappi"], ["utenti", "Soci"], ["app", "App e storico"],
       ]} />
       {msg && <p className="ok">{msg}</p>}
       {tab === "utente" && (
@@ -305,6 +305,27 @@ export function Settings() {
           <AccentPicker />
         </>
       )}
+      {tab === "impianto" && (() => {
+        const get = (k: string) => settings.find((x) => x.key === k);
+        const field = (k: string, label: string, step: number, dec: number, unit: string) => {
+          const st = get(k);
+          return st ? <PriceField key={k} label={label} value={Number(st.value)} step={step} decimals={dec} unit={unit} disabled={!isAdmin} onSave={(v) => saveSetting(st, String(v))} /> : null;
+        };
+        return (
+          <div className="panel">
+            <h2>Impianto</h2>
+            <p className="muted small">Dati del vostro impianto per il calcolatore dell'acqua delle ricette: valgono per tutte le ricette e per tutti.</p>
+            {get("water_ratio") ? (
+              <div className="cf-list">
+                {field("water_ratio", "Rapporto acqua/grani nel mash", 0.1, 1, "L/kg")}
+                {field("water_boiloff", "Evaporazione in bollitura", 0.1, 1, "L/ora")}
+                {field("water_absorption", "Acqua assorbita dai grani", 0.1, 1, "L/kg")}
+                {field("water_losses", "Perdite (trub, tubi, fondo pentola)", 0.5, 1, "L")}
+              </div>
+            ) : <p className="note small">Esegui su Supabase il file <code>0023_impianto_acqua.sql</code> per poterli impostare (intanto uso 3 L/kg, 3 L/ora, 1 L/kg e 2 L).</p>}
+          </div>
+        );
+      })()}
       {tab === "costi" && (() => {
         const get = (k: string) => settings.find((x) => x.key === k);
         const val = (k: string) => Number(get(k)?.value ?? 0);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Droplets, ShowerHead, Calculator } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Droplets, ShowerHead, Calculator, Settings2 } from "lucide-react";
 import { supabase, errMsg, num, type Row } from "../lib";
 
 const KEY = "brewpastore-impianto";
@@ -13,6 +14,13 @@ function loadEquip(): Equip {
 export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit: boolean; onSaved: (r: Row) => void }) {
   const [malt, setMalt] = useState(0);
   const [eq, setEq] = useState<Equip>(loadEquip);
+  // dati dell'impianto: Impostazioni → Impianto (uguali per tutti); se non ci sono ancora, quelli di prima
+  useEffect(() => {
+    supabase.from("settings").select("key, value").in("key", ["water_ratio", "water_boiloff", "water_absorption", "water_losses"]).then(({ data }) => {
+      const v = (k: string) => { const r = (data ?? []).find((x) => x.key === k); return r ? Number(r.value) : null; };
+      setEq((e) => ({ ratio: v("water_ratio") ?? e.ratio, boilOff: v("water_boiloff") ?? e.boilOff, absorption: v("water_absorption") ?? e.absorption, losses: v("water_losses") ?? e.losses }));
+    });
+  }, []);
   const [mash, setMash] = useState<string>(recipe.mash_water_l ?? "");
   const [sparge, setSparge] = useState<string>(recipe.sparge_water_l ?? "");
   const [msg, setMsg] = useState("");
@@ -24,7 +32,6 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
         .reduce((s, i) => s + (i.unit === "kg" ? Number(i.quantity) : i.unit === "g" ? Number(i.quantity) / 1000 : 0), 0));
     });
   }, [recipe.id]);
-  useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(eq)); } catch { /* ignore */ } }, [eq]);
 
   const vol = Number(recipe.batch_size_l) || 0;
   const boil = Number(recipe.boil_time_min) || 60;
@@ -89,13 +96,10 @@ export function RecipeWater({ recipe, canEdit, onSaved }: { recipe: Row; canEdit
           <p className="muted">Per il calcolo servono i <strong>litri finali</strong> (scheda Scheda) e i <strong>malti</strong> (scheda Ingredienti).</p>
         ) : (
           <>
-            <p className="muted small">Dati del vostro impianto (restano salvati su questo dispositivo):</p>
-            <div className="form-grid">
-              <label><span>Rapporto acqua/grani (L/kg)</span><input type="number" step="0.1" value={eq.ratio} onChange={(e) => setEq({ ...eq, ratio: Number(e.target.value) })} /></label>
-              <label><span>Evaporazione (L/ora)</span><input type="number" step="0.1" value={eq.boilOff} onChange={(e) => setEq({ ...eq, boilOff: Number(e.target.value) })} /></label>
-              <label><span>Assorbimento grani (L/kg)</span><input type="number" step="0.1" value={eq.absorption} onChange={(e) => setEq({ ...eq, absorption: Number(e.target.value) })} /></label>
-              <label><span>Perdite (trub, tubi, fondo) L</span><input type="number" step="0.1" value={eq.losses} onChange={(e) => setEq({ ...eq, losses: Number(e.target.value) })} /></label>
-            </div>
+            <p className="muted small water-eq">
+              Impianto: {num(eq.ratio, 1)} L/kg nel mash · evaporazione {num(eq.boilOff, 1)} L/h · assorbimento {num(eq.absorption, 1)} L/kg · perdite {num(eq.losses, 1)} L
+              <Link to="/impostazioni?tab=impianto"><Settings2 size={14} /> cambia</Link>
+            </p>
             <table className="water-calc">
               <tbody>
                 <tr><td>Birra in fermentatore</td><td>{num(vol, 1)} L</td></tr>

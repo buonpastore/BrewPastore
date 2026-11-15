@@ -2024,3 +2024,6 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .tone-ok .rv-dot { background: var(--teal); }
 .tone-warn .rv-dot { background: var(--gold); }
 .tone-bad .rv-dot { background: var(--magenta); }
+.cf-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+.water-eq { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.water-eq a { display: inline-flex; align-items: center; gap: 4px; }
