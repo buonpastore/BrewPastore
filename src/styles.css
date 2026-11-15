@@ -2054,3 +2054,11 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .pv-view { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .btn svg, .mini-btn svg, .pv-view svg { flex: none; }
 .cel-tools .btn { padding-left: 8px; padding-right: 8px; }
+/* finestre lunghe: chiudi sempre in alto e pulsanti fissi in fondo */
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.modal-head h2 { margin: 0 0 10px; }
+.modal-x { flex: none; margin: -4px -6px 0 0; }
+.modal-foot { position: sticky; bottom: -1px; z-index: 2; background: var(--surface); padding: 12px 0 4px; margin-top: 12px; border-top: 1px solid var(--line); }
+.modal-foot { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+.modal-foot .btn { width: 100%; }
+.modal-foot .btn.primary { grid-column: 1 / -1; order: -1; }

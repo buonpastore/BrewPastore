@@ -1,3 +1,4 @@
+import { ArrowLeft, X } from "lucide-react";
 import { textOf } from "../ocr";
 import { sortByCat, nameColor } from "../categories";
 import { useEffect, useRef, useState } from "react";
@@ -148,7 +149,10 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles, complete
   return (
     <div className="modal-backdrop">
       <div className="modal wide">
-        <h2>{complete ? "🧩 Completa i dati della ricetta" : "📸 Importa ricetta"}</h2>
+        <div className="modal-head">
+          <h2>{complete ? "🧩 Completa i dati della ricetta" : "📸 Importa ricetta"}</h2>
+          <button className="icon-btn modal-x" aria-label="Chiudi" title="Chiudi senza salvare" onClick={onClose}><X size={20} /></button>
+        </div>
         {step === "upload" && (
           <>
             <p>Incolla lo screenshot di una chat con un'AI (anche più screenshot se la ricetta è lunga), la foto di un foglio o un PDF. L'AI estrarrà ingredienti e parametri: potrai controllarli prima di salvare.</p>
@@ -208,11 +212,12 @@ export function ImportRecipe({ onClose, recipeId, onDone, initialFiles, complete
           </>
         )}
         {error && <p className="error">{error}</p>}
-        <div className="row-actions">
+        <div className="row-actions modal-foot">
+          {step === "review" && <button className="btn" onClick={() => { setStep("upload"); setData(null); setWarn(""); setError(""); }}><ArrowLeft size={16} /> Indietro</button>}
           {step === "upload" && picked.length > 0 && <button className="btn primary" onClick={read}>🔎 Leggi {picked.length > 1 ? `${picked.length} screenshot` : "la ricetta"}</button>}
           {step === "review" && <button className="btn primary" onClick={save}>{complete ? `Aggiorna la ricetta${data?.ingredients.length ? ` (+${data.ingredients.length} ingredienti)` : ""}` : `Salva ${data?.ingredients.length} ingredienti`}</button>}
           {step === "saving" && <button className="btn primary" disabled>Salvo…</button>}
-          <button className="btn" onClick={onClose}>Chiudi</button>
+          <button className="btn" onClick={onClose}><X size={16} /> {step === "review" ? "Annulla" : "Chiudi"}</button>
         </div>
       </div>
     </div>
