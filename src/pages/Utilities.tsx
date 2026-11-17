@@ -13,6 +13,7 @@ export function Utilities() {
   if (tool === "carbonazione") return <Carbonation />;
   if (tool === "ph") return <PhAdjust />;
   if (tool === "densita") return <GravityFix />;
+  if (tool === "pressione") return <Pressure />;
   if (tool === "timer") return <HopTimer />;
   if (tool === "ruota") return <BeerWheel />;
   return <BottleCount />;
@@ -275,6 +276,49 @@ function GravityFix() {
         <div className="ut-result"><div className="ut-ok">✓ La densità è giusta.</div></div>
       )}
       <p className="muted small">Stima: 1 g di zucchero bianco per litro alza la densità di circa 0,4 punti. Misura a 20 °C (o correggi con la temperatura).</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Convertitore di pressione: bar ↔ PSI                               */
+/* ------------------------------------------------------------------ */
+const PSI_PER_BAR = 14.5038;
+
+function Pressure() {
+  const [bar, setBar] = useState(1);
+  const psi = bar * PSI_PER_BAR;
+  const REF: [string, number][] = [
+    ["Spillatura dal fusto (alla spina)", 0.8],
+    ["Carbonazione forzata a freddo (2,4 vol a 4 °C)", 1],
+    ["Fermentazione in pressione (spunding)", 1],
+    ["Travaso a pressione tra fusti", 0.5],
+    ["Bombola CO₂ piena (a 20 °C)", 57],
+  ];
+  return (
+    <div>
+      <h1>Pressione</h1>
+      <p className="muted">Cambia un valore e l'altro si aggiorna: 1 bar = {num(PSI_PER_BAR, 2)} PSI.</p>
+      <div className="ut-steppers">
+        <Stepper label="Bar" value={Math.round(bar * 100) / 100} step={0.05} digits={2} onChange={setBar} unit="bar" />
+        <Stepper label="PSI" value={Math.round(psi * 10) / 10} step={0.5} digits={1} onChange={(v) => setBar(v / PSI_PER_BAR)} unit="psi" />
+      </div>
+      <div className="ut-result">
+        <div><small>{num(bar, 2)} bar</small><strong>{num(psi, 1)} PSI</strong></div>
+        <div><small>in kPa</small><strong>{num(bar * 100, 0)} kPa</strong></div>
+      </div>
+      <h3 className="rv-h">Valori di riferimento</h3>
+      <table className="rv-table">
+        <tbody>
+          {REF.map(([label, b]) => (
+            <tr key={label} className="rv-ref" onClick={() => setBar(b)}>
+              <td>{label}</td>
+              <td>{num(b, 2)} bar <small>· {num(b * PSI_PER_BAR, 1)} PSI</small></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="muted small">Tocca un valore di riferimento per convertirlo. Valori indicativi, a pressione relativa (quella dei manometri).</p>
     </div>
   );
 }

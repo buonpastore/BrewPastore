@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.239", date: "17/11/2026 10:00", text: "Nuova utilità «Bar/PSI»: converte la pressione tra bar e PSI (e kPa) con − e +, con i valori di riferimento per spina, carbonazione forzata, spunding, travasi e bombola di CO₂ da toccare per convertirli" },
   { version: "0.238", date: "15/11/2026 19:30", text: "Importa ricetta: una ✕ in alto per chiudere senza salvare, «← Indietro» per tornare a scegliere il documento e i pulsanti fissi in fondo alla finestra, sempre visibili anche scorrendo" },
   { version: "0.237", date: "15/11/2026 19:15", text: "Completa i dati della ricetta: funziona anche con un testo senza ingredienti (solo mash, acqua, bollitura, IBU…), il pulsante diventa «Aggiorna la ricetta». Il mash si legge in molti più modi: «66 °C per 60 minuti», tabelle «67 °C | 60 min», «65 °C x 45 min», «60 min a 66 °C» e più soste (durata = somma senza il mash-out)" },
   { version: "0.236", date: "15/11/2026 18:55", text: "Cantina: ogni pulsante ha la sua iconcina (Le mie, Di tutti, Aggiungi una birra, Riconosci dalla foto, Azzera tutte, Metti nella mia cantina, Annulla). In tutta l’app le icone dei pulsanti non spariscono più quando il testo è lungo" },

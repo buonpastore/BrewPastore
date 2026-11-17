@@ -2062,3 +2062,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .modal-foot { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
 .modal-foot .btn { width: 100%; }
 .modal-foot .btn.primary { grid-column: 1 / -1; order: -1; }
+.rv-ref { cursor: pointer; }
+.section-tabs.one-row.many { gap: 4px; }
+.section-tabs.one-row.many a { font-size: .62rem; padding: 6px 1px; }
+.section-tabs.one-row.many a svg { width: 16px; height: 16px; }

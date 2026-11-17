@@ -7,7 +7,7 @@ import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
   Calculator, ClipboardList, LayoutGrid, Milk, Sparkles, FlaskConical, Timer,
-  Disc3, Warehouse, Gauge, TrendingUp,
+  Disc3, Warehouse, Gauge, TrendingUp, CircleGauge,
 } from "lucide-react";
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
@@ -56,8 +56,9 @@ export const GROUPS: Group[] = [
       { to: "/utilita/carbonazione", label: "Carbonazione", short: "CO₂", icon: Sparkles, color: "var(--teal)" },
       { to: "/utilita/ph", label: "Correzione pH", short: "pH", icon: FlaskConical, color: "var(--magenta)" },
       { to: "/utilita/densita", label: "Correzione densità", short: "Densità", icon: Gauge, color: "var(--violet)" },
-      { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--hop)" },
-      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--gold)" },
+      { to: "/utilita/pressione", label: "Pressione bar/PSI", short: "Bar/PSI", icon: CircleGauge, color: "var(--hop)" },
+      { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--gold)" },
+      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--teal)" },
     ],
   },
 ];
@@ -157,7 +158,7 @@ export function Layout() {
         {current.tabs && (
           <>
             <div className="section-title">{current.label}</div>
-            <nav className={"section-tabs" + (ONE_ROW ? " one-row" : (current.tabs.length >= 4 ? " two-cols" : "") + (current.tabs.length >= 4 && current.tabs.length % 2 ? " odd" : ""))}
+            <nav className={"section-tabs" + (ONE_ROW ? " one-row" + (current.tabs.length >= 7 ? " many" : "") : (current.tabs.length >= 4 ? " two-cols" : "") + (current.tabs.length >= 4 && current.tabs.length % 2 ? " odd" : ""))}
               style={{ ["--n" as string]: ONE_ROW ? current.tabs.length : current.tabs.length >= 4 ? 2 : current.tabs.length }}>
               {current.tabs.map(({ to, label, short, icon: Icon, color }) => (
                 <NavLink key={to} to={to} style={{ ["--c" as string]: color }} className={tabActive({ to, label, icon: Icon, color, also: current.tabs!.find((t) => t.to === to)?.also }, loc.pathname) ? "active" : ""}>
