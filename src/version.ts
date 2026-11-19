@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.241", date: "19/11/2026 11:00", text: "Utilità divise in due gruppi con un selettore in cima: «Strumenti» (CO₂, pH, Densità, Bar/PSI, Timer) e «Svago» (Conta bottiglie, Gira la bottiglia). Toccando Utilità si apre Strumenti" },
   { version: "0.240", date: "19/11/2026 10:30", text: "Nuova sezione Attività → Eventi: festival, corsi, degustazioni e visite ai birrifici a tema birra in Umbria e Centro Italia, con data, luogo, descrizione e il link «Vai all’evento». Filtri «Solo Umbria» e per tipo. L’elenco si aggiorna da solo ogni mattina" },
   { version: "0.239", date: "17/11/2026 10:00", text: "Nuova utilità «Bar/PSI»: converte la pressione tra bar e PSI (e kPa) con − e +, con i valori di riferimento per spina, carbonazione forzata, spunding, travasi e bombola di CO₂ da toccare per convertirli" },
   { version: "0.238", date: "15/11/2026 19:30", text: "Importa ricetta: una ✕ in alto per chiudere senza salvare, «← Indietro» per tornare a scegliere il documento e i pulsanti fissi in fondo alla finestra, sempre visibili anche scorrendo" },

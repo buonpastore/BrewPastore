@@ -2087,3 +2087,5 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ev-desc { margin: 2px 0 4px; font-size: .86rem; line-height: 1.45; }
 .ev-link { align-self: flex-start; margin-top: 4px; }
 .ev-body h3 { text-transform: none; letter-spacing: 0; color: var(--text); font-family: var(--sans); font-weight: 700; }
+.sub-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: -2px 0 10px; }
+.sub-switch a.pv-view { text-decoration: none; display: flex; align-items: center; justify-content: center; }

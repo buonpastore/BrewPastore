@@ -15,7 +15,11 @@ import { QuotePopup } from "./QuoteOfTheDay";
 import { UpdateBanner } from "./UpdateBanner";
 import { VERSION_LABEL } from "../version";
 
-interface Tab { to: string; label: string; short?: string; icon: LucideIcon; color: string; also?: string[] }
+interface Tab { to: string; label: string; short?: string; icon: LucideIcon; color: string; also?: string[]; sub?: string }
+/** Sottogruppi di una sezione (es. Utilità: strumenti e svago). */
+const SUBS: Record<string, { key: string; label: string }[]> = {
+  utilita: [{ key: "strumenti", label: "🧪 Strumenti" }, { key: "svago", label: "🎲 Svago" }],
+};
 interface Group { key: string; label: string; icon: LucideIcon; to: string; color: string; tabs?: Tab[] }
 
 /** Pulsanti di sezione tutti su una riga, più piccoli (prova; false = due per riga). */
@@ -51,15 +55,17 @@ export const GROUPS: Group[] = [
     ],
   },
   {
-    key: "utilita", label: "Utilità", icon: LayoutGrid, to: "/utilita/bottiglie", color: "var(--violet)",
+    key: "utilita", label: "Utilità", icon: LayoutGrid, to: "/utilita/carbonazione", color: "var(--violet)",
     tabs: [
-      { to: "/utilita/bottiglie", label: "Conta bottiglie", short: "Bottiglie", icon: Milk, color: "var(--gold)" },
-      { to: "/utilita/carbonazione", label: "Carbonazione", short: "CO₂", icon: Sparkles, color: "var(--teal)" },
-      { to: "/utilita/ph", label: "Correzione pH", short: "pH", icon: FlaskConical, color: "var(--magenta)" },
-      { to: "/utilita/densita", label: "Correzione densità", short: "Densità", icon: Gauge, color: "var(--violet)" },
-      { to: "/utilita/pressione", label: "Pressione bar/PSI", short: "Bar/PSI", icon: CircleGauge, color: "var(--hop)" },
-      { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--gold)" },
-      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--teal)" },
+      // strumenti: calcoli, conversioni e aggiustamenti
+      { to: "/utilita/carbonazione", label: "Carbonazione", short: "CO₂", icon: Sparkles, color: "var(--gold)", sub: "strumenti" },
+      { to: "/utilita/ph", label: "Correzione pH", short: "pH", icon: FlaskConical, color: "var(--teal)", sub: "strumenti" },
+      { to: "/utilita/densita", label: "Correzione densità", short: "Densità", icon: Gauge, color: "var(--magenta)", sub: "strumenti" },
+      { to: "/utilita/pressione", label: "Pressione bar/PSI", short: "Bar/PSI", icon: CircleGauge, color: "var(--violet)", sub: "strumenti" },
+      { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--hop)", sub: "strumenti" },
+      // svago
+      { to: "/utilita/bottiglie", label: "Conta bottiglie", short: "Bottiglie", icon: Milk, color: "var(--gold)", sub: "svago" },
+      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--teal)", sub: "svago" },
     ],
   },
 ];
@@ -156,19 +162,33 @@ export function Layout() {
             <button className="btn small" onClick={() => backToAdmin()}>Torna a {adminBackup()?.name}</button>
           </div>
         )}
-        {current.tabs && (
+        {current.tabs && (() => {
+          // con i sottogruppi mostro solo i pulsanti del gruppo della pagina aperta
+          const subs = SUBS[current.key];
+          const activeTab = current.tabs.find((t) => tabActive(t, loc.pathname));
+          const sub = subs ? (activeTab?.sub ?? subs[0].key) : null;
+          const tabs = sub ? current.tabs.filter((t) => t.sub === sub) : current.tabs;
+          return (
           <>
             <div className="section-title">{current.label}</div>
-            <nav className={"section-tabs" + (ONE_ROW ? " one-row" + (current.tabs.length >= 7 ? " many" : "") : (current.tabs.length >= 4 ? " two-cols" : "") + (current.tabs.length >= 4 && current.tabs.length % 2 ? " odd" : ""))}
-              style={{ ["--n" as string]: ONE_ROW ? current.tabs.length : current.tabs.length >= 4 ? 2 : current.tabs.length }}>
-              {current.tabs.map(({ to, label, short, icon: Icon, color }) => (
+            {subs && (
+              <div className="pv-views sub-switch">
+                {subs.map((g) => (
+                  <NavLink key={g.key} to={current.tabs!.find((t) => t.sub === g.key)!.to} className={"pv-view" + (sub === g.key ? " on" : "")}>{g.label}</NavLink>
+                ))}
+              </div>
+            )}
+            <nav className={"section-tabs" + (ONE_ROW ? " one-row" + (tabs.length >= 7 ? " many" : "") : (tabs.length >= 4 ? " two-cols" : "") + (tabs.length >= 4 && tabs.length % 2 ? " odd" : ""))}
+              style={{ ["--n" as string]: ONE_ROW ? tabs.length : tabs.length >= 4 ? 2 : tabs.length }}>
+              {tabs.map(({ to, label, short, icon: Icon, color }) => (
                 <NavLink key={to} to={to} style={{ ["--c" as string]: color }} className={tabActive({ to, label, icon: Icon, color, also: current.tabs!.find((t) => t.to === to)?.also }, loc.pathname) ? "active" : ""}>
                   <Icon size={16} /> <span className="st-long">{label}</span><span className="st-short">{short ?? label}</span>
                 </NavLink>
               ))}
             </nav>
           </>
-        )}
+          );
+        })()}
         <Outlet />
       </main>
 

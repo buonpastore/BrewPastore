@@ -47,7 +47,7 @@ export default function App() {
           <Route path="eventi" element={<Events />} />
           <Route path="storico" element={<HistoryPage />} />
           <Route path="impostazioni" element={<Settings />} />
-          <Route path="utilita" element={<Navigate to="/utilita/bottiglie" replace />} />
+          <Route path="utilita" element={<Navigate to="/utilita/carbonazione" replace />} />
           <Route path="utilita/:tool" element={<Utilities />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
