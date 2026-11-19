@@ -14,6 +14,7 @@ import { Expenses } from "./pages/Expenses";
 import { Tastings } from "./pages/Tastings";
 import { Cellar } from "./pages/Cellar";
 import { Revenue } from "./pages/Revenue";
+import { Events } from "./pages/Events";
 import { EquipmentProjects, EquipmentProject, EquipmentQuote } from "./pages/Equipment";
 import { ChatPage, Dashboard, HistoryPage, Login, Settings } from "./pages/Misc";
 
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="impianto/preventivo/:id" element={<EquipmentQuote />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="task" element={<Tasks />} />
+          <Route path="eventi" element={<Events />} />
           <Route path="storico" element={<HistoryPage />} />
           <Route path="impostazioni" element={<Settings />} />
           <Route path="utilita" element={<Navigate to="/utilita/bottiglie" replace />} />

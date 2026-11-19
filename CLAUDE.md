@@ -12,3 +12,6 @@
 - Le modifiche al database vanno in un nuovo file `supabase/migrations/00NN_*.sql` (mai modificare quelli già eseguiti),
   e l'utente lo deve eseguire a mano nello SQL Editor di Supabase.
 - Prima di pubblicare: `npx tsc --noEmit -p .` e `npm run build` senza errori.
+- Eventi (Attività → Eventi): l'elenco è nel file `public/eventi.json`, aggiornato ogni giorno da un'attività pianificata
+  che cerca eventi a tema birra in Umbria e Centro Italia. Il solo aggiornamento di `public/eventi.json` non richiede
+  una voce nel `CHANGELOG` né il cambio di versione.

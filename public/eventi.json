@@ -1,0 +1,83 @@
+{
+  "aggiornato": "2026-11-19",
+  "nota": "Eventi a tema birra in Umbria e Centro Italia, aggiornati ogni giorno in automatico.",
+  "eventi": [
+    {
+      "titolo": "Birraio dell'Anno 2027",
+      "tipo": "festival",
+      "dal": "2027-01-23",
+      "al": "2027-01-24",
+      "quando": "23–24 gennaio 2027 (sab 12–17 e 19–24, dom 12–18)",
+      "dove": "Teatro Cartiere Carrara, Firenze",
+      "regione": "Toscana",
+      "descrizione": "Festival e premiazione dei migliori birrai artigianali italiani (Fermento Birra). Ingresso a sessioni con Beer Pass, assaggi illimitati.",
+      "link": "https://www.birraiodellanno.it/evento/"
+    },
+    {
+      "titolo": "6° Corso sulla Birra – A tavola con Bacco",
+      "tipo": "corso",
+      "dal": "2027-04-21",
+      "al": null,
+      "quando": "da mercoledì 21 aprile 2027, ore 20:30 (5 lezioni)",
+      "dove": "Ristorante Deco, Ponte San Giovanni (Perugia)",
+      "regione": "Umbria",
+      "descrizione": "Corso di degustazione: 5 lezioni con 4 birre ogni sera. 230 € (159 € per i primi 15 iscritti), parte con almeno 20 iscritti.",
+      "link": "https://www.atavolaconbacco.it/corso-sulla-birra/"
+    },
+    {
+      "titolo": "Umbria Lup & Beer – fiera della birra artigianale e agricola umbra",
+      "tipo": "festival",
+      "dal": null,
+      "al": null,
+      "quando": "edizione 2027 da annunciare",
+      "dove": "Umbria",
+      "regione": "Umbria",
+      "descrizione": "Fiera dei birrifici artigianali e agricoli umbri con birrifici aperti, incontri e degustazioni. Tenere d'occhio il sito per le date.",
+      "link": "https://umbrialupandbeer.it/"
+    },
+    {
+      "titolo": "UBeer – festival della birra artigianale umbra",
+      "tipo": "festival",
+      "dal": null,
+      "al": null,
+      "quando": "prossima edizione da annunciare (l'ultima: 22–24 maggio 2026)",
+      "dove": "Barton Park, Pian di Massiano, Perugia",
+      "regione": "Umbria",
+      "descrizione": "Tre giorni con una ventina di birrifici umbri, food truck, musica e incontri.",
+      "link": "https://www.pintamedicea.com/birra/evento/ubeer-2026/"
+    },
+    {
+      "titolo": "Corso Sommelier della Birra – I livello",
+      "tipo": "corso",
+      "dal": null,
+      "al": null,
+      "quando": "date da chiedere all'organizzatore",
+      "dove": "Perugia",
+      "regione": "Umbria",
+      "descrizione": "Accademia Francesco Bologna: 28 ore, una lezione a settimana, a numero chiuso.",
+      "link": "https://corsidia.com/corsi-sommelier-della-birra-perugia/corso-i-livello-sommelier-della-birra-a-perugia-accademiafrancescobologna"
+    },
+    {
+      "titolo": "Visita e degustazione da Mastri Birrai Umbri",
+      "tipo": "birrificio",
+      "dal": null,
+      "al": null,
+      "quando": "tutto l'anno, da giovedì a domenica",
+      "dove": "Gualdo Cattaneo (PG)",
+      "regione": "Umbria",
+      "descrizione": "Tour del birrificio con degustazione e aperitivo, su prenotazione.",
+      "link": "https://www.winedering.com/tour-with-beer-tasting-and-aperitif-at-mastri-birrai-umbri_d2376_travel"
+    },
+    {
+      "titolo": "Tour e degustazione al Birrificio Flea",
+      "tipo": "birrificio",
+      "dal": null,
+      "al": null,
+      "quando": "tutto l'anno, su prenotazione",
+      "dove": "Gualdo Tadino (PG)",
+      "regione": "Umbria",
+      "descrizione": "Visita guidata del birrificio con degustazione delle birre alla spina.",
+      "link": "https://www.umbriatourism.it/en/dettaglio-offerta/-/dettaglio/tour-e-degustazione-birrificio-flea_5039_service_en"
+    }
+  ]
+}

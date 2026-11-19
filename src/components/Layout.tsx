@@ -7,7 +7,7 @@ import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
   Calculator, ClipboardList, LayoutGrid, Milk, Sparkles, FlaskConical, Timer,
-  Disc3, Warehouse, Gauge, TrendingUp, CircleGauge,
+  Disc3, Warehouse, Gauge, TrendingUp, CircleGauge, CalendarDays,
 } from "lucide-react";
 import { supabase, FACE_IMG } from "../lib";
 import { useAuth } from "../auth";
@@ -47,6 +47,7 @@ export const GROUPS: Group[] = [
       { to: "/task", label: "Task", short: "Task", icon: ClipboardList, color: "var(--gold)" },
       { to: "/spese", label: "Spese condivise", short: "Spese", icon: Wallet, color: "var(--teal)" },
       { to: "/chat", label: "Chat", icon: MessageCircle, color: "var(--magenta)" },
+      { to: "/eventi", label: "Eventi", icon: CalendarDays, color: "var(--violet)" },
     ],
   },
   {
