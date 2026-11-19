@@ -102,11 +102,12 @@ export function MonthEvents() {
   if (!list?.length) return null;
   const monthName = new Date().toLocaleDateString("it-IT", { month: "long" });
   return (
-    <div className="panel home-events">
+    <>
       <div className="home-events-head">
-        <h2><CalendarDays size={18} /> Eventi di {monthName}</h2>
-        <Link to="/eventi" className="small">tutti →</Link>
+        <h2>📅 Eventi di {monthName}</h2>
+        <Link to="/eventi" className="small">Tutti gli eventi →</Link>
       </div>
+      <div className="panel home-events">
       {list.map((e, i) => {
         const t = typeOf(e.tipo); const Icon = t.icon;
         return (
@@ -117,6 +118,7 @@ export function MonthEvents() {
           </a>
         );
       })}
-    </div>
+      </div>
+    </>
   );
 }

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.245", date: "19/11/2026 20:30", text: "Home: il riquadro degli eventi del mese non è più attaccato alle task; il titolo «📅 Eventi di …» è fuori dal riquadro come gli altri titoli della Home, con «Tutti gli eventi →» a destra, e le righe sono più compatte" },
   { version: "0.244", date: "19/11/2026 19:40", text: "Scheda della ricetta: accanto allo stile c’è una coppetta; toccandola si vedono le 3 birre più famose di quello stile (nome, birrificio e paese), da assaggiare come riferimento" },
   { version: "0.243", date: "19/11/2026 11:50", text: "Carbonazione: nell’elenco degli stili solo il nome, senza l’intervallo di CO₂ (che si vede sotto, una volta scelto lo stile)" },
   { version: "0.242", date: "19/11/2026 11:40", text: "Home: se ci sono eventi a tema birra nel mese in corso (anche già iniziati e non ancora finiti) compare il riquadro «Eventi di …» con data, tipo e luogo; toccando un evento si apre la sua pagina" },
