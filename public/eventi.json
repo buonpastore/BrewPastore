@@ -3,6 +3,17 @@
   "nota": "Eventi a tema birra in Umbria e Centro Italia, aggiornati ogni giorno in automatico.",
   "eventi": [
     {
+      "titolo": "Viaggio nel mondo della birra – corso Unionbirrai",
+      "tipo": "corso",
+      "dal": "2027-01-11",
+      "al": null,
+      "quando": "da lunedì 11 gennaio 2027",
+      "dove": "Piabè Drink'n Food, Chiaravalle (AN)",
+      "regione": "Marche",
+      "descrizione": "Corso di degustazione di Unionbirrai, con visita al Birrificio Godog di Jesi. Sede da verificare sulla pagina.",
+      "link": "https://mondobirra.org/p/viaggio-nel-mondo-della-birra-unionbirrai-lancia-i-nuovi-corsi-di-degustazione"
+    },
+    {
       "titolo": "Birraio dell'Anno 2027",
       "tipo": "festival",
       "dal": "2027-01-23",
@@ -12,6 +23,28 @@
       "regione": "Toscana",
       "descrizione": "Festival e premiazione dei migliori birrai artigianali italiani (Fermento Birra). Ingresso a sessioni con Beer Pass, assaggi illimitati.",
       "link": "https://www.birraiodellanno.it/evento/"
+    },
+    {
+      "titolo": "Italy Beer Week 2027",
+      "tipo": "festival",
+      "dal": "2027-03-15",
+      "al": "2027-03-21",
+      "quando": "15–21 marzo 2027",
+      "dove": "locali e birrifici aderenti in tutta Italia (anche in Umbria)",
+      "regione": "Italia",
+      "descrizione": "Settimana della birra artigianale con eventi e serate a tema nei locali aderenti: controllare il programma per quelli vicini.",
+      "link": "https://italybeerweek.com/"
+    },
+    {
+      "titolo": "Corso di degustazione birra (base) – Fermento Birra",
+      "tipo": "corso",
+      "dal": "2027-03-16",
+      "al": "2027-04-20",
+      "quando": "tutti i martedì dal 16 marzo al 20 aprile 2027",
+      "dove": "The Factory, piazza dei Condottieri 41, Roma",
+      "regione": "Lazio",
+      "descrizione": "Corso base «Conoscere la birra» di Fermento Birra: stili, degustazione e difetti. 199 €.",
+      "link": "https://www.fermentobirra.com/prodotto/roma-corso-di-degustazione-birra-base-conoscere-la-birra/"
     },
     {
       "titolo": "6° Corso sulla Birra – A tavola con Bacco",
