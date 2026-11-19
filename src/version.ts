@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.244", date: "19/11/2026 19:40", text: "Scheda della ricetta: accanto allo stile c’è una coppetta; toccandola si vedono le 3 birre più famose di quello stile (nome, birrificio e paese), da assaggiare come riferimento" },
   { version: "0.243", date: "19/11/2026 11:50", text: "Carbonazione: nell’elenco degli stili solo il nome, senza l’intervallo di CO₂ (che si vede sotto, una volta scelto lo stile)" },
   { version: "0.242", date: "19/11/2026 11:40", text: "Home: se ci sono eventi a tema birra nel mese in corso (anche già iniziati e non ancora finiti) compare il riquadro «Eventi di …» con data, tipo e luogo; toccando un evento si apre la sua pagina" },
   { version: "0.241", date: "19/11/2026 11:00", text: "Utilità divise in due gruppi con un selettore in cima: «Strumenti» (CO₂, pH, Densità, Bar/PSI, Timer) e «Svago» (Conta bottiglie, Gira la bottiglia). Toccando Utilità si apre Strumenti" },

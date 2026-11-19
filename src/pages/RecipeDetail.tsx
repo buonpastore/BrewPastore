@@ -12,6 +12,7 @@ import type { FieldDef } from "../components/fields";
 import { ImportRecipe } from "./ImportRecipe";
 import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
+import { FamousBeers } from "../components/FamousBeers";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { BrewDay } from "./BrewDay";
 import { RecipeOverview } from "./RecipeOverview";
@@ -107,7 +108,7 @@ export function RecipeDetail() {
         <div>
           <Link to="/ricette" className="muted small">← Ricette</Link>
           <h1>{recipe.name}</h1>
-          <div className="muted">{recipe.style}</div>
+          <div className="muted style-line">{recipe.style}<FamousBeers style={recipe.style} /></div>
         </div>
       </div>
 
