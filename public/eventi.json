@@ -3,6 +3,50 @@
   "nota": "Eventi a tema birra in Umbria e Centro Italia, aggiornati ogni giorno in automatico.",
   "eventi": [
     {
+      "titolo": "Corso sulle birre – Assosommelier",
+      "tipo": "corso",
+      "dal": "2026-11-19",
+      "al": null,
+      "quando": "da giovedì 19 novembre 2026, ore 20:30",
+      "dove": "Perugia",
+      "regione": "Umbria",
+      "descrizione": "Corso di degustazione delle birre di Assosommelier: stili, analisi sensoriale e abbinamenti. Iscrizioni e calendario delle serate sulla pagina.",
+      "link": "https://www.assosommelier.it/corsi-sommelier/corso-sulle-birre-perugia/"
+    },
+    {
+      "titolo": "Corso di degustazione birra – Il Tempo Ritrovato",
+      "tipo": "corso",
+      "dal": "2026-11-19",
+      "al": "2026-11-26",
+      "quando": "giovedì 19 e 26 novembre 2026",
+      "dove": "Firenze",
+      "regione": "Toscana",
+      "descrizione": "Corso breve di degustazione in due serate per imparare a riconoscere stili e difetti della birra.",
+      "link": "https://www.iltemporitrovato.org/corsi/cucina-vino/degustazione-birra/corso-degustazione-birra-firenze/"
+    },
+    {
+      "titolo": "Natale alla Rocca",
+      "tipo": "mercatino",
+      "dal": "2026-12-05",
+      "al": "2026-12-27",
+      "quando": "5–27 dicembre 2026",
+      "dove": "Rocca Paolina, Perugia",
+      "regione": "Umbria",
+      "descrizione": "Mercatino di Natale con stand enogastronomici: non è dedicato alla birra, ma di solito ci sono produttori locali. Buono anche per cercare birre di Natale umbre.",
+      "link": "https://www.umbriaeventi.com/natale-umbria.htm"
+    },
+    {
+      "titolo": "Christmas Beers 2026 – premiazione Unionbirrai",
+      "tipo": "concorso",
+      "dal": "2026-12-12",
+      "al": null,
+      "quando": "sabato 12 dicembre 2026, ore 16:30",
+      "dove": "Piazza Walther, Bolzano (fuori zona)",
+      "regione": "Italia",
+      "descrizione": "Concorso nazionale delle birre di Natale di Unionbirrai: utile per sapere quali birre natalizie italiane assaggiare. Iscrizioni dei birrifici fino al 1° dicembre.",
+      "link": "https://www.birraandsound.it/christmas-beers-2026-unionbirrai/"
+    },
+    {
       "titolo": "Viaggio nel mondo della birra – corso Unionbirrai",
       "tipo": "corso",
       "dal": "2027-01-11",
@@ -56,6 +100,39 @@
       "regione": "Umbria",
       "descrizione": "Corso di degustazione: 5 lezioni con 4 birre ogni sera. 230 € (159 € per i primi 15 iscritti), parte con almeno 20 iscritti.",
       "link": "https://www.atavolaconbacco.it/corso-sulla-birra/"
+    },
+    {
+      "titolo": "Birra Turbacci Xmas Fest",
+      "tipo": "festival",
+      "dal": null,
+      "al": null,
+      "quando": "metà dicembre (data 2026 da confermare)",
+      "dove": "Il Fabbricone, Mentana (RM)",
+      "regione": "Lazio",
+      "descrizione": "Festa natalizia del birrificio Turbacci con birre speciali di Natale e birrifici ospiti. Si tiene ogni anno a dicembre: controllare la data sui canali del birrificio.",
+      "link": "https://www.fermentobirra.com/gli-eventi-dicembre-birre-lalbero-magazzino-winter-beer-festival-birra-turbacci-xmas-fest-castellalto-winter-beer-festival/"
+    },
+    {
+      "titolo": "Birre Sotto l'Albero",
+      "tipo": "festival",
+      "dal": null,
+      "al": null,
+      "quando": "weekend prima di Natale (data 2026 da confermare)",
+      "dove": "pub di Trastevere (Ma Che Siete Venuti a Fà e altri), Roma",
+      "regione": "Lazio",
+      "descrizione": "Appuntamento annuale con le birre natalizie italiane e straniere nei pub storici della birra artigianale romana.",
+      "link": "https://www.fermentobirra.com/gli-eventi-dicembre-birre-lalbero-magazzino-winter-beer-festival-birra-turbacci-xmas-fest-castellalto-winter-beer-festival/"
+    },
+    {
+      "titolo": "Corso degustazione birra – Degustibuss",
+      "tipo": "corso",
+      "dal": null,
+      "al": null,
+      "quando": "il sabato (10–13 e 14–17), date sulla pagina",
+      "dove": "Roma",
+      "regione": "Lazio",
+      "descrizione": "Corso di un giorno con diploma di degustatore di birra.",
+      "link": "https://www.degustibuss.it/corso/corso-degustazione-birra-roma/"
     },
     {
       "titolo": "Umbria Lup & Beer – fiera della birra artigianale e agricola umbra",
