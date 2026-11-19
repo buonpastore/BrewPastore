@@ -138,7 +138,7 @@ function Carbonation() {
         <label><span>Stile</span>
           <select value={style} onChange={(e) => { setStyle(e.target.value); setCo2(null); }}>
             <option value="">— scegli lo stile —</option>
-            {styles.map((s) => <option key={s} value={s}>{s} ({num(STYLE_CO2[s][0], 1)}–{num(STYLE_CO2[s][1], 1)} vol)</option>)}
+            {styles.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
         <label><span>Zucchero</span>

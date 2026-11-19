@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.243", date: "19/11/2026 11:50", text: "Carbonazione: nell’elenco degli stili solo il nome, senza l’intervallo di CO₂ (che si vede sotto, una volta scelto lo stile)" },
   { version: "0.242", date: "19/11/2026 11:40", text: "Home: se ci sono eventi a tema birra nel mese in corso (anche già iniziati e non ancora finiti) compare il riquadro «Eventi di …» con data, tipo e luogo; toccando un evento si apre la sua pagina" },
   { version: "0.241", date: "19/11/2026 11:00", text: "Utilità divise in due gruppi con un selettore in cima: «Strumenti» (CO₂, pH, Densità, Bar/PSI, Timer) e «Svago» (Conta bottiglie, Gira la bottiglia). Toccando Utilità si apre Strumenti" },
   { version: "0.240", date: "19/11/2026 10:30", text: "Nuova sezione Attività → Eventi: festival, corsi, degustazioni e visite ai birrifici a tema birra in Umbria e Centro Italia, con data, luogo, descrizione e il link «Vai all’evento». Filtri «Solo Umbria» e per tipo. L’elenco si aggiorna da solo ogni mattina" },
