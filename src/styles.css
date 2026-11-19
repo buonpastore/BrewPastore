@@ -2089,3 +2089,15 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ev-body h3 { text-transform: none; letter-spacing: 0; color: var(--text); font-family: var(--sans); font-weight: 700; }
 .sub-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: -2px 0 10px; }
 .sub-switch a.pv-view { text-decoration: none; display: flex; align-items: center; justify-content: center; }
+/* home: eventi del mese */
+.home-events-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.home-events-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+.home-events-head h2 svg { color: var(--violet); }
+.he-row { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--line); color: var(--text); text-decoration: none; }
+.he-date { flex: none; width: 44px; display: flex; flex-direction: column; align-items: center; padding: 4px 0; border-radius: 10px; background: var(--surface-2); border-left: 3px solid var(--c); }
+.he-date strong { font-size: 1.05rem; line-height: 1.1; }
+.he-date small { font-size: .66rem; text-transform: uppercase; font-weight: 700; color: var(--c); }
+.he-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.he-body strong { font-size: .95rem; overflow-wrap: anywhere; }
+.he-body small { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: .78rem; }
+.he-go { flex: none; color: var(--muted); }

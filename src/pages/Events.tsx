@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { CalendarDays, ExternalLink, GraduationCap, MapPin, PartyPopper, Factory, Beer } from "lucide-react";
 
 interface BeerEvent { titolo: string; tipo: string; dal: string | null; al: string | null; quando: string; dove: string; regione: string; descrizione: string; link: string }
@@ -81,6 +82,41 @@ export function Events() {
         {data && !list.length && <p className="muted">Nessun evento con questi filtri.</p>}
       </div>
       {data && <label className="check" style={{ marginTop: 10 }}><input type="checkbox" checked={past} onChange={(e) => setPast(e.target.checked)} /> mostra anche quelli passati</label>}
+    </div>
+  );
+}
+
+/** In Home: gli eventi del mese in corso (anche quelli già iniziati e non ancora finiti). Se non ce ne sono, non mostra niente. */
+export function MonthEvents() {
+  const [list, setList] = useState<BeerEvent[] | null>(null);
+  useEffect(() => {
+    fetch(`${new URL("eventi.json", document.baseURI).href}?t=${Date.now()}`)
+      .then((r) => (r.ok ? r.json() : null)).then((d: EventsFile | null) => {
+        const now = new Date();
+        const today = now.toISOString().slice(0, 10);
+        const month = today.slice(0, 7);
+        setList((d?.eventi ?? []).filter((e) => e.dal && (e.al ?? e.dal) >= today && (e.dal.slice(0, 7) === month || e.dal <= today))
+          .sort((a, b) => String(a.dal).localeCompare(String(b.dal))));
+      }).catch(() => setList([]));
+  }, []);
+  if (!list?.length) return null;
+  const monthName = new Date().toLocaleDateString("it-IT", { month: "long" });
+  return (
+    <div className="panel home-events">
+      <div className="home-events-head">
+        <h2><CalendarDays size={18} /> Eventi di {monthName}</h2>
+        <Link to="/eventi" className="small">tutti →</Link>
+      </div>
+      {list.map((e, i) => {
+        const t = typeOf(e.tipo); const Icon = t.icon;
+        return (
+          <a key={i} className="he-row" href={e.link} target="_blank" rel="noopener noreferrer" style={{ ["--c" as string]: t.color }}>
+            <span className="he-date"><strong>{fmt(e.dal!).split(" ")[0]}</strong><small>{fmt(e.dal!).split(" ")[1]}</small></span>
+            <span className="he-body"><strong>{e.titolo}</strong><small><Icon size={12} /> {t.one} · {e.dove}</small></span>
+            <ExternalLink size={16} className="he-go" />
+          </a>
+        );
+      })}
     </div>
   );
 }

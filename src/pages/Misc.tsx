@@ -1,3 +1,4 @@
+import { MonthEvents } from "./Events";
 import { whoOf } from "./Tasks";
 import { LogIn, Minus, Plus, Camera, RotateCcw } from "lucide-react";
 import { UserAvatar } from "../components/UserAvatar";
@@ -132,6 +133,7 @@ export function Dashboard() {
       ) : null}
 
       <MyTasks />
+      <MonthEvents />
 
       {recent.length > 0 && (
         <>
