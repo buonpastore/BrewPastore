@@ -4,9 +4,9 @@ import { findStyle } from "../styleGuide";
 import { FAMOUS_BEERS } from "../famousBeers";
 import { accentAt } from "../lib";
 
-/** Ricerca per immagini della bottiglia (si apre nel browser). */
+/** Ricerca per immagini della birra: nome e birrificio tra virgolette, così escono solo foto di QUELLA birra e non le altre del birrificio. */
 const imagesUrl = (name: string, brewery: string) =>
-  `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${brewery} ${name} birra bottiglia`)}`;
+  `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`"${brewery}" "${name}" beer`)}`;
 
 /** Iconcina accanto allo stile: toccandola mostra le 3 birre più famose di quello stile. */
 export function FamousBeers({ style }: { style: string | null | undefined }) {

@@ -7,7 +7,7 @@ export const FAMOUS_BEERS: Record<string, FamousBeer[]> = {
   "Weiss": [B("Hefeweissbier", "Weihenstephaner", "Germania"), B("Hefe-Weißbier Naturtrüb", "Paulaner", "Germania"), B("Hefe-Weissbier", "Franziskaner", "Germania")],
   "Blanche": [B("Hoegaarden Wit", "Hoegaarden", "Belgio"), B("Blanche de Namur", "Du Bocq", "Belgio"), B("St. Bernardus Wit", "St. Bernardus", "Belgio")],
   "Dubbel": [B("Westmalle Dubbel", "Westmalle (trappista)", "Belgio"), B("Chimay Rouge", "Chimay (trappista)", "Belgio"), B("Rochefort 6", "Rochefort (trappista)", "Belgio")],
-  "APA": [B("Pale Ale", "Sierra Nevada", "USA"), B("Mirror Pond", "Deschutes", "USA"), B("Dale's Pale Ale", "Oskar Blues", "USA")],
+  "APA": [B("Pale Ale", "Sierra Nevada", "USA"), B("Pale 31", "Firestone Walker", "USA"), B("Re Hop", "Toccalmatto", "Italia")],
   "English Ale": [B("London Pride", "Fuller's", "Inghilterra"), B("Landlord", "Timothy Taylor", "Inghilterra"), B("Pedigree", "Marston's", "Inghilterra")],
   "Winter Ale": [B("Christmas Ale", "St. Bernardus", "Belgio"), B("N'ice Chouffe", "Brasserie d'Achouffe", "Belgio"), B("Christmas Ale", "Anchor", "USA")],
   "Bock": [B("Ur-Bock Dunkel", "Einbecker", "Germania"), B("Maibock", "Ayinger", "Germania"), B("Bock", "Aass", "Norvegia")],
