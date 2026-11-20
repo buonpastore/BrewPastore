@@ -275,8 +275,8 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   const vol = find(/otten[a-z]*\s*(?:circa\s*)?(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i)   // «si dovrebbero ottenere circa 23 litri»
     ?? find(/(?:volume|batch|lotto|litri finali|in fermentatore|per)\b[^\d\n]{0,25}(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i) ?? find(/\b(\d{1,3}(?:[.,]\d)?)\s*(?:l|litri)\s*(?:di birra|finali|batch)/i);
   const eff = find(/efficien[a-z]*\b[^\d\n]{0,15}(\d{2}(?:[.,]\d)?)\s*%/i);
-  const mash = find(/(?:mash(?!\s*out)|ammostamento|infusione|single infusion|saccarificazione)[^\n]{0,60}?(\d{2}(?:[.,]\d)?)\s*°\s*C?[^\n]{0,30}?(\d{2,3})\s*(?:min|minuti|')/i)
-    ?? find(/(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:per|x|×)?\s*(\d{1,3})\s*(?:min|minuti|')/i);
+  const mash = find(/(?:mash(?!\s*out)|ammostamento|infusione|single infusion|saccarificazione)[^\n]{0,60}?(\d{2}(?:[.,]\d)?)\s*(?:°\s*C?|gradi)[^\n]{0,30}?(\d{2,3})\s*(?:min|minuti|')/i)
+    ?? find(/(\d{2}(?:[.,]\d)?)\s*(?:°\s*C?|gradi)\s*(?:per|x|×|da)?\s*(\d{1,3})\s*(?:min|minuti|')/i);
   // tabella delle fasi di mash: "Prima fase  63 °C  60 minuti"
   const mashSteps = lines
     .map((l) => l.match(/^([A-Za-zÀ-ú' ]{3,30}?)\s+(\d{2}(?:[.,]\d)?)\s*°\s*C\s+(\d{1,3})\s*(?:min|minuti|')/i))
@@ -286,18 +286,23 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   // soste del mash scritte in tanti modi: «66°C - 20 min», «66 °C | 60 min», «66°C per 60 minuti», «66 °C x 60'», «60 min a 66 °C»
   // (tranne le righe di sparge, whirlpool, bollitura, raffreddamento, fermentazione)
   const NOT_MASH = /sparge|risciacqu|whirlpool|hop\s?stand|bollitur|boil|raffredd|ferment|dry|lievit|imbottigl|carbonaz|priming|acqua per il risciacquo/i;
-  const steps: { t: number; min: number }[] = [];
+  const steps: { t: number; min: number; out?: boolean }[] = [];
   // conta solo la parola sospetta subito prima del numero (nelle foto a due colonne l'OCR mette testi diversi sulla stessa riga)
   const near = (l: string, i: number) => NOT_MASH.test(l.slice(Math.max(0, i - 28), i));
+  // «mash out» scritto subito prima: è il mash-out anche se a 72 °C (non conta nella durata del mash)
+  const isOut = (l: string, i: number) => /mash[\s-]*out|mashout/i.test(l.slice(Math.max(0, i - 28), i));
   for (const l of raw.split(/\r?\n/)) {
-    for (const m of l.matchAll(/(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:[-–—|:,x×]|per|for)?\s*(\d{1,3})\s*(?:min|minuti|mins|')/gi)) if (!near(l, m.index ?? 0)) steps.push({ t: num(m[1]), min: Number(m[2]) });
-    for (const m of l.matchAll(/(\d{1,3})\s*(?:min|minuti|mins|')\s*(?:a|at|@)\s*(\d{2}(?:[.,]\d)?)\s*°/gi)) if (!near(l, m.index ?? 0)) steps.push({ t: num(m[2]), min: Number(m[1]) });
+    // «66 °C 60 min», «66°C - 60 min», «66 °C da 60 minuti», «66 gradi per 60 minuti»
+    for (const m of l.matchAll(/(\d{2}(?:[.,]\d)?)\s*(?:°\s*C?|gradi)\s*(?:[-–—|:,x×]|per|for|da|di)?\s*(\d{1,3})\s*(?:min|minuti|mins|')/gi)) if (!near(l, m.index ?? 0)) steps.push({ t: num(m[1]), min: Number(m[2]), out: isOut(l, m.index ?? 0) });
+    // «60 min a 66 °C», «da 60 minuti a 66 gradi»
+    for (const m of l.matchAll(/(\d{1,3})\s*(?:min|minuti|mins|')\s*(?:a|at|@)\s*(\d{2}(?:[.,]\d)?)\s*(?:°|gradi)/gi)) if (!near(l, m.index ?? 0)) steps.push({ t: num(m[2]), min: Number(m[1]), out: isOut(l, m.index ?? 0) });
   }
-  steps.splice(0, steps.length, ...steps.filter((x, i, a) => x.t >= 40 && x.t <= 80 && x.min > 0 && x.min <= 120 && a.findIndex((y) => y.t === x.t && y.min === x.min) === i));
-  if (steps.length >= 2 && !mashSteps.length) mashSteps.push(...steps.map((x) => `${x.t >= 75 ? "Mash-out" : "Sosta"} ${String(x.t).replace(".", ",")} °C × ${x.min} min`));
+  steps.splice(0, steps.length, ...steps.filter((x, i, a) => x.t >= 40 && x.t <= 80 && x.min > 0 && x.min <= 120 && a.findIndex((y) => y.t === x.t && y.min === x.min) === i)
+    .map((x) => ({ ...x, out: x.out || x.t >= 75 || steps.some((y) => y.t === x.t && y.min === x.min && y.out) })));
+  if (steps.length >= 2 && !mashSteps.length) mashSteps.push(...steps.map((x) => `${x.out ? "Mash-out" : "Sosta"} ${String(x.t).replace(".", ",")} °C × ${x.min} min`));
   // durata = somma delle soste (senza il mash-out); temperatura = la sosta principale di saccarificazione (62–70 °C)
   const mashFromSteps = steps.length >= 1 ? (() => {
-    const rest = steps.filter((x) => x.t < 75);
+    const rest = steps.filter((x) => !x.out);
     const main = [...rest].filter((x) => x.t >= 62 && x.t <= 70).sort((a, b) => b.min - a.min)[0] ?? [...rest].sort((a, b) => b.min - a.min)[0];
     return main ? { temp: main.t, time: rest.reduce((t, x) => t + x.min, 0) } : null;
   })() : null;
