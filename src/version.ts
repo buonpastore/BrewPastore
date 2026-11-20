@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.247", date: "20/11/2026 09:45", text: "Materie prime e ingredienti: dopo l’ordine malti, luppoli, lieviti e resto, dentro ogni gruppo vengono prima quelli con la quantità maggiore (grammi e chili confrontati correttamente). Vale per acquisti, ordini importati, ricette, batch, giornata di cotta, costi e Materie prime" },
   { version: "0.246", date: "20/11/2026 09:30", text: "Dettaglio di un acquisto (es. ordine Mr. Malti importato): le righe sono sempre in ordine malti, luppoli, lieviti e poi il resto, come in tutta l’app (prima a volte restavano nell’ordine del documento)" },
   { version: "0.245", date: "19/11/2026 20:30", text: "Home: il riquadro degli eventi del mese non è più attaccato alle task; il titolo «📅 Eventi di …» è fuori dal riquadro come gli altri titoli della Home, con «Tutti gli eventi →» a destra, e le righe sono più compatte" },
   { version: "0.244", date: "19/11/2026 19:40", text: "Scheda della ricetta: accanto allo stile c’è una coppetta; toccandola si vedono le 3 birre più famose di quello stile (nome, birrificio e paese), da assaggiare come riferimento" },

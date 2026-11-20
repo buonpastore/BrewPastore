@@ -129,7 +129,10 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
     const va = val(a), vb = val(b);
     const c = typeof va === "string" ? va.localeCompare(vb as string, "it") : (va as number) - (vb as number);
     // a parità (es. stessa categoria) ordine alfabetico
-    return (c !== 0 ? c : a.name.localeCompare(b.name, "it")) * (sort.dir === "asc" || c === 0 ? 1 : -1);
+    if (c !== 0) return c * (sort.dir === "asc" ? 1 : -1);
+    // stessa categoria: prima le quantità maggiori, poi in ordine alfabetico
+    if (sort.key === "category") { const dq = Number(b.qty_purchased ?? 0) - Number(a.qty_purchased ?? 0); if (dq) return dq; }
+    return a.name.localeCompare(b.name, "it");
   });
   const sortBy = (key: SortKey) => setSort((s0) => (s0.key === key ? { key, dir: s0.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "name" || key === "category" ? "asc" : "desc" }));
   const Th = ({ k, children }: { k: SortKey; children: string }) => (

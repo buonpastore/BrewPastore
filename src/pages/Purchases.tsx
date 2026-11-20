@@ -27,7 +27,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
   const full = view === "estesa";
 
   useEffect(() => {
-    supabase.from("purchases").select("*, purchase_items(total_price, description, materials(name, category))").order("purchase_date", { ascending: false })
+    supabase.from("purchases").select("*, purchase_items(total_price, quantity, unit, description, materials(name, category))").order("purchase_date", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
   }, []);
 
@@ -39,7 +39,7 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
     try {
       const r = await rebuildPurchasesFromDocuments((m) => setRebuilding(m));
       setReport(r);
-      const { data } = await supabase.from("purchases").select("*, purchase_items(total_price, description, materials(name, category))").order("purchase_date", { ascending: false });
+      const { data } = await supabase.from("purchases").select("*, purchase_items(total_price, quantity, unit, description, materials(name, category))").order("purchase_date", { ascending: false });
       setRows(data ?? []);
     } catch (e) { alert(errMsg(e)); }
     setRebuilding(null);
