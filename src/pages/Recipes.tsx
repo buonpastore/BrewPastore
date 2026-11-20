@@ -26,7 +26,7 @@ export function Recipes() {
     .sort((a, b) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "").localeCompare(String(a.bottling_date ?? a.brew_date ?? a.created_at ?? "")))[0]?.cap_color as string | undefined;
 
   useEffect(() => {
-    supabase.from("recipes").select("*, batches(id, brew_date, bottling_date, created_at, status, cap_color)").order("name")
+    supabase.from("recipes").select("*, batches(id, brew_date, bottling_date, created_at, status, cap_color)").order("created_at", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
   }, []);
 

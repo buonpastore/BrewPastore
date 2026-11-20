@@ -351,7 +351,12 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
         .replace(/[®™]|['’]!?(?=\s|$)/g, "").replace(/\s{2,}/g, " ").trim();
       line = `${nm} ${tab[3]} ${tab[2]}`; fromTable = true;
     }
-    const q = line.match(QTY);
+    let q = line.match(QTY);
+    // lievito senza unità: «Lievito US-05 x2», «US-05 n. 2»
+    if (!q && guessCategory(line) === "lievito") {
+      const m = line.match(/(?:[x×]|n\.?)\s*(\d)\s*$/i);
+      if (m) { line = line.slice(0, m.index).trim() + ` ${m[1]} pz`; q = line.match(QTY); }
+    }
     if (!q) continue;
     if (/^(ecco|ricetta|per\b|questa|una\b|un\b|ti\b|di seguito)/i.test(line)) continue;
     let name = cleanIngredientName(line);
@@ -365,10 +370,16 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     let quantity = qtyNum(q[1], unit);
     if (unit === "cl") { unit = "l"; quantity = quantity / 100; }
     if (category === "lievito" && (unit === "g" || unit === "ml")) {
-      // "11,5 g" di lievito secco = 1 bustina
-      name = `${name} (${q[1]} ${q[2]})`; quantity = 1; unit = "pz";
+      // lievito in grammi → bustine: «2 bustine da 11,5 g», «11,5 g x 2», «2 x 11 g», «23 g» (= 2 bustine da 11,5 g)
+      const sachets = line.match(/(\d{1,2})\s*(?:bustin[ae]|buste?|confezion[ei]|pacchett[oi])\b/i);
+      const times = line.match(/(?:^|[^\d.,])(\d)\s*[x×]\s*(?:\d|[a-z])/i) ?? line.match(/[x×]\s*(\d)\b(?!\s*(?:g|gr|ml)\b)/i);
+      const each = 11.5;
+      quantity = sachets ? Number(sachets[1]) : times ? Number(times[1]) : Math.max(1, Math.round(quantity / each));
+      const per = sachets || times ? q[1] : quantity > 1 ? null : q[1];
+      name = per ? `${name} (${per} ${q[2]})` : name; unit = "pz";
     }
     name = tidyName(name, category);
+    if (category === "lievito") name = name.replace(/(?:^|\s)\d\s*[x×](?=\s|$)|\s[x×]\s*\d(?=\s|$)/gi, " ").replace(/\s{2,}/g, " ").trim();
     if (!name) continue;
     // lettere sporche dell'OCR in testa («I Lievito…») e simboli in coda («SafLager'!»)
     name = name.replace(/^(?:[A-Za-z]{1,2}[\s.:;|]+)+(?=[A-ZÀ-Ú][a-zà-ú])/, "").replace(/[®™]|['’]!?(?=\s|$)/g, "").replace(/\s{2,}/g, " ").trim();
@@ -391,7 +402,20 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
 
   // ingredienti elencati due volte (es. tabella + procedimento): ne tengo uno solo
   const unique = dedupeIngredients(ingredients).kept;
-  ingredients.length = 0; ingredients.push(...unique);
+  // lo stesso lievito citato due volte (es. «2 bustine US-05» negli ingredienti e «US-05 11,5 g» nel procedimento):
+  // uno solo, con il numero di bustine più alto
+  const yKey = (n: string) => n.toLowerCase().replace(/\(.*?\)/g, " ").replace(/\b(?:lievito|secco|liquido|fermentis|safale|saflager|lallemand|lalbrew|bustin[ae]|buste?|di|da)\b/g, " ").replace(/[^a-z0-9]/g, "");
+  const yeasts = new Map<string, typeof unique[number]>();
+  const merged = unique.filter((i) => {
+    if (i.category !== "lievito" || i.unit !== "pz") return true;
+    const k = yKey(i.name); if (!k) return true;
+    const prev = yeasts.get(k);
+    if (!prev) { yeasts.set(k, i); return true; }
+    prev.quantity = Math.max(prev.quantity, i.quantity);
+    if (i.name.length > prev.name.length && !/\(/.test(i.name)) prev.name = i.name;
+    return false;
+  });
+  ingredients.length = 0; ingredients.push(...merged);
 
   // nome e stile: prima riga "titolo" senza quantità
   const SECTION = /^(ingredienti|parametri|dati|malti|cereali|fermentabili|luppoli|lievit[oi]|acqua(?: e sali)?|sali|procedimento|processo|istruzioni|note|mash|bollitura|fermentazione|imbottigliamento|profilo|ricetta|recipe)\s*:?$/i;

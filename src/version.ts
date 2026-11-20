@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.250", date: "20/11/2026 11:10", text: "Ricette: in alto l’ultima inserita, in fondo la prima. Import ricetta: il lievito si conta in bustine anche quando è scritto in grammi («2 bustine da 11,5 g», «11,5 g x 2», «23 g» = 2 bustine, «x2») e se lo stesso lievito compare due volte (ingredienti e procedimento) resta una riga sola con il numero giusto di bustine" },
   { version: "0.249", date: "20/11/2026 10:45", text: "Import ricetta: «5.250 g» si legge 5250 g (punto delle migliaia) e non più 5,25 g, anche «5, 25 kg» con lo spazio; l’acqua si legge anche col numero prima («20 litri di mash», «15 litri per lo sparge») e una riga non prende più il numero della riga sotto né lo scambia per il volume" },
   { version: "0.248", date: "20/11/2026 10:15", text: "Import ricetta: il mash-out non si perde più. Si legge anche scritto «Mash in 66 °C da 60 minuti, mash out 72 °C da 10 minuti» o con «gradi» al posto di °C; se c’è scritto «mash out» vale come mash-out anche a 72 °C, compare come fase a sé nella scheda e non si somma alla durata del mash" },
   { version: "0.247", date: "20/11/2026 09:45", text: "Materie prime e ingredienti: dopo l’ordine malti, luppoli, lieviti e resto, dentro ogni gruppo vengono prima quelli con la quantità maggiore (grammi e chili confrontati correttamente). Vale per acquisti, ordini importati, ricette, batch, giornata di cotta, costi e Materie prime" },
