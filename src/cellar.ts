@@ -13,11 +13,11 @@ export async function loadTasted(): Promise<Set<string>> {
   return new Set((data ?? []).map((t) => t.batch_id).filter(Boolean));
 }
 
-/** Batch prodotti, dall'ultimo inserito, con nome e stile della ricetta. */
+/** Batch prodotti, dall'ultima cotta, con nome e stile della ricetta. */
 export async function loadProduced(): Promise<Row[]> {
   const [{ data }, tasted] = await Promise.all([
     supabase.from("batches").select("id, code, status, bottling_date, first_tasting_date, cap_color, brew_date, created_at, recipe_id, recipes(name, style)")
-      .order("created_at", { ascending: false }),
+      .order("brew_date", { ascending: false, nullsFirst: true }).order("created_at", { ascending: false }),
     loadTasted(),
   ]);
   return (data ?? []).filter((b) => isProduced(b, tasted));

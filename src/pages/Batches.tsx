@@ -43,7 +43,7 @@ export function Batches() {
   const full = view === "estesa";
 
   useEffect(() => {
-    supabase.from("batches").select("*, recipes(name)").order("created_at", { ascending: false })
+    supabase.from("batches").select("*, recipes(name)").order("brew_date", { ascending: false, nullsFirst: true }).order("created_at", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
     supabase.from("batch_cost_summary").select("*").then(({ data }) =>
       setCosts(Object.fromEntries((data ?? []).map((c) => [c.batch_id, c]))));
