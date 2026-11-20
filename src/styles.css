@@ -2114,8 +2114,9 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .famous-modal h2 svg { color: var(--gold); }
 .famous-x { position: absolute; top: 14px; right: 14px; }
 .famous-list { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
-.famous-list li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2);
-  border-left: 3px solid var(--c); }
-.famous-list li > span:last-child { display: grid; gap: 2px; }
+.famous-list li { border-radius: 14px; background: var(--surface-2); border-left: 3px solid var(--c); }
+.famous-list li a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; color: var(--text); text-decoration: none; }
+.famous-list .famous-txt { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.famous-list .famous-go { flex: none; color: var(--c); }
 .famous-n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; flex: none; font-weight: 700;
   background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--c); }
