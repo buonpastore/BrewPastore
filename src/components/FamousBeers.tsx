@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Trophy, X } from "lucide-react";
+import { Beer, ExternalLink, X } from "lucide-react";
 import { findStyle } from "../styleGuide";
 import { FAMOUS_BEERS } from "../famousBeers";
 import { accentAt } from "../lib";
@@ -18,13 +18,13 @@ export function FamousBeers({ style }: { style: string | null | undefined }) {
     <>
       <button type="button" className="famous-btn" title="Le birre più famose di questo stile" aria-label="Le birre più famose di questo stile"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}>
-        <Trophy size={15} />
+        <Beer size={15} />
       </button>
       {open && (
         <div className="modal-backdrop" onClick={() => setOpen(false)}>
           <div className="modal famous-modal" onClick={(e) => e.stopPropagation()}>
             <button className="icon-btn famous-x" aria-label="Chiudi" onClick={() => setOpen(false)}><X size={18} /></button>
-            <h2><Trophy size={20} /> {found.name}</h2>
+            <h2><Beer size={20} /> {found.name}</h2>
             <p className="muted small">Le 3 birre più famose di questo stile, da assaggiare come riferimento. Tocca una birra per vedere le foto della bottiglia.</p>
             <ol className="famous-list">
               {list.map((b, i) => (

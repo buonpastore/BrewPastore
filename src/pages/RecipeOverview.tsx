@@ -6,7 +6,6 @@ import {
 import { num, sg, type Row } from "../lib";
 import { abvOf, ebcColor, ebcName, ibuName, cleanDescription } from "../beerLook";
 import { findStyle } from "../styleGuide";
-import { FamousBeers } from "../components/FamousBeers";
 
 function Tile({ icon, label, value, sub, color = "var(--gold)", swatch }: { icon: ReactNode; label: string; value: ReactNode; sub?: string; color?: string; swatch?: string }) {
   return (
@@ -284,7 +283,7 @@ function StyleCard({ recipe, abv }: { recipe: Row; abv: number | null }) {
   ];
   return (
     <>
-      <h3 className="ov-h"><BookMarked size={16} /> Lo stile: {name}<FamousBeers style={name} /></h3>
+      <h3 className="ov-h"><BookMarked size={16} /> Lo stile: {name}</h3>
       <div className="style-card">
         <div className="style-meta">
           <span><FlaskConical size={15} /> {info.ferm}</span>

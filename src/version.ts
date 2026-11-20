@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.252", date: "20/11/2026 11:45", text: "Birre più famose dello stile: l’iconcina ora è un boccale di birra (non più la coppa) e si trova solo accanto allo stile, sotto il nome della ricetta; tolta dal riquadro «Lo stile» in fondo alla scheda" },
   { version: "0.251", date: "20/11/2026 11:30", text: "Birre più famose dello stile: ogni birra ha una freccetta; toccandola si aprono le foto della bottiglia (ricerca immagini)" },
   { version: "0.250", date: "20/11/2026 11:10", text: "Ricette: in alto l’ultima inserita, in fondo la prima. Import ricetta: il lievito si conta in bustine anche quando è scritto in grammi («2 bustine da 11,5 g», «11,5 g x 2», «23 g» = 2 bustine, «x2») e se lo stesso lievito compare due volte (ingredienti e procedimento) resta una riga sola con il numero giusto di bustine" },
   { version: "0.249", date: "20/11/2026 10:45", text: "Import ricetta: «5.250 g» si legge 5250 g (punto delle migliaia) e non più 5,25 g, anche «5, 25 kg» con lo spazio; l’acqua si legge anche col numero prima («20 litri di mash», «15 litri per lo sparge») e una riga non prende più il numero della riga sotto né lo scambia per il volume" },
