@@ -112,7 +112,7 @@ export function RowsEditor(p: Props) {
             {rows.length === 0 && !adding && (
               <tr><td colSpan={99} className="muted">{p.emptyText ?? "Nessuna riga"}</td></tr>
             )}
-            {rows.map((r) =>
+            {(p.categoryOf ? sortByCat(rows, p.categoryOf) : rows).map((r) =>
               editId === r.id ? formRow(saveEdit, () => setEditId(null), r.id) : (
                 <tr key={r.id}>
                   {p.fields.map((f, k) => (
