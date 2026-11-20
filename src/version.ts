@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.254", date: "20/11/2026 12:20", text: "Tutti gli elenchi in ordine di inserimento, con in cima l’ultimo inserito: Costi delle birre, Ricavi, Batch (anche la scelta della ricetta per un nuovo batch), Degustazioni, Cantina, Acquisti e Spese (come già Ricette, Task e Preventivi). Le materie prime restano per categoria (malti, luppoli, lieviti, resto)" },
   { version: "0.253", date: "20/11/2026 12:00", text: "Birre più famose dello stile: le foto cercano esattamente quella birra di quel birrificio (prima uscivano anche le altre birre del birrificio, magari scure). APA: Sierra Nevada Pale Ale, Firestone Walker Pale 31 e Toccalmatto Re Hop" },
   { version: "0.252", date: "20/11/2026 11:45", text: "Birre più famose dello stile: l’iconcina ora è un boccale di birra (non più la coppa) e si trova solo accanto allo stile, sotto il nome della ricetta; tolta dal riquadro «Lo stile» in fondo alla scheda" },
   { version: "0.251", date: "20/11/2026 11:30", text: "Birre più famose dello stile: ogni birra ha una freccetta; toccandola si aprono le foto della bottiglia (ricerca immagini)" },

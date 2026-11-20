@@ -26,7 +26,7 @@ export function Cellar() {
   const beer = (id: string) => beers.find((b) => b.id === id);
   const nameOfBeer = (b?: Row) => b?.recipes?.name ?? b?.code ?? "Birra";
   const mine = (cellar ?? []).filter((c) => c.user_id === me && beer(c.batch_id))
-    .sort((a, b) => nameOfBeer(beer(a.batch_id)).localeCompare(nameOfBeer(beer(b.batch_id))));
+    .sort((a, b) => String(beer(b.batch_id)?.created_at ?? "").localeCompare(String(beer(a.batch_id)?.created_at ?? "")));
   const myTotal = mine.reduce((t, c) => t + c.bottles, 0);
   const notMine = beers.filter((b) => !mine.some((c) => c.batch_id === b.id));
 

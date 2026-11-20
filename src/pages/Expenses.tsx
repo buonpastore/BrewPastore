@@ -21,7 +21,7 @@ export function Expenses() {
   const refresh = () => setReload((x) => x + 1);
 
   useEffect(() => {
-    supabase.from("expenses").select("*, expense_shares(*)").order("expense_date", { ascending: false }).order("created_at", { ascending: false })
+    supabase.from("expenses").select("*, expense_shares(*)").order("created_at", { ascending: false })
       .then(({ data }) => setExpenses(data ?? []));
     supabase.from("settlements").select("*").then(({ data }) => setSettlements(data ?? []));
   }, [reload]);

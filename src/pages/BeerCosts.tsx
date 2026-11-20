@@ -14,7 +14,7 @@ export function useCostData(reload = 0): CostData | null {
   const [data, setData] = useState<CostData | null>(null);
   useEffect(() => {
     Promise.all([
-      supabase.from("recipes").select("*").order("name"),
+      supabase.from("recipes").select("*").order("created_at", { ascending: false }),
       supabase.from("batches").select("*"),
       supabase.from("batch_ingredients").select("*"),
       supabase.from("recipe_ingredients").select("*"),
@@ -74,7 +74,8 @@ export function beersOf(data: CostData) {
     const costs = refE ? [computeBatchCost(refE, r, ings, extras.filter((x) => x.batch_id === refE.id), mats, data.energy, data.water, data.cfg)] : [];
     return { recipe: r, list, all, ings, costs, sum: sumCosts(costs) };
   }).filter((x) => x.list.length || !x.recipe.archived)
-    .sort((a, b) => Number(b.list.length > 0) - Number(a.list.length > 0) || a.recipe.name.localeCompare(b.recipe.name, "it"));
+    // sempre dall'ultima ricetta inserita alla prima
+    .sort((a, b) => String(b.recipe.created_at ?? "").localeCompare(String(a.recipe.created_at ?? "")));
 
   return beers;
 }

@@ -18,7 +18,7 @@ export function Batches() {
   const isDone = (r: Row) => ((r.batches ?? []) as Row[]).length > 0 && ((r.batches ?? []) as Row[]).every((b) => isEnded(b.status));
   const [busy, setBusy] = useState(false);
   const startNew = async () => {
-    const { data } = await supabase.from("recipes").select("*, batches(id, code, status, brew_date, fermentation_start, bottling_date, first_tasting_date, created_at)").eq("archived", false).order("name");
+    const { data } = await supabase.from("recipes").select("*, batches(id, code, status, brew_date, fermentation_start, bottling_date, first_tasting_date, created_at)").eq("archived", false).order("created_at", { ascending: false });
     const recipes = data ?? [];
     if (!recipes.length) return alert("Prima crea o importa una ricetta: il batch nasce da una ricetta.");
     const open = recipes.filter((x) => !isDone(x));
@@ -43,7 +43,7 @@ export function Batches() {
   const full = view === "estesa";
 
   useEffect(() => {
-    supabase.from("batches").select("*, recipes(name)").order("brew_date", { ascending: false, nullsFirst: true })
+    supabase.from("batches").select("*, recipes(name)").order("created_at", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
     supabase.from("batch_cost_summary").select("*").then(({ data }) =>
       setCosts(Object.fromEntries((data ?? []).map((c) => [c.batch_id, c]))));

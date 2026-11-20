@@ -39,7 +39,7 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    let q = supabase.from("tastings").select("*, batches(code, recipes(name))").order("tasted_on", { ascending: false }).order("created_at", { ascending: false });
+    let q = supabase.from("tastings").select("*, batches(code, recipes(name))").order("created_at", { ascending: false });
     if (filter) q = q.eq("batch_id", filter);
     q.then(({ data }) => setRows(data ?? []));
     supabase.from("tasting_summary").select("*").then(({ data }) => setSummary(data ?? []));
@@ -47,7 +47,7 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
   useEffect(() => {
     // si degustano solo le birre imbottigliate
     Promise.all([
-      supabase.from("batches").select("id, code, status, bottling_date, first_tasting_date, bottles_count, cap_color, recipes(name, style)").order("brew_date", { ascending: false, nullsFirst: false }),
+      supabase.from("batches").select("id, code, status, bottling_date, first_tasting_date, bottles_count, cap_color, recipes(name, style)").order("created_at", { ascending: false }),
       loadTasted(),
     ]).then(([{ data }, tasted]) => setBatches((data ?? []).filter((b) => isProduced(b, tasted))));
   }, []);
