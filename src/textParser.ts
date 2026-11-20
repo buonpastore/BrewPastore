@@ -177,7 +177,8 @@ export interface TextRecipe {
 }
 
 const UNIT_RX = "kg|chili|chilogrammi|g|gr|grammi|ml|cl|l|lt|litri|bustin[ae]|buste?|pz|pezzi|confezion[ei]|pacchett[oi]|cucchiain[oi]|compress[ae]|pastigli[ae]";
-const QTY = new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*(${UNIT_RX})\\b\\.?`, "i");
+// «5,25 kg», «5.250 g» e «5, 25 kg» (spazio dopo la virgola, capita con l'OCR)
+const QTY = new RegExp(`(\\d+(?:[.,]\\d+|,\\s\\d{1,3}(?=\\s*(?:kg|chili|l|lt|litri)\\b))?)\\s*(${UNIT_RX})\\b\\.?`, "i");
 
 function normUnit(u: string): string {
   const x = u.toLowerCase();
@@ -189,7 +190,9 @@ function normUnit(u: string): string {
   return "pz";
 }
 
-const num = (s: string) => Number(s.replace(",", "."));
+const num = (s: string) => Number(s.replace(/\s/g, "").replace(",", "."));
+/** Quantità di un ingrediente: in grammi/millilitri «5.250» è 5250 (punto delle migliaia), non 5,25. */
+const qtyNum = (s: string, unit: string) => (/^(g|ml)$/.test(unit) && /^\d{1,3}(?:\.\d{3})+$/.test(s.trim()) ? Number(s.replace(/\./g, "")) : num(s));
 const SKIP_LINE = /^(volume|batch|lotto|litri|acqua\b|og\b|fg\b|ibu\b|ebc\b|srm\b|abv\b|efficien|mash\b.*°|ammostamento\b.*°|bollitura\b|temperatura|ph\b|densit|gravity|resa|colore|amaro\b|totale)/i;
 
 /** Ricava lo step di aggiunta (mash, 60 min, whirlpool, dry hop…) dal testo della riga. */
@@ -273,7 +276,7 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   const ebc = find(/\bEBC\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)(?:\s*[–—-]\s*(\d{1,3}(?:[.,]\d)?))?|(\d{1,3}(?:[.,]\d)?)\s*EBC\b/i);
   const srm = find(/\bSRM\b[^\d\n]{0,15}(\d{1,3}(?:[.,]\d)?)|(\d{1,3}(?:[.,]\d)?)\s*SRM\b/i);
   const vol = find(/otten[a-z]*\s*(?:circa\s*)?(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i)   // «si dovrebbero ottenere circa 23 litri»
-    ?? find(/(?:volume|batch|lotto|litri finali|in fermentatore|per)\b[^\d\n]{0,25}(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b/i) ?? find(/\b(\d{1,3}(?:[.,]\d)?)\s*(?:l|litri)\s*(?:di birra|finali|batch)/i);
+    ?? find(/(?:volume|batch|lotto|litri finali|in fermentatore|per)\b[^\d\n]{0,25}(\d{1,3}(?:[.,]\d)?)\s*(?:l|lt|litri)\b(?!\s*(?:d['’]\s?acqua\s*|di\s+acqua\s*)?(?:di|per|in|nel|nello)?\s*(?:il\s+|lo\s+)?(?:mash|sparge|ammostamento|risciacquo|lavaggio))/i) ?? find(/\b(\d{1,3}(?:[.,]\d)?)\s*(?:l|litri)\s*(?:di birra|finali|batch)/i);
   const eff = find(/efficien[a-z]*\b[^\d\n]{0,15}(\d{2}(?:[.,]\d)?)\s*%/i);
   const mash = find(/(?:mash(?!\s*out)|ammostamento|infusione|single infusion|saccarificazione)[^\n]{0,60}?(\d{2}(?:[.,]\d)?)\s*(?:°\s*C?|gradi)[^\n]{0,30}?(\d{2,3})\s*(?:min|minuti|')/i)
     ?? find(/(\d{2}(?:[.,]\d)?)\s*(?:°\s*C?|gradi)\s*(?:per|x|×|da)?\s*(\d{1,3})\s*(?:min|minuti|')/i);
@@ -306,9 +309,11 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     const main = [...rest].filter((x) => x.t >= 62 && x.t <= 70).sort((a, b) => b.min - a.min)[0] ?? [...rest].sort((a, b) => b.min - a.min)[0];
     return main ? { temp: main.t, time: rest.reduce((t, x) => t + x.min, 0) } : null;
   })() : null;
-  const mashW = find(/(?:acqua\s*(?:di|del|per(?: il| lo)?)?\s*)(?:mash|ammostamento|infusione|impasto)\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i)
+  // acqua scritta col numero prima: «20 litri di mash», «20 L d'acqua per il mash», «15 litri per lo sparge»
+  const W_BEFORE = (kw: string) => new RegExp(`(\\d{1,3}(?:[.,]\\d+)?)[ \\t]*(?:l|lt|litri)\\b[ \\t]*(?:d['’][ \\t]?acqua[ \\t]*|di[ \\t]+acqua[ \\t]*)?(?:di|per|in|nel|nello|del|dello)?[ \\t]*(?:il[ \\t]+|lo[ \\t]+|l['’][ \\t]?)?(?:${kw})\\b`, "i");
+  const mashW = find(W_BEFORE("mash(?![\\s-]*out)|ammostamento|infusione|impasto")) ?? find(/(?:acqua\s*(?:di|del|per(?: il| lo)?)?\s*)(?:mash|ammostamento|infusione|impasto)\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i)
     ?? find(/(?:mash|ammostamento)\s*(?:water|acqua)?\s*[:=]\s*(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
-  const spargeW = find(/sparge\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
+  const spargeW = find(W_BEFORE("sparge|risciacquo|lavaggio")) ?? find(/sparge\b[^\n\d]{0,25}(\d{1,3}(?:[.,]\d+)?)\s*(?:l|lt|litri)\b/i);
   const boil = find(/bollitura[^\n\d]{0,20}(\d{2,3})\s*(?:min|minuti|')/i) ?? find(/(\d{2,3})\s*(?:min|minuti)\s*(?:di\s*)?bollitura/i);
 
   const ingredients: TextRecipe["ingredients"] = [];
@@ -357,7 +362,7 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
     if (/^acqua\b/i.test(name)) continue;
     if (category === "altro" && /^(l|lt|litri)$/i.test(q[2])) continue; // "20 litri" è un volume, non un ingrediente
     let unit = normUnit(q[2]);
-    let quantity = num(q[1]);
+    let quantity = qtyNum(q[1], unit);
     if (unit === "cl") { unit = "l"; quantity = quantity / 100; }
     if (category === "lievito" && (unit === "g" || unit === "ml")) {
       // "11,5 g" di lievito secco = 1 bustina
