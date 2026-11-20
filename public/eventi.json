@@ -1,5 +1,5 @@
 {
-  "aggiornato": "2026-11-19",
+  "aggiornato": "2026-11-20",
   "nota": "Eventi a tema birra in Umbria e Centro Italia, aggiornati ogni giorno in automatico.",
   "eventi": [
     {
@@ -58,6 +58,17 @@
       "link": "https://mondobirra.org/p/viaggio-nel-mondo-della-birra-unionbirrai-lancia-i-nuovi-corsi-di-degustazione"
     },
     {
+      "titolo": "Viaggio nel mondo della birra – corso Unionbirrai (Roma)",
+      "tipo": "corso",
+      "dal": "2027-01-18",
+      "al": null,
+      "quando": "da lunedì 18 gennaio 2027",
+      "dove": "Le Stravaganti, Roma",
+      "regione": "Lazio",
+      "descrizione": "Corso di degustazione di Unionbirrai (169 €): stili, analisi sensoriale e birra artigianale italiana. Iscrizioni dal catalogo corsi.",
+      "link": "https://www.unionbirrai.it/it/catalogo/categoria/corsi-degustazione/"
+    },
+    {
       "titolo": "Birraio dell'Anno 2027",
       "tipo": "festival",
       "dal": "2027-01-23",
@@ -67,6 +78,17 @@
       "regione": "Toscana",
       "descrizione": "Festival e premiazione dei migliori birrai artigianali italiani (Fermento Birra). Ingresso a sessioni con Beer Pass, assaggi illimitati.",
       "link": "https://www.birraiodellanno.it/evento/"
+    },
+    {
+      "titolo": "Birra dell'Anno 2027 – premiazione Unionbirrai",
+      "tipo": "concorso",
+      "dal": "2027-02-21",
+      "al": null,
+      "quando": "domenica 21 febbraio 2027, ore 15:45",
+      "dove": "Fiera di Rimini (Beer&Food Attraction)",
+      "regione": "Emilia-Romagna",
+      "descrizione": "Premiazione del più importante concorso delle birre artigianali italiane, dentro la fiera Beer&Food Attraction.",
+      "link": "https://www.agenfood.it/vino-e-birre/birra-artigianale-aperta-la-sfida-per-birra-dellanno-2027-iscrizioni-agevolate-fino-al-10-novembre/"
     },
     {
       "titolo": "Italy Beer Week 2027",
@@ -188,6 +210,17 @@
       "regione": "Umbria",
       "descrizione": "Visita guidata del birrificio con degustazione delle birre alla spina.",
       "link": "https://www.umbriatourism.it/en/dettaglio-offerta/-/dettaglio/tour-e-degustazione-birrificio-flea_5039_service_en"
+    },
+    {
+      "titolo": "BAM – Birrifici Aperti Marche",
+      "tipo": "birrificio",
+      "dal": null,
+      "al": null,
+      "quando": "primo weekend di dicembre (data 2026 da confermare)",
+      "dove": "birrifici di tutte le Marche",
+      "regione": "Marche",
+      "descrizione": "I birrifici marchigiani aprono le porte al pubblico con visite e degustazioni (nel 2025 dal 6 all'8 dicembre).",
+      "link": "https://www.beverfood.com/bam-birrifici-aperti-marche-migliori-birre-agricole-e-artigianali-wd/"
     }
   ]
 }
