@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Calculator, Handshake, Pencil, Plus, Trash2, Users, X } from "lucide-react";
-import { supabase, eur, date, errMsg, type Row } from "../lib";
+import { Calculator, Handshake, Minus, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import { supabase, eur, date, errMsg, isEnded, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { CapDot, useCapColors } from "../components/CapColor";
-import { Stepper } from "../components/Stepper";
 import { loadProduced } from "../cellar";
 import { Revenue } from "./Revenue";
 
 const NEED_0024 = "Per registrare le vendite esegui 0024_vendite.sql nello SQL Editor di Supabase.";
+const NEED_0025 = "Per vendere più birre insieme esegui 0025_vendite_righe.sql nello SQL Editor di Supabase.";
 const LKEY = "pastorizia-prezzi-vendita";
 
 /** Economia → Ricavi: due viste, il calcolo (a quanto vendere) e le vendite fatte (a chi e quanto abbiamo incassato). */
@@ -26,7 +26,10 @@ export function RevenuePage() {
   );
 }
 
-const total = (s: Row) => Number(s.bottles) * Number(s.unit_price);
+/** Righe della vendita: quale birra, quante bottiglie, a che prezzo (le vendite vecchie hanno una sola birra sulla vendita). */
+const itemsOf = (s: Row): Row[] => ((s.sale_items as Row[] | undefined)?.length ? s.sale_items as Row[]
+  : [{ batch_id: s.batch_id ?? null, bottles: s.bottles, unit_price: s.unit_price }]);
+const total = (s: Row) => (s.amount != null ? Number(s.amount) : itemsOf(s).reduce((a, i) => a + Number(i.bottles) * Number(i.unit_price), 0));
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** Le vendite: chi vende, a chi, quante bottiglie di quale birra, a che prezzo, e se l'incasso si divide tra i soci. */
@@ -42,15 +45,22 @@ export function Sales() {
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    supabase.from("sales").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
+    (async () => {
+      let { data, error } = await supabase.from("sales").select("*, sale_items(*)").order("created_at", { ascending: false });
+      let warn = "";
+      if (error && /sale_items|relationship/i.test(error.message)) {
+        // 0025 non ancora eseguita: le vendite si leggono lo stesso
+        ({ data, error } = await supabase.from("sales").select("*").order("created_at", { ascending: false }));
+        warn = NEED_0025;
+      }
       if (error) { setErr(/sales|relation|schema cache/i.test(error.message) ? NEED_0024 : errMsg(error)); setSales([]); }
-      else { setErr(""); setSales(data ?? []); }
-    });
+      else { setErr(warn); setSales(data ?? []); }
+    })();
   }, [reload]);
   useEffect(() => { loadProduced().then(setBatches); }, []);
 
   const batchOf = (id?: string | null) => batches.find((b) => b.id === id);
-  const beerName = (s: Row) => { const b = batchOf(s.batch_id); return b ? (b.recipes?.name ?? b.code) : null; };
+  const beerName = (id?: string | null) => { const b = batchOf(id); return b ? (b.recipes?.name ?? b.code) : null; };
   const list = sales ?? [];
   const soci = profiles.length ? profiles : [{ id: me, display_name: "Io" }];
 
@@ -67,7 +77,7 @@ export function Sales() {
     return m;
   }, [list, soci]);
   const tot = list.reduce((a, s) => a + total(s), 0);
-  const bottles = list.reduce((a, s) => a + Number(s.bottles), 0);
+  const bottles = list.reduce((a, s) => a + itemsOf(s).reduce((x, i) => x + Number(i.bottles), 0), 0);
   const divisi = list.filter((s) => s.split !== "venditore").reduce((a, s) => a + total(s), 0);
 
   // clienti: a chi abbiamo venduto, quanto e quando
@@ -76,7 +86,7 @@ export function Sales() {
     for (const s of list) {
       const k = s.buyer.trim().toLowerCase();
       const c = m.get(k) ?? { name: s.buyer.trim(), bottles: 0, euro: 0, n: 0, last: s.sold_on, first: s.created_at };
-      c.bottles += Number(s.bottles); c.euro += total(s); c.n += 1;
+      c.bottles += itemsOf(s).reduce((a, i) => a + Number(i.bottles), 0); c.euro += total(s); c.n += 1;
       if (s.sold_on > c.last) c.last = s.sold_on;
       m.set(k, c);
     }
@@ -84,7 +94,7 @@ export function Sales() {
   }, [list]);
 
   const remove = async (s: Row) => {
-    if (!confirm(`Eliminare la vendita a ${s.buyer} (${s.bottles} bottiglie, ${eur(total(s))})?`)) return;
+    if (!confirm(`Eliminare la vendita a ${s.buyer} (${itemsOf(s).reduce((a, i) => a + Number(i.bottles), 0)} bottiglie, ${eur(total(s))})?`)) return;
     const { error } = await supabase.from("sales").delete().eq("id", s.id);
     if (error) return alert(errMsg(error));
     setReload((x) => x + 1);
@@ -135,17 +145,23 @@ export function Sales() {
           {view === "vendite" ? (
             <div className="sales-list">
               {list.map((s) => {
-                const b = batchOf(s.batch_id);
                 return (
                   <div key={s.id} className="sales-row">
                     <div className="sr-top">
                       <strong>{s.buyer}</strong>
                       <strong className="sr-tot">{eur(total(s))}</strong>
                     </div>
-                    <div className="sr-meta">
-                      <span>{date(s.sold_on)}</span>
-                      <span>{s.bottles} {Number(s.bottles) === 1 ? "bottiglia" : "bottiglie"} × {eur(s.unit_price)}</span>
-                      {b && <span><CapDot color={b.cap_color} /> {beerName(s)}</span>}
+                    <div className="sr-meta"><span>{date(s.sold_on)}</span></div>
+                    <div className="sr-items">
+                      {itemsOf(s).map((i, k) => {
+                        const b = batchOf(i.batch_id);
+                        return (
+                          <span key={k}>
+                            {b ? <CapDot color={b.cap_color} /> : <i className="sr-nocap" />}
+                            <b>{i.bottles}×</b> {beerName(i.batch_id) ?? "birra"} <span className="muted">a {eur(i.unit_price)}</span>
+                          </span>
+                        );
+                      })}
                     </div>
                     <div className="sr-meta">
                       <span>venduta da <b>{nameOf(s.seller_id)}</b></span>
@@ -184,7 +200,7 @@ export function Sales() {
       {sales && !list.length && !err && <p className="muted" style={{ marginTop: 14 }}>Nessuna vendita ancora. Con «Nuova vendita» segnate a chi vendete le bottiglie: qui vedrete quanto avete incassato e quanto spetta a ciascuno.</p>}
 
       {editing && (
-        <SaleForm sale={editing === "new" ? null : editing} me={me} soci={soci} batches={batches} buyers={clienti.map((c) => c.name)}
+        <SaleForm sale={editing === "new" ? null : editing} me={me} soci={soci} batches={batches} buyers={clienti.map((c) => c.name)} items={editing === "new" ? [] : itemsOf(editing)}
           onClose={() => setEditing(null)} onSaved={() => { setEditing(null); setReload((x) => x + 1); }} />
       )}
       <p className="muted small" style={{ marginTop: 16 }}>Il prezzo giusto da chiedere lo trovi in <Link to="/ricavi">Calcolo</Link>.</p>
@@ -192,47 +208,92 @@ export function Sales() {
   );
 }
 
-function SaleForm({ sale, me, soci, batches, buyers, onClose, onSaved }: {
-  sale: Row | null; me: string; soci: Row[]; batches: Row[]; buyers: string[]; onClose: () => void; onSaved: () => void;
+/** − numero + compatto, per le righe delle birre. */
+function MiniStep({ value, step, digits, unit, onChange }: { value: number; step: number; digits: number; unit?: string; onChange: (n: number) => void }) {
+  const fmt = (v: number) => v.toFixed(digits).replace(".", ",");
+  const [text, setText] = useState(fmt(value));
+  useEffect(() => setText(fmt(value)), [value]);   // eslint-disable-line react-hooks/exhaustive-deps
+  const set = (n: number) => onChange(Number(Math.max(0, Math.round(n / step) * step).toFixed(digits)));
+  return (
+    <div className="mini-step">
+      <button type="button" onClick={() => set(value - step)}><Minus size={16} /></button>
+      <span><input inputMode="decimal" value={text} onChange={(e) => setText(e.target.value)} onFocus={(e) => e.target.select()}
+        onBlur={() => set(Number(text.trim().replace(",", ".")) || 0)} />{unit && <small>{unit}</small>}</span>
+      <button type="button" onClick={() => set(value + step)}><Plus size={16} /></button>
+    </div>
+  );
+}
+
+type Line = { key: string; batch_id: string | null; qty: number; price: number };
+
+function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: {
+  sale: Row | null; me: string; soci: Row[]; batches: Row[]; buyers: string[]; items: Row[]; onClose: () => void; onSaved: () => void;
 }) {
   const [seller, setSeller] = useState<string>(sale?.seller_id ?? me);
   const [buyer, setBuyer] = useState<string>(sale?.buyer ?? "");
   const [day, setDay] = useState<string>(sale?.sold_on ?? today());
-  const [batch, setBatch] = useState<string>(sale?.batch_id ?? "");
-  const [n, setN] = useState<number>(sale ? Number(sale.bottles) : 1);
-  const [price, setPrice] = useState<number>(sale ? Number(sale.unit_price) : 0);
   const [split, setSplit] = useState<"soci" | "venditore">(sale?.split ?? "soci");
   const [notes, setNotes] = useState<string>(sale?.notes ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  // scegliendo la birra propongo il suo prezzo di vendita (quello salvato in Calcolo)
-  const pickBatch = async (id: string) => {
-    setBatch(id);
-    if (!id || price > 0) return;
-    const b = batches.find((x) => x.id === id);
-    if (!b?.recipe_id) return;
-    let p: number | null = null;
-    try { p = JSON.parse(localStorage.getItem(LKEY) ?? "{}")[b.recipe_id] ?? null; } catch { /* niente */ }
-    if (p == null) {
-      const { data } = await supabase.from("recipes").select("sale_price").eq("id", b.recipe_id).single();
-      if (data?.sale_price != null) p = Number(data.sale_price);
-    }
-    if (p != null) setPrice(p);
-  };
+  // le ultime 5 birre non esaurite (dalla più recente), più quelle già nella vendita che si modifica, più «altra birra»
+  const beers = useMemo(() => {
+    const last = batches.filter((b) => !isEnded(b.status)).slice(0, 5);
+    for (const i of items) { const b = batches.find((x) => x.id === i.batch_id); if (b && !last.includes(b)) last.push(b); }
+    return last;
+  }, [batches, items]);
+  const [lines, setLines] = useState<Line[]>(() => [
+    ...beers.map((b) => { const it = items.find((i) => i.batch_id === b.id); return { key: b.id, batch_id: b.id, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0 }; }),
+    (() => { const it = items.find((i) => !i.batch_id || !beers.some((b) => b.id === i.batch_id)); return { key: "altro", batch_id: null, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0 }; })(),
+  ]);
+  const setLine = (key: string, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+
+  // prezzo proposto: quello salvato in Calcolo per la ricetta della birra
+  const [suggested, setSuggested] = useState<Record<string, number>>({});
+  useEffect(() => {
+    const ids = [...new Set(beers.map((b) => b.recipe_id).filter(Boolean))] as string[];
+    let local: Record<string, number> = {};
+    try { local = JSON.parse(localStorage.getItem(LKEY) ?? "{}"); } catch { /* niente */ }
+    supabase.from("recipes").select("id, sale_price").in("id", ids).then(({ data }) => {
+      const out: Record<string, number> = {};
+      for (const b of beers) {
+        const r = (data ?? []).find((x) => x.id === b.recipe_id);
+        const p = local[b.recipe_id] ?? (r?.sale_price != null ? Number(r.sale_price) : undefined);
+        if (p != null) out[b.id] = p;
+      }
+      setSuggested(out);
+    });
+  }, [beers]);
+  const addOne = (l: Line) => setLine(l.key, { qty: l.qty + 1, price: l.price || (l.batch_id ? suggested[l.batch_id] ?? 0 : 0) });
+
+  const chosen = lines.filter((l) => l.qty > 0);
+  const t = chosen.reduce((a, l) => a + l.qty * l.price, 0);
+  const nBottles = chosen.reduce((a, l) => a + l.qty, 0);
+  const names = beers.map((b) => b.recipes?.name ?? b.code);
+  const label = (b: Row) => { const n = b.recipes?.name ?? b.code; return names.filter((x) => x === n).length > 1 && b.code ? `${n} (${b.code})` : n; };
 
   const save = async () => {
     if (!buyer.trim()) return setErr("Scrivi a chi l'avete venduta.");
-    if (n < 1) return setErr("Almeno una bottiglia.");
+    if (!chosen.length) return setErr("Metti quante bottiglie di almeno una birra.");
     setBusy(true); setErr("");
-    const row = { seller_id: seller, buyer: buyer.trim(), sold_on: day || today(), batch_id: batch || null, bottles: Math.round(n), unit_price: price, split, notes: notes.trim() || null };
-    const { error } = sale ? await supabase.from("sales").update(row).eq("id", sale.id) : await supabase.from("sales").insert(row);
+    const amount = Math.round(t * 100) / 100;
+    const row = {
+      seller_id: seller, buyer: buyer.trim(), sold_on: day || today(), split, notes: notes.trim() || null,
+      batch_id: chosen.length === 1 ? chosen[0].batch_id : null, bottles: nBottles,
+      unit_price: Math.round((amount / nBottles) * 100) / 100, amount,
+    };
+    const fail = (e: { message: string }) => { setBusy(false); setErr(/amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
+    let id = sale?.id as string | undefined;
+    if (sale) { const { error } = await supabase.from("sales").update(row).eq("id", sale.id); if (error) return fail(error); }
+    else { const { data, error } = await supabase.from("sales").insert(row).select("id").single(); if (error) return fail(error); id = data.id; }
+    await supabase.from("sale_items").delete().eq("sale_id", id!);
+    const { error } = await supabase.from("sale_items").insert(chosen.map((l) => ({ sale_id: id, batch_id: l.batch_id, bottles: l.qty, unit_price: l.price })));
+    if (error) return fail(error);
     setBusy(false);
-    if (error) return setErr(/sales|relation|schema cache/i.test(error.message) ? NEED_0024 : errMsg(error));
     onSaved();
   };
 
-  const t = n * price;
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal sale-modal" onClick={(e) => e.stopPropagation()}>
@@ -248,17 +309,30 @@ function SaleForm({ sale, me, soci, batches, buyers, onClose, onSaved }: {
           <datalist id="sale-buyers">{buyers.map((b) => <option key={b} value={b} />)}</datalist>
         </label>
         <label className="block"><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>
-        <label className="block"><span>Quale birra (facoltativo)</span>
-          <select value={batch} onChange={(e) => pickBatch(e.target.value)}>
-            <option value="">— non specificata —</option>
-            {batches.map((b) => <option key={b.id} value={b.id}>{b.recipes?.name ?? b.code}{b.code && b.recipes?.name ? ` (${b.code})` : ""}</option>)}
-          </select>
-        </label>
-        <div className="sale-steppers">
-          <Stepper label="Bottiglie" value={n} step={1} digits={0} onChange={setN} />
-          <Stepper label="Prezzo a bottiglia" value={price} step={0.5} digits={2} unit="€" onChange={setPrice} />
+
+        <span className="nb-label">Quali birre e quante bottiglie</span>
+        <div className="sale-beers">
+          {lines.map((l) => {
+            const b = beers.find((x) => x.id === l.batch_id);
+            return (
+              <div key={l.key} className={"sale-beer" + (l.qty > 0 ? " on" : "")}>
+                <div className="sb-top">
+                  <span className="sb-name">{b ? <CapDot color={b.cap_color} size={18} /> : <i className="sr-nocap" />}{b ? label(b) : "Altra birra"}</span>
+                  <MiniStep value={l.qty} step={1} digits={0} onChange={(q) => (q > l.qty && l.qty === 0 ? addOne(l) : setLine(l.key, { qty: q }))} />
+                </div>
+                {l.qty > 0 && (
+                  <div className="sb-price">
+                    <span className="muted small">a bottiglia</span>
+                    <MiniStep value={l.price} step={0.5} digits={2} unit="€" onChange={(p) => setLine(l.key, { price: p })} />
+                    <strong>{eur(l.qty * l.price)}</strong>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {!beers.length && <p className="muted small">Nessuna birra imbottigliata e non esaurita: usa «Altra birra».</p>}
         </div>
-        <div className="sale-total">Totale <strong>{eur(t)}</strong></div>
+        <div className="sale-total">{nBottles} {nBottles === 1 ? "bottiglia" : "bottiglie"} · totale <strong>{eur(t)}</strong></div>
 
         <span className="nb-label">I soldi</span>
         <div className="xp-types two">

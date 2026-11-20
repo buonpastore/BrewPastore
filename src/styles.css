@@ -2150,3 +2150,18 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .sale-total { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); margin-bottom: 12px; }
 .sale-total strong { font-size: 1.25rem; color: var(--gold); }
 .xp-types .pay-method small { display: block; font-weight: 500; font-size: .74rem; opacity: .8; }
+.sale-beers { display: grid; gap: 8px; margin-bottom: 10px; }
+.sale-beer { border: 1px solid var(--line); border-radius: 14px; padding: 8px 10px; background: var(--surface-2); }
+.sale-beer.on { border-color: color-mix(in srgb, var(--gold) 55%, transparent); }
+.sale-beer .sb-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sale-beer .sb-name { display: flex; align-items: center; gap: 8px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sale-beer .sb-price { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.sale-beer .sb-price strong { color: var(--gold); min-width: 64px; text-align: right; }
+.mini-step { display: flex; align-items: center; gap: 4px; flex: none; }
+.mini-step button { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.mini-step span { display: flex; align-items: baseline; gap: 2px; }
+.mini-step input { width: 52px; text-align: center; font-weight: 700; font-size: 1rem; padding: 6px 2px; }
+.mini-step small { color: var(--muted); }
+.sr-items { display: grid; gap: 3px; font-size: .88rem; }
+.sr-items > span { display: flex; align-items: center; gap: 6px; }
+.sr-nocap { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed var(--muted); flex: none; }
