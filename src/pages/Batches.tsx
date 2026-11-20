@@ -38,6 +38,7 @@ export function Batches() {
   const [rows, setRows] = useState<Row[]>([]);
   const [costs, setCosts] = useState<Record<string, Row>>({});
   const [status, setStatus] = useState("");
+  const [lastLog, setLastLog] = useState<Record<string, string>>({});
   const [view, setViewState] = useState<"compatta" | "estesa">(() => { try { return localStorage.getItem("bp-batch-vista") === "estesa" ? "estesa" : "compatta"; } catch { return "compatta"; } });
   const setView = (v: "compatta" | "estesa") => { setViewState(v); try { localStorage.setItem("bp-batch-vista", v); } catch { /* niente */ } };
   const full = view === "estesa";
@@ -45,11 +46,22 @@ export function Batches() {
   useEffect(() => {
     supabase.from("batches").select("*, recipes(name)").order("brew_date", { ascending: false, nullsFirst: true }).order("created_at", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
+    // ultima voce del log di ogni batch (misure, note…): conta anche quella per la data più recente
+    supabase.from("batch_events").select("batch_id, event_at").then(({ data }) => {
+      const m: Record<string, string> = {};
+      for (const e of data ?? []) { const d = String(e.event_at ?? "").slice(0, 10); if (d && (!m[e.batch_id] || d > m[e.batch_id])) m[e.batch_id] = d; }
+      setLastLog(m);
+    });
     supabase.from("batch_cost_summary").select("*").then(({ data }) =>
       setCosts(Object.fromEntries((data ?? []).map((c) => [c.batch_id, c]))));
   }, []);
 
-  const list = rows.filter((r) => !status || normStatus(r.status) === status);
+  // data più recente del batch: l'ultima tra cotta, fermentazione, imbottigliamento, degustazione e log
+  const lastDate = (b: Row): string | null => [b.brew_date, b.fermentation_start, b.bottling_date, b.first_tasting_date, lastLog[b.id]]
+    .filter(Boolean).map((d) => String(d).slice(0, 10)).sort().pop() ?? null;
+  // dalla più recente; quelli senza date (non ancora cotti) in cima
+  const list = rows.filter((r) => !status || normStatus(r.status) === status)
+    .sort((a, b) => { const x = lastDate(a), y = lastDate(b); return x === y ? 0 : !x ? -1 : !y ? 1 : y.localeCompare(x); });
   return (
     <div>
       <div className="page-head head-with-toggle">
@@ -87,7 +99,7 @@ export function Batches() {
                       <td className="nowrap">{total != null && b.bottles_count ? eur(total / b.bottles_count) : "—"}</td>
                       {isAdmin && <td><button className="icon" title="Elimina batch" onClick={() => remove(b)}>🗑️</button></td>}
                     </>
-                  ) : <td className="nowrap small">{date(b.bottling_date ?? b.fermentation_start ?? b.brew_date)}</td>}
+                  ) : <td className="nowrap small">{date(lastDate(b))}</td>}
                 </tr>
               );
             })}

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.259", date: "20/11/2026 14:30", text: "Elenco dei batch: la data accanto a ogni batch è la più recente del suo log (cotta, fermentazione, imbottigliamento, degustazione o ultima misura/nota) e i batch sono ordinati da quella data, dal più recente; quelli non ancora cotti restano in cima" },
   { version: "0.258", date: "20/11/2026 14:05", text: "Batch ordinati per data di cotta, in alto il più recente (quelli ancora senza data in cima); lo stesso ordine vale per i batch in Degustazioni, Cantina, Gira la bottiglia e nelle Vendite (le ultime 5 birre)" },
   { version: "0.257", date: "20/11/2026 13:50", text: "Ricavi: il prezzo di partenza di una bottiglia è 4 € (in Calcolo e nelle vendite), finché non lo cambiate. Vendite: si sceglie il pagamento tra Contanti, PayPal e Bonifico, e si vede nell’elenco. Da eseguire: 0026_vendite_pagamento.sql" },
   { version: "0.256", date: "20/11/2026 13:30", text: "Vendite: niente più scelta del batch. Nella nuova vendita compaiono le ultime 5 birre non esaurite con il colore del tappo (più «Altra birra»): per ognuna metti quante bottiglie con − e + e il prezzo a bottiglia (proposto da Calcolo); una vendita può avere più birre e il totale si somma da solo. Nell’elenco ogni vendita mostra le sue birre. Da eseguire: 0025_vendite_righe.sql" },
