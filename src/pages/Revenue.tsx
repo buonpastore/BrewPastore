@@ -11,6 +11,8 @@ import { useCostData, beersOf } from "./BeerCosts";
 const NEED_0022 = "Per salvare il prezzo di vendita esegui 0022_prezzo_vendita.sql su Supabase (intanto lo ricordo su questo telefono)";
 const LKEY = "pastorizia-prezzi-vendita";
 const KKEY = "pastorizia-bottiglie-tenute";
+/** Prezzo di partenza di una bottiglia, finché non lo cambiate. */
+export const DEFAULT_PRICE = 4;
 
 /** Prezzo tipico di vendita di una bottiglia da 66 cl di birra artigianale, per famiglia di stile. */
 const STYLE_PRICES: { rx: RegExp; label: string; min: number; max: number }[] = [
@@ -58,7 +60,7 @@ export function Revenue() {
   const bottles = Math.max(0, Math.round(beer?.sum.bottles ?? 0));
   const totalCost = beer?.sum.total ?? 0;
   const saved = beer ? (prices[beer.recipe.id] ?? (beer.recipe.sale_price != null ? Number(beer.recipe.sale_price) : null)) : null;
-  const price = saved ?? Math.max(1, Math.ceil(perBottle * 2 * 2) / 2);    // di partenza: circa il doppio del costo
+  const price = saved ?? DEFAULT_PRICE;    // di partenza 4 €, poi lo cambiate voi
   const keepEach = beer ? (keeps[beer.recipe.id] ?? Math.min(6, Math.floor(bottles / soci / 2))) : 0;
   const kept = Math.min(bottles, keepEach * soci);
   const sellable = Math.max(0, bottles - kept);

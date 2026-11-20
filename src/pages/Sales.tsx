@@ -5,9 +5,12 @@ import { supabase, eur, date, errMsg, isEnded, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { CapDot, useCapColors } from "../components/CapColor";
 import { loadProduced } from "../cellar";
-import { Revenue } from "./Revenue";
+import { Revenue, DEFAULT_PRICE } from "./Revenue";
 
 const NEED_0024 = "Per registrare le vendite esegui 0024_vendite.sql nello SQL Editor di Supabase.";
+const NEED_0026 = "Per segnare come hanno pagato esegui 0026_vendite_pagamento.sql nello SQL Editor di Supabase.";
+const PAYMENTS: { key: string; label: string }[] = [{ key: "contanti", label: "💶 Contanti" }, { key: "paypal", label: "🅿️ PayPal" }, { key: "bonifico", label: "🏦 Bonifico" }];
+const payLabel = (k?: string | null) => PAYMENTS.find((p) => p.key === k)?.label ?? null;
 const NEED_0025 = "Per vendere più birre insieme esegui 0025_vendite_righe.sql nello SQL Editor di Supabase.";
 const LKEY = "pastorizia-prezzi-vendita";
 
@@ -151,7 +154,7 @@ export function Sales() {
                       <strong>{s.buyer}</strong>
                       <strong className="sr-tot">{eur(total(s))}</strong>
                     </div>
-                    <div className="sr-meta"><span>{date(s.sold_on)}</span></div>
+                    <div className="sr-meta"><span>{date(s.sold_on)}</span>{payLabel(s.payment) && <span>{payLabel(s.payment)}</span>}</div>
                     <div className="sr-items">
                       {itemsOf(s).map((i, k) => {
                         const b = batchOf(i.batch_id);
@@ -234,6 +237,7 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
   const [day, setDay] = useState<string>(sale?.sold_on ?? today());
   const [split, setSplit] = useState<"soci" | "venditore">(sale?.split ?? "soci");
   const [notes, setNotes] = useState<string>(sale?.notes ?? "");
+  const [payment, setPayment] = useState<string>(sale?.payment ?? "contanti");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -265,7 +269,8 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
       setSuggested(out);
     });
   }, [beers]);
-  const addOne = (l: Line) => setLine(l.key, { qty: l.qty + 1, price: l.price || (l.batch_id ? suggested[l.batch_id] ?? 0 : 0) });
+  // prezzo di partenza: quello salvato in Calcolo per la birra, altrimenti 4 €
+  const addOne = (l: Line) => setLine(l.key, { qty: l.qty + 1, price: l.price || (l.batch_id ? suggested[l.batch_id] ?? DEFAULT_PRICE : DEFAULT_PRICE) });
 
   const chosen = lines.filter((l) => l.qty > 0);
   const t = chosen.reduce((a, l) => a + l.qty * l.price, 0);
@@ -279,11 +284,11 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
     setBusy(true); setErr("");
     const amount = Math.round(t * 100) / 100;
     const row = {
-      seller_id: seller, buyer: buyer.trim(), sold_on: day || today(), split, notes: notes.trim() || null,
+      seller_id: seller, buyer: buyer.trim(), sold_on: day || today(), split, payment, notes: notes.trim() || null,
       batch_id: chosen.length === 1 ? chosen[0].batch_id : null, bottles: nBottles,
       unit_price: Math.round((amount / nBottles) * 100) / 100, amount,
     };
-    const fail = (e: { message: string }) => { setBusy(false); setErr(/amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
+    const fail = (e: { message: string }) => { setBusy(false); setErr(/payment/i.test(e.message) ? NEED_0026 : /amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
     let id = sale?.id as string | undefined;
     if (sale) { const { error } = await supabase.from("sales").update(row).eq("id", sale.id); if (error) return fail(error); }
     else { const { data, error } = await supabase.from("sales").insert(row).select("id").single(); if (error) return fail(error); id = data.id; }
@@ -339,7 +344,11 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
           <button type="button" className={"pay-method" + (split === "soci" ? " on" : "")} onClick={() => setSplit("soci")}>Divisi tra i soci<small>{eur(t / Math.max(1, soci.length))} a testa</small></button>
           <button type="button" className={"pay-method" + (split === "venditore" ? " on" : "")} onClick={() => setSplit("venditore")}>Li tiene chi vende<small>{eur(t)}</small></button>
         </div>
-        <label className="block"><span>Note</span><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="es. pagato con bonifico, 33 cl…" /></label>
+        <span className="nb-label">Pagamento</span>
+        <div className="xp-types">
+          {PAYMENTS.map((p) => <button key={p.key} type="button" className={"pay-method" + (payment === p.key ? " on" : "")} onClick={() => setPayment(p.key)}>{p.label}</button>)}
+        </div>
+        <label className="block"><span>Note</span><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="es. bottiglie da 33 cl, regalo…" /></label>
 
         {err && <p className="error">{err}</p>}
         <div className="half-actions" style={{ marginTop: 14 }}>
