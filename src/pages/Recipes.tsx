@@ -42,7 +42,12 @@ export function Recipes() {
   const match = (r: Row) => (!style || r.style === style) && (r.name + " " + (r.style ?? "")).toLowerCase().includes(q.toLowerCase());
   // le archiviate, se mostrate, vanno in fondo all'elenco
   const archivedCount = rows.filter((r) => r.archived && match(r)).length;
-  const list = [...rows.filter((r) => !r.archived && match(r)), ...(showArchived ? rows.filter((r) => r.archived && match(r)) : [])];
+  // ordine: dalla ricetta con il batch più recente (data di cotta, o di creazione se non ancora cotto);
+  // quelle senza batch dopo, dall'ultima inserita
+  const lastBatch = (r: Row) => ((r.batches ?? []) as Row[]).map((b) => String(b.brew_date ?? String(b.created_at ?? "").slice(0, 10))).sort().pop() ?? "";
+  const byLast = (a: Row, b: Row) => { const x = lastBatch(a), y = lastBatch(b);
+    return (x && y ? y.localeCompare(x) : Number(Boolean(y)) - Number(Boolean(x))) || String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")); };
+  const list = [...rows.filter((r) => !r.archived && match(r)).sort(byLast), ...(showArchived ? rows.filter((r) => r.archived && match(r)).sort(byLast) : [])];
   const usedStyles = [...new Set(rows.map((r) => r.style).filter(Boolean))] as string[];
   const styleChoices = [...STYLE_OPTIONS.filter((o) => !o.disabled && usedStyles.includes(o.value)).map((o) => o.value), ...usedStyles.filter((s) => !STYLE_OPTIONS.some((o) => o.value === s))];
 
