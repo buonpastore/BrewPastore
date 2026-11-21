@@ -89,6 +89,7 @@ export function errMsg(e: unknown): string {
   if (typeof e === "object" && "message" in e) {
     const m = String((e as { message: unknown }).message);
     if (/batches_status_check/.test(m)) return "Per i nuovi stati del batch esegui prima 0020_stati_batch.sql su Supabase";
+    if (/depleted_date/.test(m)) return "Per la data in cui la birra è esaurita esegui 0027_data_esaurita.sql nello SQL Editor di Supabase";
     return m;
   }
   return String(e);

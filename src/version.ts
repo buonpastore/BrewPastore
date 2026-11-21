@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.267", date: "21/11/2026 12:30", text: "Batch: la data in cui la birra è esaurita. «🫙 Esaurita» la segna con la data di oggi, in «Log cotta → Modifica» si cambia («Esaurita il»), si vede nel riepilogo delle date e conta per l’ordine dell’elenco dei batch. Da eseguire: 0027_data_esaurita.sql" },
   { version: "0.266", date: "21/11/2026 12:00", text: "Degustazioni: nell’aroma si possono scegliere più voci insieme (es. luppolato e fruttato), più eventuali note con «altro…»" },
   { version: "0.265", date: "21/11/2026 11:45", text: "Degustazioni: aspetto, schiuma, gusto (secco → dolce), amaro, corpo, bollicine e finale si valutano con un cursore, anche con valori intermedi (es. «tra medio e alto»); toccando una parola sotto il cursore ci si va direttamente, con ✕ si toglie. L’aroma resta a bottoni (luppolato, maltato, fruttato, speziato)" },
   { version: "0.264", date: "21/11/2026 11:20", text: "Timer dei luppoli: − e + ai lati del tempo per togliere o aggiungere un minuto, prima di partire (cambia la durata della bollitura), durante e in pausa; tornando indietro le aggiunte non ancora raggiunte suonano di nuovo" },

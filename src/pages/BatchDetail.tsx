@@ -31,6 +31,7 @@ const SECTIONS: { title?: string; fields: FieldDef[] }[] = [
     { key: "fermentation_start", label: "Inizio fermentazione", type: "date" },
     { key: "bottling_date", label: "Imbottigliamento", type: "date" },
     { key: "first_tasting_date", label: "Prima degustazione", type: "date" },
+    { key: "depleted_date", label: "Esaurita il", type: "date" },
   ]},
   { title: "pH", fields: [
     { key: "water_ph_initial", label: "pH acqua iniziale", type: "number", step: "0.01" },
@@ -226,12 +227,15 @@ export function BatchDetail() {
 
   const quick = async (q: (typeof QUICK)[number]) => {
     if (!q.field) {
-      // esaurita: niente data, cambia solo lo stato (ritoccandola torna «degustata»)
+      // esaurita: stato «esaurito» con la data di oggi (modificabile in Log cotta); ritoccandola torna «degustata»
       const ended = batch!.status === "esaurito";
       if (!confirm(ended ? "Rimettere la birra come degustata? Torna in cantina, nella bottiglia da girare e tra le degustazioni."
         : "Segnare la birra come esaurita? Non ce l'ha più nessuno: sparisce da cantina, bottiglia da girare, degustazioni e tappi, e resta nello storico.")) return;
       const status = ended ? "degustato" : "esaurito";
-      const { data, error } = await supabase.from("batches").update({ status }).eq("id", batch!.id).select().single();
+      const today = new Date().toISOString().slice(0, 10);
+      let { data, error } = await supabase.from("batches").update({ status, depleted_date: ended ? null : today }).eq("id", batch!.id).select().single();
+      // 0027 non ancora eseguita: cambio almeno lo stato
+      if (error && /depleted_date/.test(error.message)) ({ data, error } = await supabase.from("batches").update({ status }).eq("id", batch!.id).select().single());
       if (error) return alert(errMsg(error));
       setBatch(data);
       await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${statusLabel(status)}` });
@@ -285,7 +289,7 @@ export function BatchDetail() {
         <div className={batch.fermentation_start ? "done" : ""}><span>Fermentazione</span>{date(batch.fermentation_start)}</div>
         <div className={batch.bottling_date ? "done" : ""}><span>Imbottigliata</span>{date(batch.bottling_date)}</div>
         <div className={batch.first_tasting_date ? "done" : ""}><span>Degustata</span>{date(batch.first_tasting_date)}</div>
-        <div className={batch.status === "esaurito" ? "done" : ""}><span>Esaurita</span>{batch.status === "esaurito" ? "✓" : "—"}</div>
+        <div className={batch.status === "esaurito" ? "done" : ""}><span>Esaurita</span>{batch.status === "esaurito" ? (batch.depleted_date ? date(batch.depleted_date) : "✓") : "—"}</div>
       </div>
 
       <Tabs grid wide active={tab} onChange={setTab} tabs={[

@@ -56,8 +56,8 @@ export function Batches() {
       setCosts(Object.fromEntries((data ?? []).map((c) => [c.batch_id, c]))));
   }, []);
 
-  // data più recente del batch: l'ultima tra cotta, fermentazione, imbottigliamento, degustazione e log
-  const lastDate = (b: Row): string | null => [b.brew_date, b.fermentation_start, b.bottling_date, b.first_tasting_date, lastLog[b.id]]
+  // data più recente del batch: l'ultima tra cotta, fermentazione, imbottigliamento, degustazione, esaurita e log
+  const lastDate = (b: Row): string | null => [b.brew_date, b.fermentation_start, b.bottling_date, b.first_tasting_date, b.depleted_date, lastLog[b.id]]
     .filter(Boolean).map((d) => String(d).slice(0, 10)).sort().pop() ?? null;
   // dalla più recente; quelli senza date (non ancora cotti) in cima
   const list = rows.filter((r) => !status || normStatus(r.status) === status)
