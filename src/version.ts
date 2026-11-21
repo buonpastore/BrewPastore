@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.269", date: "21/11/2026 13:15", text: "Ricette: «Mostra le ricette archiviate» è un pulsante in fondo all’elenco (con quante sono) e non più in alto; le archiviate compaiono dopo tutte le altre" },
   { version: "0.268", date: "21/11/2026 13:00", text: "Pagina del batch più semplice: in alto i pulsanti di stato, poi le date (cotta, fermentazione, imbottigliata, degustata ed esaurita) modificabili direttamente, poi i dati del batch con «Salva e chiudi». Tutte le altre schede (ingredienti, diario, piano di cotta, valori chimici, carbonazione, valutazioni, documenti, chat, tutti i dati, modifiche) stanno in fondo, chiuse sotto «Altro»" },
   { version: "0.267", date: "21/11/2026 12:30", text: "Batch: la data in cui la birra è esaurita. «🫙 Esaurita» la segna con la data di oggi, in «Log cotta → Modifica» si cambia («Esaurita il»), si vede nel riepilogo delle date e conta per l’ordine dell’elenco dei batch. Da eseguire: 0027_data_esaurita.sql" },
   { version: "0.266", date: "21/11/2026 12:00", text: "Degustazioni: nell’aroma si possono scegliere più voci insieme (es. luppolato e fruttato), più eventuali note con «altro…»" },

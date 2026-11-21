@@ -39,7 +39,10 @@ export function Recipes() {
   };
 
   const [view, setView] = useViewMode("pastorizia-ricette-vista");
-  const list = rows.filter((r) => (showArchived || !r.archived) && (!style || r.style === style) && (r.name + " " + (r.style ?? "")).toLowerCase().includes(q.toLowerCase()));
+  const match = (r: Row) => (!style || r.style === style) && (r.name + " " + (r.style ?? "")).toLowerCase().includes(q.toLowerCase());
+  // le archiviate, se mostrate, vanno in fondo all'elenco
+  const archivedCount = rows.filter((r) => r.archived && match(r)).length;
+  const list = [...rows.filter((r) => !r.archived && match(r)), ...(showArchived ? rows.filter((r) => r.archived && match(r)) : [])];
   const usedStyles = [...new Set(rows.map((r) => r.style).filter(Boolean))] as string[];
   const styleChoices = [...STYLE_OPTIONS.filter((o) => !o.disabled && usedStyles.includes(o.value)).map((o) => o.value), ...usedStyles.filter((s) => !STYLE_OPTIONS.some((o) => o.value === s))];
 
@@ -58,7 +61,6 @@ export function Recipes() {
             {styleChoices.map((s) => <option key={s}>{s}</option>)}
           </select>
         )}
-        <label className="check"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> mostra archiviate</label>
       </div>
       {importing && <ImportRecipe initialFiles={picked} onClose={() => { setImporting(false); setPicked(undefined); }} />}
       {choosing && (
@@ -105,6 +107,11 @@ export function Recipes() {
         })}
         {!list.length && <p className="muted">Nessuna ricetta.</p>}
       </div>
+      {archivedCount > 0 && (
+        <button type="button" className="btn full-w" style={{ marginTop: 16 }} onClick={() => setShowArchived(!showArchived)}>
+          {showArchived ? "Nascondi le ricette archiviate" : `Mostra le ricette archiviate (${archivedCount})`}
+        </button>
+      )}
     </div>
   );
 }
