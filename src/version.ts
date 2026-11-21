@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.262", date: "21/11/2026 10:30", text: "Batch → Inserisci: nei consumi della cotta (energia elettrica e acqua totale) l’app non propone e non salva più valori stimati con «Salva e chiudi»: si scrivono solo a mano. Se mancano, nei costi resta la stima segnata come «stimato»" },
   { version: "0.261", date: "21/11/2026 10:15", text: "Batch → Inserisci: tolto il pH dalla sezione Mash (resta solo la gravity pre-sparge); i pH sono solo nella correzione dell’acqua" },
   { version: "0.260", date: "21/11/2026 10:00", text: "Batch → Inserisci: nuova sezione «Correzione acqua del mash» con pH iniziale, acido lattico (grammi messi) e pH corretto; nella sezione dell’acqua restano solo i litri di mash e di sparge (niente pH per lo sparge). I − e + ora rispondono subito: i valori si salvano tutti insieme con «Salva e chiudi» o uscendo dalla pagina (anche chiudendo l’app), e il campo cambiato mostra «da salvare»" },
   { version: "0.259", date: "20/11/2026 14:30", text: "Elenco dei batch: la data accanto a ogni batch è la più recente del suo log (cotta, fermentazione, imbottigliamento, degustazione o ultima misura/nota) e i batch sono ordinati da quella data, dal più recente; quelli non ancora cotti restano in cima" },

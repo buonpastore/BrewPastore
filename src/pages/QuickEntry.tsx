@@ -5,7 +5,6 @@ import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus,
 import type { ReactNode } from "react";
 import { supabase, errMsg, num, type Row } from "../lib";
 import { BottleCalc } from "./BottleCalc";
-import { estimateBrew } from "../costs";
 import { recipeCo2 } from "../styleGuide";
 import { primingGrams } from "../lib";
 
@@ -354,7 +353,6 @@ function suggestions(b: Row, r?: Row): Record<string, number | null> {
   const style = String(r?.style ?? "").toLowerCase();
   // CO₂: dalla ricetta se c'è, altrimenti la media dello stile, altrimenti 2,5
   const co2 = n(b.target_co2_vol) ?? recipeCo2(r)?.value ?? (/weiss|weizen|blanche|wit|saison|tripel/.test(style) ? 3 : 2.5);
-  const est = estimateBrew(b, r);
   return {
     mash_water_l: n(r?.mash_water_l), sparge_water_l: n(r?.sparge_water_l),
     water_ph_initial: 7.5, water_ph_adjusted: 5.5, mash_ph: n(b.water_ph_adjusted) ?? 5.5,
@@ -364,6 +362,6 @@ function suggestions(b: Row, r?: Row): Record<string, number | null> {
     bottles_count: bottledL != null ? Math.floor(((n(b.volume_bottled_l) ?? bottledL) as number) / 0.66) : null,
     target_co2_vol: co2,
     priming_sugar_g: bottledL != null ? Math.round(primingGrams(n(b.volume_bottled_l) ?? bottledL, co2, 20, "saccarosio")) : null,
-    energy_kwh: est.kwh, water_used_l: est.waterL,
+    // consumi: niente valori proposti, li scrivete voi (nei costi, se mancano, resta la stima segnata come «stimato»)
   };
 }
