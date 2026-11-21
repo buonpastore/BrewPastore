@@ -5,7 +5,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, X, Clock, Scale, Info } from "lucide-react";
 import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
-import { type PriceBasis, neededTotals, piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, isBottled, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
+import { type PriceBasis, neededTotals, piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
 export type CostData = { recipes: Row[]; batches: Row[]; bIngs: Row[]; rIngs: Row[]; extras: Row[]; mats: Row[]; lines: Row[]; energy: number; water: number; cfg: BottlePrices };
 
@@ -51,11 +51,11 @@ export function beersOf(data: CostData) {
 
   const beers = recipes.map((r) => {
     // una birra = una ricetta: gli ingredienti si contano UNA volta, dalla ricetta.
-    // litri, bottiglie e kWh vengono dal batch di riferimento (l'ultimo imbottigliato, altrimenti l'ultimo fatto)
+    // litri, bottiglie e kWh vengono dal batch di riferimento: sempre l'ultimo batch fatto di quella birra
     const all = batches.filter((b) => b.recipe_id === r.id && isBrewed(b));   // i batch creati e mai fatti non contano
     const key = (b: Row) => String(b.brew_date ?? "") + String(b.created_at ?? "");
     const sorted = [...all].sort((a, b) => key(b).localeCompare(key(a)));
-    const ref = sorted.find(isBottled) ?? sorted[0];
+    const ref = sorted[0];
     const recipeIngs = rIngs.filter((i) => i.recipe_id === r.id);
     const base = recipeIngs.length ? recipeIngs : ref ? ingsOf(ref) : [];
     // in ogni birra usiamo sempre 5 g di Irish moss, anche se non è scritto nella ricetta
@@ -72,10 +72,11 @@ export function beersOf(data: CostData) {
       water_used_l: waterBatch?.water_used_l ?? null, mash_water_l: waterBatch?.mash_water_l ?? null, sparge_water_l: waterBatch?.sparge_water_l ?? null,
     } : null;
     const costs = refE ? [computeBatchCost(refE, r, ings, extras.filter((x) => x.batch_id === refE.id), mats, data.energy, data.water, data.cfg)] : [];
-    return { recipe: r, list, all, ings, costs, sum: sumCosts(costs) };
+    return { recipe: r, list, all, ings, costs, sum: sumCosts(costs), last: ref ? key(ref) : "" };
   }).filter((x) => x.list.length || !x.recipe.archived)
-    // sempre dall'ultima ricetta inserita alla prima
-    .sort((a, b) => String(b.recipe.created_at ?? "").localeCompare(String(a.recipe.created_at ?? "")));
+    // dalla birra con il batch più recente; quelle senza batch in fondo (dall'ultima ricetta inserita)
+    .sort((a, b) => (b.last && a.last ? b.last.localeCompare(a.last) : Number(Boolean(b.last)) - Number(Boolean(a.last)))
+      || String(b.recipe.created_at ?? "").localeCompare(String(a.recipe.created_at ?? "")));
 
   return beers;
 }

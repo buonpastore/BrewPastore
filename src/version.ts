@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.272", date: "21/11/2026 14:00", text: "Costi delle birre: ogni birra usa sempre il suo ultimo batch fatto (prima l’ultimo imbottigliato) e le birre sono in ordine dal batch più recente; quelle senza batch in fondo" },
   { version: "0.271", date: "21/11/2026 13:45", text: "Materie prime → Acquisti: prima l’elenco degli ordini (gli ultimi 5, poi «Mostra altri» 5 alla volta), sotto l’importazione di un nuovo acquisto e l’inserimento manuale" },
   { version: "0.270", date: "21/11/2026 13:30", text: "Batch: tolte le caselle delle date ripetute sotto i pulsanti di stato; al loro posto un pulsante «📅 Modifica le date» che apre tutte le date del batch e le salva insieme con «Salva»" },
   { version: "0.269", date: "21/11/2026 13:15", text: "Ricette: «Mostra le ricette archiviate» è un pulsante in fondo all’elenco (con quante sono) e non più in alto; le archiviate compaiono dopo tutte le altre" },
