@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { DedupeButton } from "../components/DedupeButton";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -208,7 +209,9 @@ export function BatchDetail() {
   const [batch, setBatch] = useState<Row | null>(null);
   const [recipe, setRecipe] = useState<Row | null>(null);
   const [materials, setMaterials] = useState<Row[]>([]);
-  const [tab, setTab] = useState("dati");
+  // le altre schede (ingredienti, diario, documenti…) stanno in fondo, chiuse
+  const [tab, setTab] = useState("ingredienti");
+  const [more, setMore] = useState(false);
   const [sp, setSp] = useSearchParams();
   const isNew = sp.get("nuovo") === "1";
   const [deleting, setDeleting] = useState(false);
@@ -247,7 +250,7 @@ export function BatchDetail() {
     const { data, error } = await supabase.from("batches").update({ status: q.status, [field]: today }).eq("id", batch!.id).select().single();
     if (error) return alert(errMsg(error));
     setBatch(data);
-    setTab("dati"); setFocusStatus(q.status); setFocusKey((k) => k + 1);   // apri solo la fase interessante
+    setFocusStatus(q.status); setFocusKey((k) => k + 1);   // apri solo la fase interessante
     await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${statusLabel(q.status)}` });
   };
 
@@ -284,24 +287,25 @@ export function BatchDetail() {
           onClose={() => setDeleting(false)} />
       )}
 
-      <div className="timeline">
-        <div className={batch.brew_date ? "done" : ""}><span>Cotta</span>{date(batch.brew_date)}</div>
-        <div className={batch.fermentation_start ? "done" : ""}><span>Fermentazione</span>{date(batch.fermentation_start)}</div>
-        <div className={batch.bottling_date ? "done" : ""}><span>Imbottigliata</span>{date(batch.bottling_date)}</div>
-        <div className={batch.first_tasting_date ? "done" : ""}><span>Degustata</span>{date(batch.first_tasting_date)}</div>
-        <div className={batch.status === "esaurito" ? "done" : ""}><span>Esaurita</span>{batch.status === "esaurito" ? (batch.depleted_date ? date(batch.depleted_date) : "✓") : "—"}</div>
-      </div>
-
-      <Tabs grid wide active={tab} onChange={setTab} tabs={[
-        ["dati", "✍️ Inserisci"], ["log", "Log cotta"], ["cottura", "Cottura"],
-        ["chimici", "Valori chimici"], ["ingredienti", "Ingredienti"], ["diario", "Diario"],
-        ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"],
-        ["documenti", "Documenti"], ["chat", "Chat"], ["storico", "Storico"],
-      ]} />
+      <BatchDates batch={batch} canEdit={isAdmin} onSaved={setBatch} />
 
       <div className="panel">
-        {tab === "dati" && isNew && isAdmin && <NewBatchCard batch={batch} onSaved={setBatch} onDone={() => setSp({}, { replace: true })} />}
-        {tab === "dati" && <QuickEntry key={batch.id} batch={batch} recipe={recipe} canEdit={isAdmin} onSaved={setBatch} onDelete={() => setDeleting(true)} focusKey={focusKey} focusStatus={focusStatus} onAfterSave={() => nav("/batch")} />}
+        {isNew && isAdmin && <NewBatchCard batch={batch} onSaved={setBatch} onDone={() => setSp({}, { replace: true })} />}
+        <QuickEntry key={batch.id} batch={batch} recipe={recipe} canEdit={isAdmin} onSaved={setBatch} onDelete={() => setDeleting(true)} focusKey={focusKey} focusStatus={focusStatus} onAfterSave={() => nav("/batch")} />
+      </div>
+
+      {/* tutto il resto, per chi vuole: in fondo e chiuso */}
+      <button type="button" className={"batch-more-btn" + (more ? " open" : "")} onClick={() => setMore(!more)} aria-expanded={more}>
+        <span>Altro: ingredienti, diario, documenti, chat…</span><ChevronDown size={18} />
+      </button>
+      {more && (
+      <>
+      <Tabs grid wide active={tab} onChange={setTab} tabs={[
+        ["ingredienti", "Ingredienti"], ["diario", "Diario"], ["cottura", "Piano di cotta"],
+        ["chimici", "Valori chimici"], ["carbonazione", "Carbonazione"], ["valutazioni", "Valutazioni"],
+        ["documenti", "Documenti"], ["chat", "Chat"], ["log", "Tutti i dati"], ["storico", "Modifiche"],
+      ]} />
+      <div className="panel">
         {tab === "log" && <RecordForm table="batches" row={batch} sections={SECTIONS.filter((s) => !["Carbonazione", "pH", "Gravity"].includes(s.title ?? ""))} canEdit={isAdmin} onSaved={setBatch} />}
         {tab === "cottura" && <BatchBrewDay batch={batch} recipe={recipe} />}
         {tab === "chimici" && (
@@ -359,7 +363,37 @@ export function BatchDetail() {
         {tab === "chat" && <ChatPanel batchId={batch.id} />}
         {tab === "storico" && <HistoryList relatedTo={{ id: batch.id, key: "batch_id" }} />}
       </div>
-      {isAdmin && tab !== "dati" && <button className="btn danger full-w bottom-delete" onClick={() => setDeleting(true)}>🗑️ Elimina batch</button>}
+      </>
+      )}
+    </div>
+  );
+}
+
+/** Le date del batch, modificabili direttamente (cotta, fermentazione, imbottigliamento, degustazione, esaurita). */
+function BatchDates({ batch, canEdit, onSaved }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void }) {
+  const [err, setErr] = useState("");
+  const rows: { key: string; label: string; show: boolean }[] = [
+    { key: "brew_date", label: "Cotta", show: true },
+    { key: "fermentation_start", label: "Fermentazione", show: true },
+    { key: "bottling_date", label: "Imbottigliata", show: true },
+    { key: "first_tasting_date", label: "Degustata", show: true },
+    { key: "depleted_date", label: "Esaurita", show: batch.status === "esaurito" },
+  ];
+  const save = async (key: string, v: string) => {
+    setErr("");
+    const { data, error } = await supabase.from("batches").update({ [key]: v || null }).eq("id", batch.id).select().single();
+    if (error) return setErr(errMsg(error));
+    onSaved(data);
+  };
+  return (
+    <div className="batch-dates">
+      {rows.filter((r) => r.show).map((r) => (
+        <label key={r.key} className={batch[r.key] ? "done" : ""}>
+          <span>{r.label}</span>
+          {canEdit ? <input type="date" value={batch[r.key] ?? ""} onChange={(e) => save(r.key, e.target.value)} /> : <strong>{date(batch[r.key])}</strong>}
+        </label>
+      ))}
+      {err && <p className="error small">{err}</p>}
     </div>
   );
 }

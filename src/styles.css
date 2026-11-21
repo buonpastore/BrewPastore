@@ -2186,3 +2186,13 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .tc-scale-ticks button { position: absolute; transform: translateX(-50%); border: 0; background: none; color: var(--muted); font: 600 .78rem var(--sans); padding: 4px 2px; cursor: pointer; white-space: nowrap; }
 .tc-scale-ticks button:first-child { transform: none; left: -10px !important; }
 .tc-scale-ticks button:last-child { transform: translateX(-100%); left: calc(100% + 10px) !important; }
+/* batch: date modificabili e «Altro» in fondo */
+.batch-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+.batch-dates label { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.batch-dates label.done { border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.batch-dates label > span { margin: 0; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+.batch-dates input { width: 100%; min-height: 40px; padding: 6px 8px; }
+.batch-dates .error { grid-column: 1 / -1; }
+.batch-more-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 22px 0 10px; padding: 12px 14px; border-radius: 12px; border: 1px dashed var(--line-strong); background: none; color: var(--muted); font: 600 .9rem var(--sans); cursor: pointer; }
+.batch-more-btn svg { transition: transform .2s; }
+.batch-more-btn.open svg { transform: rotate(180deg); }
