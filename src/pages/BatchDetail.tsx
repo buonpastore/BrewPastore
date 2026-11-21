@@ -369,31 +369,53 @@ export function BatchDetail() {
   );
 }
 
-/** Le date del batch, modificabili direttamente (cotta, fermentazione, imbottigliamento, degustazione, esaurita). */
+/** Pulsante «Modifica le date»: apre le date del batch (cotta, fermentazione, imbottigliamento, degustazione, esaurita) e le salva insieme. */
 function BatchDates({ batch, canEdit, onSaved }: { batch: Row; canEdit: boolean; onSaved: (b: Row) => void }) {
-  const [err, setErr] = useState("");
-  const rows: { key: string; label: string; show: boolean }[] = [
-    { key: "brew_date", label: "Cotta", show: true },
-    { key: "fermentation_start", label: "Fermentazione", show: true },
-    { key: "bottling_date", label: "Imbottigliata", show: true },
-    { key: "first_tasting_date", label: "Degustata", show: true },
-    { key: "depleted_date", label: "Esaurita", show: batch.status === "esaurito" },
+  const rows: { key: string; label: string }[] = [
+    { key: "brew_date", label: "🔥 Cotta" },
+    { key: "fermentation_start", label: "🫧 Fermentata" },
+    { key: "bottling_date", label: "🍾 Imbottigliata" },
+    { key: "first_tasting_date", label: "🍻 Degustata" },
+    ...(batch.status === "esaurito" ? [{ key: "depleted_date", label: "🫙 Esaurita" }] : []),
   ];
-  const save = async (key: string, v: string) => {
-    setErr("");
-    const { data, error } = await supabase.from("batches").update({ [key]: v || null }).eq("id", batch.id).select().single();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Row>({});
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  if (!canEdit) return null;
+  const start = () => { setDraft(Object.fromEntries(rows.map((r) => [r.key, batch[r.key] ?? ""]))); setErr(""); setOpen(true); };
+  const save = async () => {
+    setBusy(true); setErr("");
+    const patch = Object.fromEntries(rows.map((r) => [r.key, draft[r.key] || null]));
+    const { data, error } = await supabase.from("batches").update(patch).eq("id", batch.id).select().single();
+    setBusy(false);
     if (error) return setErr(errMsg(error));
-    onSaved(data);
+    onSaved(data); setOpen(false);
   };
   return (
-    <div className="batch-dates">
-      {rows.filter((r) => r.show).map((r) => (
-        <label key={r.key} className={batch[r.key] ? "done" : ""}>
-          <span>{r.label}</span>
-          {canEdit ? <input type="date" value={batch[r.key] ?? ""} onChange={(e) => save(r.key, e.target.value)} /> : <strong>{date(batch[r.key])}</strong>}
-        </label>
-      ))}
-      {err && <p className="error small">{err}</p>}
-    </div>
+    <>
+      <button type="button" className="btn full-w batch-dates-btn" onClick={start}>📅 Modifica le date</button>
+      {open && (
+        <div className="modal-backdrop" onClick={() => setOpen(false)}>
+          <div className="modal batch-dates-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>📅 Date del batch</h2>
+            {rows.map((r) => (
+              <label key={r.key} className="block">
+                <span>{r.label}</span>
+                <div className="bdm-row">
+                  <input type="date" value={draft[r.key] ?? ""} onChange={(e) => setDraft({ ...draft, [r.key]: e.target.value })} />
+                  {draft[r.key] && <button type="button" className="icon-btn" aria-label="Togli la data" onClick={() => setDraft({ ...draft, [r.key]: "" })}>✕</button>}
+                </div>
+              </label>
+            ))}
+            {err && <p className="error">{err}</p>}
+            <div className="half-actions" style={{ marginTop: 12 }}>
+              <button type="button" className="btn" onClick={() => setOpen(false)}>Annulla</button>
+              <button type="button" className="btn primary" disabled={busy} onClick={save}>{busy ? "Salvo…" : "Salva"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
