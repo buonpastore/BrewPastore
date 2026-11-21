@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.277", date: "21/11/2026 15:45", text: "Degustazioni divisa in due schede: «⭐ Degustazioni» (voti, note e classifica) e «🍽️ Abbinamenti». Negli abbinamenti le birre disponibili sono schede grandi con tappo, stile e famiglia; scegliendone una, sotto compaiono antipasti, primi, secondi e dolci con il perché e le foto" },
   { version: "0.276", date: "21/11/2026 15:15", text: "Degustazioni: nuova sezione «Cosa ci mangio?» con le birre disponibili (imbottigliate e non esaurite). Toccando una birra si vedono i piatti da abbinare divisi per antipasti, primi, secondi e dolci, con il perché di ogni abbinamento; toccando un piatto se ne vedono le foto" },
   { version: "0.275", date: "21/11/2026 14:45", text: "Task: nuovo pulsante «❗ Segna come importante». Le task importanti sono evidenziate in magenta con l’etichetta «Importante» e stanno in cima, sia nelle Task sia in Home. Da eseguire: 0028_task_importante.sql" },
   { version: "0.274", date: "21/11/2026 14:30", text: "Ricette: in cima quelle con un batch in corso (cotta, fermentata o imbottigliata), dal batch più recente; poi le altre (batch già degustati o esauriti, o nessun batch), dall’ultima ricetta inserita" },

@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { BeerPairings } from "../components/Pairings";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -334,12 +335,27 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
 }
 
 export function Tastings() {
+  // due schede: le degustazioni (voti e note) e gli abbinamenti con il cibo
+  const [sp, setSp] = useSearchParams();
+  const vista = sp.get("vista") === "abbinamenti" ? "abbinamenti" : "degustazioni";
   return (
     <div>
-      <div className="page-head"><h1>Degustazioni</h1></div>
-      <p className="muted">Ognuno lascia il proprio voto e le proprie note sui batch: qui trovate tutte le degustazioni e la classifica.</p>
-      <BeerPairings />
-      <TastingsPanel />
+      <div className="pv-views sub-switch">
+        <button className={"pv-view" + (vista === "degustazioni" ? " on" : "")} onClick={() => setSp({}, { replace: true })}>⭐ Degustazioni</button>
+        <button className={"pv-view" + (vista === "abbinamenti" ? " on" : "")} onClick={() => setSp({ vista: "abbinamenti" }, { replace: true })}>🍽️ Abbinamenti</button>
+      </div>
+      {vista === "abbinamenti" ? (
+        <>
+          <div className="page-head"><h1>Abbinamenti</h1></div>
+          <BeerPairings />
+        </>
+      ) : (
+        <>
+          <div className="page-head"><h1>Degustazioni</h1></div>
+          <p className="muted">Ognuno lascia il proprio voto e le proprie note sui batch: qui trovate tutte le degustazioni e la classifica.</p>
+          <TastingsPanel />
+        </>
+      )}
     </div>
   );
 }

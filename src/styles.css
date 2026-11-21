@@ -2202,14 +2202,16 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .tk-imp-toggle.on { border: 1px solid var(--magenta); background: color-mix(in srgb, var(--magenta) 16%, transparent); color: var(--magenta); }
 
 /* degustazioni: abbinamenti con il cibo */
-.pairings { margin: 14px 0 22px; }
-.pairings h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
-.pairings h2 svg { color: var(--violet); }
-.pairing-beers { display: flex; gap: 8px; overflow-x: auto; padding: 8px 2px 6px; scrollbar-width: none; }
-.pairing-beers::-webkit-scrollbar { display: none; }
-.pairing-beer { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; max-width: 240px; }
-.pairing-beer > span { display: grid; min-width: 0; }
-.pairing-beer strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pairings { margin: 4px 0 22px; }
+.pairing-beers { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 18px; }
+.pairing-beer { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 14px 10px 12px; border-radius: 16px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; min-width: 0; transition: border-color .15s, transform .1s; }
+.pairing-beer:active { transform: scale(.97); }
+.pairing-beer strong { margin-top: 6px; font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.pairing-beer .pb-fam { margin-top: 4px; padding: 2px 8px; border-radius: 99px; font-size: .7rem; font-weight: 700; background: var(--surface-2); color: var(--muted); }
+.pairing-beer.on { border-color: var(--magenta); box-shadow: 0 0 0 2px color-mix(in srgb, var(--magenta) 45%, transparent); background: color-mix(in srgb, var(--magenta) 8%, var(--surface)); }
+.pairing-beer.on .pb-fam { background: var(--magenta); color: #fff; }
+.pairing-detail { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px; }
+.pairing-detail h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }
 .pairing-modal { position: relative; max-width: 560px; }
 .pairing-modal h2 { display: flex; align-items: center; gap: 10px; padding-right: 32px; }
 .pairing-course { margin-top: 14px; }
