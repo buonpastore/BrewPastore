@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.279", date: "21/11/2026 16:15", text: "Costi delle birre, materie prime usate: sul telefono ogni ingrediente ha il nome su tutta la riga (niente più nomi spezzati e freccetta da sola) e sotto quantità, prezzo e costo" },
   { version: "0.278", date: "21/11/2026 16:00", text: "Abbinamenti: sotto ogni piatto due pulsanti, «📷 Foto» per vederlo e «📖 Ricetta» per sapere come si prepara" },
   { version: "0.277", date: "21/11/2026 15:45", text: "Degustazioni divisa in due schede: «⭐ Degustazioni» (voti, note e classifica) e «🍽️ Abbinamenti». Negli abbinamenti le birre disponibili sono schede grandi con tappo, stile e famiglia; scegliendone una, sotto compaiono antipasti, primi, secondi e dolci con il perché e le foto" },
   { version: "0.276", date: "21/11/2026 15:15", text: "Degustazioni: nuova sezione «Cosa ci mangio?» con le birre disponibili (imbottigliate e non esaurite). Toccando una birra si vedono i piatti da abbinare divisi per antipasti, primi, secondi e dolci, con il perché di ogni abbinamento; toccando un piatto se ne vedono le foto" },

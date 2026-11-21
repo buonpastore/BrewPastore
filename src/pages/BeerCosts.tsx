@@ -246,7 +246,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
             {sortByCat([...groups.values()]).map((g) => (
               <Fragment key={g.name + g.unit}>
               <tr className={g.mat ? "bc-ing-row" : ""} onClick={() => g.mat && setOpenIng(openIng === g.name + g.unit ? null : g.name + g.unit)}>
-                <td><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.mat ? (openIng === g.name + g.unit ? "▾ " : "▸ ") : ""}{g.name}</span>{g.fixed && <div className="muted small">sempre usato (fisso)</div>}</td>
+                <td className="bc-ing-name"><span style={{ color: nameColor(g.category), fontWeight: 600 }}>{g.mat ? (openIng === g.name + g.unit ? "▾\u00a0" : "▸\u00a0") : ""}{g.name}</span>{g.fixed && <div className="muted small">sempre usato (fisso)</div>}</td>
                 <td className="nowrap">{g.category === "lievito" ? yeastQty(g.qty, g.unit) : `${num(g.qty, 3)} ${g.unit}`}</td>
                 {(
                   <>
@@ -264,7 +264,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
                             .map((m) => <option key={m.material_id} value={m.material_id}>{m.name}</option>)}
                         </select>
                       ) : <span className="warn">nessun prezzo</span>}</td>
-                    <td className="nowrap">{g.cost != null ? eur(g.cost) : g.mat ? <span className="warn small">unità non convertibile</span> : "—"}</td>
+                    <td className="nowrap bc-ing-cost">{g.cost != null ? eur(g.cost) : g.mat ? <span className="warn small">unità non convertibile</span> : "—"}</td>
                   </>
                 )}
               </tr>
