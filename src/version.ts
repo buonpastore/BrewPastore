@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.260", date: "21/11/2026 10:00", text: "Batch → Inserisci: nuova sezione «Correzione acqua del mash» con pH iniziale, acido lattico (grammi messi) e pH corretto; nella sezione dell’acqua restano solo i litri di mash e di sparge (niente pH per lo sparge). I − e + ora rispondono subito: i valori si salvano tutti insieme con «Salva e chiudi» o uscendo dalla pagina (anche chiudendo l’app), e il campo cambiato mostra «da salvare»" },
   { version: "0.259", date: "20/11/2026 14:30", text: "Elenco dei batch: la data accanto a ogni batch è la più recente del suo log (cotta, fermentazione, imbottigliamento, degustazione o ultima misura/nota) e i batch sono ordinati da quella data, dal più recente; quelli non ancora cotti restano in cima" },
   { version: "0.258", date: "20/11/2026 14:05", text: "Batch ordinati per data di cotta, in alto il più recente (quelli ancora senza data in cima); lo stesso ordine vale per i batch in Degustazioni, Cantina, Gira la bottiglia e nelle Vendite (le ultime 5 birre)" },
   { version: "0.257", date: "20/11/2026 13:50", text: "Ricavi: il prezzo di partenza di una bottiglia è 4 € (in Calcolo e nelle vendite), finché non lo cambiate. Vendite: si sceglie il pagamento tra Contanti, PayPal e Bonifico, e si vede nell’elenco. Da eseguire: 0026_vendite_pagamento.sql" },

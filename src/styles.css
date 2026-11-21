@@ -2165,3 +2165,6 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .sr-items { display: grid; gap: 3px; font-size: .88rem; }
 .sr-items > span { display: flex; align-items: center; gap: 6px; }
 .sr-nocap { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed var(--muted); flex: none; }
+
+.big-field.dirty { border-color: color-mix(in srgb, var(--gold) 60%, transparent); }
+.bf-dirty { font-size: .72rem; font-weight: 600; color: var(--gold); }

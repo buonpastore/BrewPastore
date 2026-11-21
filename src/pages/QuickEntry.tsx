@@ -9,7 +9,11 @@ import { estimateBrew } from "../costs";
 import { recipeCo2 } from "../styleGuide";
 import { primingGrams } from "../lib";
 
-type Kind = "ph" | "sg" | "l" | "int" | "kwh" | "g" | "co2";
+/** Campo speciale: l'acido lattico sta nelle correzioni dell'acqua (water_adjustments), non nel batch. */
+const LACTIC = "__acido_lattico";
+const LACTIC_NAME = "Acido lattico 80%";
+
+type Kind = "ph" | "sg" | "l" | "int" | "kwh" | "g" | "co2" | "gd";
 interface Field { key: string; label: string; kind: Kind; hint?: string }
 interface Phase { title: string; color: string; icon: ReactNode; fields: Field[]; twoCols?: boolean }
 
@@ -17,7 +21,11 @@ const PHASES: Phase[] = [
   { title: "Acqua", color: "var(--teal)", icon: <Droplets size={20} />, fields: [
     { key: "mash_water_l", label: "Acqua di mash", kind: "l" },
     { key: "sparge_water_l", label: "Acqua di sparge", kind: "l" },
+  ], twoCols: true },
+  // la correzione riguarda l'acqua del mash: il pH dello sparge non serve
+  { title: "Correzione acqua del mash", color: "var(--teal)", icon: <FlaskConical size={20} />, fields: [
     { key: "water_ph_initial", label: "pH iniziale", kind: "ph" },
+    { key: LACTIC, label: "Acido lattico", kind: "gd", hint: "quanto ne avete messo" },
     { key: "water_ph_adjusted", label: "pH corretto", kind: "ph", hint: "viene copiato nel pH del mash" },
   ], twoCols: true },
   { title: "Mash", color: "var(--gold)", icon: <Wheat size={20} />, fields: [
@@ -46,9 +54,9 @@ const PHASES: Phase[] = [
   ] },
 ];
 
-const STEP: Record<Kind, number> = { ph: 0.05, sg: 0.001, l: 0.5, int: 1, kwh: 0.5, g: 1, co2: 0.1 };
-const UNIT: Record<Kind, string> = { ph: "", sg: "", l: "L", int: "", kwh: "kWh", g: "g", co2: "vol" };
-const DEC: Record<Kind, number> = { ph: 2, sg: 3, l: 1, int: 0, kwh: 1, g: 0, co2: 1 };
+const STEP: Record<Kind, number> = { ph: 0.05, sg: 0.001, l: 0.5, int: 1, kwh: 0.5, g: 1, co2: 0.1, gd: 0.5 };
+const UNIT: Record<Kind, string> = { ph: "", sg: "", l: "L", int: "", kwh: "kWh", g: "g", co2: "vol", gd: "g" };
+const DEC: Record<Kind, number> = { ph: 2, sg: 3, l: 1, int: 0, kwh: 1, g: 0, co2: 1, gd: 1 };
 
 /** "1052" → 1.052 · "52" → 1.052 · "1,052" → 1.052 */
 function parseValue(raw: string, kind: Kind): number | null {
@@ -68,6 +76,23 @@ const show = (v: unknown, kind: Kind) => (v == null || v === "" ? "" : Number(v)
 /** Ogni casella registra qui il suo "salva subito", usato dal pulsante Salva. */
 const FlushCtx = createContext<Set<() => Promise<void>>>(new Set());
 
+/** Salva il valore di un campo: nel batch oppure, per l'acido lattico, nelle correzioni dell'acqua del mash. */
+async function storeValue(batch: Row, key: string, v: number | null): Promise<{ data?: Row; error?: { message: string } | null }> {
+  if (key === LACTIC) {
+    const { data: rows } = await supabase.from("water_adjustments").select("id").eq("batch_id", batch.id).ilike("additive", "acido lattico%").eq("target", "mash").limit(1);
+    const id = rows?.[0]?.id;
+    const r = v == null || v === 0
+      ? (id ? await supabase.from("water_adjustments").delete().eq("id", id) : { error: null })
+      : id ? await supabase.from("water_adjustments").update({ amount: v, unit: "g" }).eq("id", id)
+        : await supabase.from("water_adjustments").insert({ batch_id: batch.id, additive: LACTIC_NAME, amount: v, unit: "g", target: "mash" });
+    return { error: r.error };
+  }
+  const patch: Row = { [key]: v };
+  if (key === "water_ph_adjusted" && v != null && (batch.mash_ph == null || batch.mash_ph === "")) patch.mash_ph = v;
+  const { data, error } = await supabase.from("batches").update(patch).eq("id", batch.id).select().single();
+  return { data: data ?? undefined, error };
+}
+
 function BigField({ f, batch, canEdit, onSaved, suggest, accept }: { f: Field; batch: Row; canEdit: boolean; onSaved: (b: Row) => void; suggest?: number | null; accept?: boolean }) {
   const flushers = useContext(FlushCtx);
   const empty = batch[f.key] == null || batch[f.key] === "";
@@ -75,53 +100,53 @@ function BigField({ f, batch, canEdit, onSaved, suggest, accept }: { f: Field; b
   const [text, setText] = useState(show(empty ? suggest : batch[f.key], f.kind));
   const [state, setState] = useState<"" | "saving" | "ok" | "err">("");
   const [err, setErr] = useState("");
-  const timer = useRef<number>();
-  useEffect(() => { setText(show(empty ? suggest : batch[f.key], f.kind)); }, [batch[f.key], suggest]); // eslint-disable-line react-hooks/exhaustive-deps
+  // i − e + cambiano solo il numero sullo schermo (subito): si salva tutto alla fine,
+  // con «Salva e chiudi» o uscendo dalla pagina
+  const pending = useRef(false);
+  const [dirty, setDirtyState] = useState(false);
+  const setDirty = (d: boolean) => { pending.current = d; setDirtyState(d); };
+  useEffect(() => { if (!pending.current) setText(show(empty ? suggest : batch[f.key], f.kind)); }, [batch[f.key], suggest]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = async (v: number | null) => {
-    pending.current = false;
+    setDirty(false);
     setState("saving");
-    const patch: Row = { [f.key]: v };
-    if (f.key === "water_ph_adjusted" && v != null && (batch.mash_ph == null || batch.mash_ph === "")) patch.mash_ph = v;
-    const { data, error } = await supabase.from("batches").update(patch).eq("id", batch.id).select().single();
-    if (error) { setState("err"); setErr(errMsg(error)); return; }
-    setState("ok"); onSaved(data);
+    const { data, error } = await storeValue(batch, f.key, v);
+    if (error) { setState("err"); setErr(errMsg(error)); setDirty(true); return; }
+    setState("ok"); if (data) onSaved(data);
     window.setTimeout(() => setState((s) => (s === "ok" ? "" : s)), 1500);
   };
-  const schedule = (raw: string) => {
-    setText(raw); pending.current = true;
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => save(parseValue(raw, f.kind)), 900);
-  };
+  const schedule = (raw: string) => { setText(raw); setDirty(true); };
   const bump = (dir: 1 | -1) => {
-    const cur = parseValue(text, f.kind) ?? (f.kind === "sg" ? 1.05 : f.kind === "ph" ? 5.4 : 0);
+    const cur = parseValue(textRef.current, f.kind) ?? (f.kind === "sg" ? 1.05 : f.kind === "ph" ? 5.4 : 0);
     const next = Math.max(0, Math.round((cur + dir * STEP[f.kind]) * 1000) / 1000);
-    setText(show(next, f.kind)); pending.current = true;
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => save(next), 700);
+    const s = show(next, f.kind);
+    textRef.current = s; setText(s); setDirty(true);
   };
-  // salva subito se c'è un valore in attesa
   const textRef = useRef(text); textRef.current = text;
-  const pending = useRef(false);
   useEffect(() => {
     const flush = async () => {
       // «Salva e chiudi»: i valori proposti non toccati vengono salvati (solo per le fasi già fatte)
       if (!pending.current && proposed && accept) { await save(suggest!); return; }
       if (!pending.current) return;
-      window.clearTimeout(timer.current); pending.current = false;
       await save(parseValue(textRef.current, f.kind));
     };
     flushers.add(flush);
     return () => { flushers.delete(flush); };
   }); // eslint-disable-line react-hooks/exhaustive-deps
+  // uscendo dalla pagina (indietro, altra scheda) salvo quello che è rimasto in sospeso
+  const savedRef = useRef(onSaved); savedRef.current = onSaved;
+  useEffect(() => () => {
+    if (pending.current) void storeValue(batch, f.key, parseValue(textRef.current, f.kind)).then((r) => { if (r.data) savedRef.current(r.data); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const v = parseValue(text, f.kind);
   const warn = f.key === "mash_ph" && v != null && (v < 5.2 || v > 5.6);
 
   return (
-    <div className={"big-field" + (state === "ok" ? " saved" : "") + (warn ? " warn" : "") + (proposed && !pending.current ? " proposed" : "")}>
+    <div className={"big-field" + (state === "ok" ? " saved" : "") + (dirty ? " dirty" : "") + (warn ? " warn" : "") + (proposed && !dirty ? " proposed" : "")}>
       <div className="bf-head">
         <span>{f.label}</span>
         {proposed && state === "" && <span className="bf-prop" title="Valore proposto dall'app: se non lo cambi viene salvato con «Salva e chiudi»">proposto</span>}
+        {dirty && state === "" && <span className="bf-dirty">da salvare</span>}
         {state === "saving" && <span className="muted small">salvo…</span>}
         {state === "ok" && <span className="ok small"><Check size={14} /> salvato</span>}
         {state === "err" && <span className="error small" title={err}>errore</span>}
@@ -132,7 +157,7 @@ function BigField({ f, batch, canEdit, onSaved, suggest, accept }: { f: Field; b
           <div className="bf-input">
             <input inputMode="decimal" value={text} placeholder={f.kind === "sg" ? "1,050" : "—"}
               onChange={(e) => schedule(e.target.value)}
-              onBlur={() => { if (!pending.current) return; window.clearTimeout(timer.current); const p = parseValue(text, f.kind); if (p !== (batch[f.key] == null ? null : Number(batch[f.key]))) save(p); setText(show(p, f.kind)); }} />
+              onBlur={() => { if (pending.current) setText(show(parseValue(text, f.kind), f.kind)); }} />
             {UNIT[f.kind] && <span className="bf-unit">{UNIT[f.kind]}</span>}
           </div>
           <button type="button" className="bf-btn" onClick={() => bump(1)} aria-label="Aumenta"><Plus size={22} /></button>
@@ -226,11 +251,19 @@ export function phasesFor(status?: string | null): string[] {
     case "fermentazione": case "maturazione": return ["Fermentazione"];
     case "imbottigliato": return ["Imbottigliamento"];
     case "degustato": case "finito": case "esaurito": return ["Imbottigliamento"];
-    default: return ["Acqua", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"];
+    default: return ["Acqua", "Correzione acqua del mash", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"];
   }
 }
 
-export function QuickEntry({ batch, recipe, canEdit, onSaved, onDelete, focusKey = 0, focusStatus, onAfterSave }: { batch: Row; recipe?: Row | null; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null; onAfterSave?: () => void }) {
+export function QuickEntry({ batch: rawBatch, recipe, canEdit, onSaved, onDelete, focusKey = 0, focusStatus, onAfterSave }: { batch: Row; recipe?: Row | null; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null; onAfterSave?: () => void }) {
+  // acido lattico del mash (dalle correzioni dell'acqua), mostrato come un campo del batch
+  const [lactic, setLactic] = useState<number | null>(null);
+  const [lacticKey, setLacticKey] = useState(0);
+  useEffect(() => {
+    supabase.from("water_adjustments").select("amount").eq("batch_id", rawBatch.id).ilike("additive", "acido lattico%").eq("target", "mash").limit(1)
+      .then(({ data }) => setLactic(data?.[0]?.amount != null ? Number(data[0].amount) : null));
+  }, [rawBatch.id, lacticKey]);
+  const batch: Row = { ...rawBatch, [LACTIC]: lactic };
   const sug = suggestions(batch, recipe ?? undefined);
   const reached = phasesReached(batch);
   const { profiles } = useAuth();
@@ -245,12 +278,20 @@ export function QuickEntry({ batch, recipe, canEdit, onSaved, onDelete, focusKey
   const toggle = (t: string) => setOpen((o) => { const n = new Set(o); if (n.has(t)) n.delete(t); else n.add(t); return n; });
   const flushers = useRef(new Set<() => Promise<void>>()).current;
   const [saveMsg, setSaveMsg] = useState("");
+  // app chiusa o messa in secondo piano sul telefono: salvo quello che è in sospeso
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === "hidden") [...flushers].forEach((fn) => void fn()); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+    return () => { document.removeEventListener("visibilitychange", onHide); window.removeEventListener("pagehide", onHide); };
+  }, [flushers]);
   const saveAll = async () => {
     setSaveMsg("Salvo…");
     (document.activeElement as HTMLElement | null)?.blur?.();
     await Promise.all([...flushers].map((fn) => fn()));
     const { data } = await supabase.from("batches").select("*").eq("id", batch.id).single();
     if (data) onSaved(data);
+    setLacticKey((x) => x + 1);
     setSaveMsg("✓ Tutto salvato");
     if (onAfterSave) window.setTimeout(onAfterSave, 600);   // chiudo il batch e torno all'elenco
     else window.setTimeout(() => setSaveMsg(""), 2500);
@@ -300,7 +341,7 @@ function phasesReached(b: Row): Set<string> {
   const fermented = ["maturazione", "imbottigliato", "degustato", "finito", "esaurito"].includes(st) || Boolean(b.bottling_date);   // FG: a fermentazione finita
   const bottled = ["imbottigliato", "degustato", "finito", "esaurito"].includes(st) || Boolean(b.bottling_date);
   const out = new Set<string>();
-  if (brewed) ["Acqua", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"].forEach((x) => out.add(x));
+  if (brewed) ["Acqua", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"].forEach((x) => out.add(x));   // la correzione non ha valori proposti
   if (fermented) out.add("Fermentazione");
   if (bottled) out.add("Imbottigliamento");
   return out;
