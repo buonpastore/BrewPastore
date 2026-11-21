@@ -140,10 +140,10 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
 /* Voci delle schede di degustazione (aspetto, schiuma, aroma, gusto, amaro, corpo, bollicine, finale).
    Si salvano nei campi della degustazione: es. aspetto «Velata · schiuma cremosa», gusto «Secco · amaro medio · finale lungo». */
 // scale: la voce si valuta con un cursore da 0 a 100 (le parole sono i punti di riferimento sulla scala)
-const CHOICES: { key: string; label: string; options: string[]; field: string; prefix?: string; scale?: boolean }[] = [
+const CHOICES: { key: string; label: string; options: string[]; field: string; prefix?: string; scale?: boolean; multi?: boolean }[] = [
   { key: "appearance", label: "Aspetto", options: ["Limpida", "Velata", "Torbida"], field: "appearance", scale: true },
   { key: "foam", label: "Schiuma", options: ["Scarsa", "Persistente", "Cremosa"], field: "appearance", prefix: "schiuma", scale: true },
-  { key: "aroma", label: "Aroma", options: ["Luppolato", "Maltato", "Fruttato", "Speziato"], field: "aroma" },
+  { key: "aroma", label: "Aroma", options: ["Luppolato", "Maltato", "Fruttato", "Speziato"], field: "aroma", multi: true },
   { key: "flavor", label: "Gusto", options: ["Secco", "Equilibrato", "Dolce"], field: "flavor", scale: true },
   { key: "bitter", label: "Amaro", options: ["Basso", "Medio", "Alto"], field: "flavor", prefix: "amaro", scale: true },
   { key: "body", label: "Corpo", options: ["Leggero", "Medio", "Pieno"], field: "mouthfeel", prefix: "corpo", scale: true },
@@ -217,6 +217,27 @@ function Scale({ label, options, value, onChange }: { label: string; options: st
   );
 }
 
+/** Più scelte insieme (es. aroma luppolato e fruttato), più un testo libero: si salvano come «Luppolato, fruttato». */
+function MultiChoice({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
+  const items = value.split(/\s*,\s*/).map((x) => x.trim()).filter(Boolean);
+  const isOpt = (x: string) => options.some((o) => o.toLowerCase() === x.toLowerCase());
+  const picked = options.filter((o) => items.some((x) => x.toLowerCase() === o.toLowerCase()));
+  const extra = items.filter((x) => !isOpt(x)).join(", ");
+  const [otherOn, setOtherOn] = useState(Boolean(extra));
+  const emit = (sel: string[], ext: string) => onChange(capF([...sel, ext.trim()].filter(Boolean).map((x, i) => (i ? x.toLowerCase() : x)).join(", ")));
+  const toggle = (o: string) => emit(picked.includes(o) ? picked.filter((x) => x !== o) : options.filter((x) => x === o || picked.includes(x)), extra);
+  return (
+    <div className="tc-choice">
+      <span className="tc-title">{label} <span className="muted small">· anche più di uno</span></span>
+      <div className="tc-opts grid" style={{ ["--n" as string]: options.length }}>
+        {options.map((o) => <button key={o} type="button" className={"tc-opt" + (picked.includes(o) ? " on" : "")} onClick={() => toggle(o)}>{o}</button>)}
+      </div>
+      <button type="button" className={"tc-other-btn" + (otherOn || extra ? " on" : "")} onClick={() => { if (otherOn) emit(picked, ""); setOtherOn(!otherOn); }}>✎ altro…</button>
+      {(otherOn || extra) && <input className="tc-other" autoFocus={otherOn && !extra} value={extra} placeholder="es. agrumi, resina, caramello" onChange={(e) => emit(picked, e.target.value)} />}
+    </div>
+  );
+}
+
 function Choice({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
   const other = value !== "" && !options.includes(value);
   const [otherOn, setOtherOn] = useState(other);
@@ -285,6 +306,7 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
 
         {CHOICES.map((c) => (c.scale
           ? <Scale key={c.key} label={c.label} options={c.options} value={t[c.key] ?? null} onChange={(v) => set(c.key, v)} />
+          : c.multi ? <MultiChoice key={c.key} label={c.label} options={c.options} value={t[c.key] ?? ""} onChange={(v) => set(c.key, v)} />
           : <Choice key={c.key} label={c.label} options={c.options} value={t[c.key] ?? ""} onChange={(v) => set(c.key, v)} />))}
 
         <label className="block tc-pair"><span className="tc-title">🍽️ Abbinata a</span>
