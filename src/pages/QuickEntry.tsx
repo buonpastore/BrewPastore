@@ -26,10 +26,9 @@ const PHASES: Phase[] = [
   { title: "Correzione acqua del mash", color: "var(--teal)", icon: <FlaskConical size={20} />, fields: [
     { key: "water_ph_initial", label: "pH iniziale", kind: "ph" },
     { key: LACTIC, label: "Acido lattico", kind: "gd", hint: "quanto ne avete messo" },
-    { key: "water_ph_adjusted", label: "pH corretto", kind: "ph", hint: "viene copiato nel pH del mash" },
+    { key: "water_ph_adjusted", label: "pH corretto", kind: "ph" },
   ], twoCols: true },
   { title: "Mash", color: "var(--gold)", icon: <Wheat size={20} />, fields: [
-    { key: "mash_ph", label: "pH del mash", kind: "ph", hint: "ideale 5,2–5,6 · parte dal pH corretto" },
     { key: "pre_sparge_gravity", label: "Gravity pre-sparge", kind: "sg" },
   ] },
   { title: "Sparge", color: "var(--teal)", icon: <ShowerHead size={20} />, fields: [
