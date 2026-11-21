@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { BookOpen, Camera } from "lucide-react";
 import { type Row } from "../lib";
 import { loadProduced } from "../cellar";
 import { CapDot, useCapColors } from "./CapColor";
-import { COURSES, dishPhotoUrl, pairingFor } from "../pairings";
+import { COURSES, dishPhotoUrl, dishRecipeUrl, pairingFor } from "../pairings";
 
 const COURSE_COLORS = ["var(--gold)", "var(--teal)", "var(--magenta)", "var(--violet)"];
 
@@ -42,15 +42,20 @@ export function BeerPairings() {
           <div key={c.key} className="pairing-course" style={{ ["--c" as string]: COURSE_COLORS[ci] }}>
             <h3>{c.emoji} {c.label}</h3>
             {p.dishes[c.key].map((d) => (
-              <a key={d.name} className="pairing-dish" href={dishPhotoUrl(d.name)} target="_blank" rel="noopener noreferrer" title="Vedi le foto del piatto">
+              <div key={d.name} className="pairing-dish">
                 <span className="pd-photo">{d.emoji}</span>
-                <span className="pd-txt"><strong>{d.name}</strong><span>{d.why}</span></span>
-                <ExternalLink size={15} className="pd-go" />
-              </a>
+                <span className="pd-txt">
+                  <strong>{d.name}</strong><span>{d.why}</span>
+                  <span className="pd-links">
+                    <a href={dishPhotoUrl(d.name)} target="_blank" rel="noopener noreferrer"><Camera size={14} /> Foto</a>
+                    <a href={dishRecipeUrl(d.name)} target="_blank" rel="noopener noreferrer"><BookOpen size={14} /> Ricetta</a>
+                  </span>
+                </span>
+              </div>
             ))}
           </div>
         ))}
-        <p className="muted small">Tocca un piatto per vederne le foto. Gli abbinamenti seguono le regole classiche per lo stile della birra.</p>
+        <p className="muted small">Sotto ogni piatto: «Foto» per vederlo, «Ricetta» per sapere come si prepara. Gli abbinamenti seguono le regole classiche per lo stile della birra.</p>
       </div>
     </section>
   );

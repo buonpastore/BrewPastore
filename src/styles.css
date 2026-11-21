@@ -2222,3 +2222,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .pd-txt span { font-size: .84rem; color: var(--muted); line-height: 1.35; }
 .pd-go { flex: none; color: var(--c); }
 .pairing-dish strong, .pairing-dish:visited strong, .pairing-dish:hover strong { color: var(--text); }
+
+.pd-links { display: flex; gap: 8px; margin-top: 6px; }
+.pd-links a { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); color: var(--c); font: 700 .8rem var(--sans); text-decoration: none; background: color-mix(in srgb, var(--c) 10%, transparent); }
+.pd-links a svg { flex: none; }

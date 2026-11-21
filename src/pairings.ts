@@ -229,5 +229,7 @@ export function pairingFor(style?: string | null): Pairing & { styleName: string
   return { ...FAMILIES[fam], styleName: found?.name ?? null };
 }
 
+/** Ricetta del piatto: ricerca sul web (si apre nel browser). */
+export const dishRecipeUrl = (dish: string) => `https://www.google.com/search?q=${encodeURIComponent(`ricetta ${dish.replace(/\s*\(.*?\)/g, "")}`)}`;
 /** Foto del piatto: ricerca per immagini (si apre nel browser). */
 export const dishPhotoUrl = (dish: string) => `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${dish} piatto`)}`;
