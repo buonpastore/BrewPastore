@@ -2240,3 +2240,15 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
   .bc-ing tbody tr.sub td { display: block; }
   .bc-ing .bc-link { max-width: 100%; }
 }
+
+/* i pulsanti delle sezioni restano in alto mentre la pagina scorre */
+.section-tabs, .section-tabs.one-row {
+  position: sticky; top: var(--topbar-h); z-index: 25;
+  margin-left: -34px; margin-right: -34px; padding: 8px 34px 10px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+@media (max-width: 860px) {
+  .section-tabs, .section-tabs.one-row { margin: -8px -16px 16px; padding: 8px 16px 10px; }
+}
