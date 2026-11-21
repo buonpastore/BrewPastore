@@ -58,6 +58,9 @@ function Items({ list, showStep }: { list: Row[]; showStep?: boolean }) {
 export function BrewDay(p: Props) {
   const ing = p.ingredients;
   const boil = p.boilTime ? Number(p.boilTime) : null;
+  // mash-out scritto nel procedimento (es. «Mash-out 78 °C × 10 min»): lo mostro tra parentesi accanto al mash
+  const mo = String(p.procedure ?? "").match(/mash[\s-]*out\s*:?\s*(\d{2}(?:[.,]\d)?)\s*°\s*C?\s*(?:×|x|per)?\s*(\d{1,3})?\s*(?:min)?/i);
+  const mashOut = mo ? `mash-out ${mo[1].replace(".", ",")} °C${mo[2] ? ` × ${mo[2]} min` : ""}` : null;
 
   const waterSalts = ing.filter((i) => i.category === "sali_acqua" && !isMash(i.step) && minutesOf(i.step) == null);
   const mashItems = ing.filter((i) => (i.category === "malto" || isMash(i.step)) && !isDryHop(i.step) && !isWhirlpool(i.step) && minutesOf(i.step) == null);
@@ -82,7 +85,7 @@ export function BrewDay(p: Props) {
     <div>
       <div className="bd-kpis">
         <div style={{ ["--c" as string]: "var(--gold)" }}><Beer size={18} /><small>Birra</small><strong>{p.volume ? `${num(p.volume, 1)} L` : "—"}</strong></div>
-        <div style={{ ["--c" as string]: "var(--teal)" }}><Wheat size={18} /><small>Mash</small><strong>{p.mashTemp ? `${num(p.mashTemp, 1)} °C` : "—"}</strong><span>{p.mashTime ? `${p.mashTime} min` : ""}</span></div>
+        <div style={{ ["--c" as string]: "var(--teal)" }}><Wheat size={18} /><small>Mash</small><strong>{p.mashTemp ? `${num(p.mashTemp, 1)} °C` : "—"}</strong><span>{p.mashTime ? `${p.mashTime} min` : ""}{mashOut ? ` (${mashOut})` : ""}</span></div>
         <div style={{ ["--c" as string]: "var(--magenta)" }}><Flame size={18} /><small>Bollitura</small><strong>{boil ? `${boil} min` : "—"}</strong></div>
         <div style={{ ["--c" as string]: "var(--violet)" }}><Leaf size={18} /><small>Luppoli</small><strong>{hopTotal > 0 ? `${num(hopTotal, 0)} g` : "—"}</strong><span>{hopTotal > 0 && p.volume ? `${num(hopTotal / Number(p.volume), 1)} g/L` : ""}</span></div>
       </div>
@@ -97,7 +100,7 @@ export function BrewDay(p: Props) {
           <Items list={waterSalts} />
         </Step>
         <Step icon={<Wheat size={18} />} color="var(--gold)" title="Ammostamento (mash)"
-          sub={p.mashTemp ? `${num(p.mashTemp, 1)} °C per ${p.mashTime ?? "?"} min` : undefined}>
+          sub={p.mashTemp ? `${num(p.mashTemp, 1)} °C per ${p.mashTime ?? "?"} min${mashOut ? ` (${mashOut})` : ""}` : undefined}>
           <Items list={mashItems} />
         </Step>
         <Step icon={<ShowerHead size={18} />} color="var(--teal)" title="Mash out e sparge" sub={p.spargeWater ? `${num(p.spargeWater, 1)} L a 76–78 °C` : "risciacquo a 76–78 °C"}>

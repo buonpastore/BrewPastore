@@ -295,10 +295,18 @@ export function parseRecipeText(text: string, knownStyles: string[] = []): TextR
   // «mash out» scritto subito prima: è il mash-out anche se a 72 °C (non conta nella durata del mash)
   const isOut = (l: string, i: number) => /mash[\s-]*out|mashout/i.test(l.slice(Math.max(0, i - 28), i));
   for (const l of raw.split(/\r?\n/)) {
+    const before = steps.length;
     // «66 °C 60 min», «66°C - 60 min», «66 °C da 60 minuti», «66 gradi per 60 minuti»
     for (const m of l.matchAll(/(\d{2}(?:[.,]\d)?)\s*(?:°\s*C?|gradi)\s*(?:[-–—|:,x×]|per|for|da|di)?\s*(\d{1,3})\s*(?:min|minuti|mins|')/gi)) if (!near(l, m.index ?? 0)) steps.push({ t: num(m[1]), min: Number(m[2]), out: isOut(l, m.index ?? 0) });
     // «60 min a 66 °C», «da 60 minuti a 66 gradi»
     for (const m of l.matchAll(/(\d{1,3})\s*(?:min|minuti|mins|')\s*(?:a|at|@)\s*(\d{2}(?:[.,]\d)?)\s*(?:°|gradi)/gi)) if (!near(l, m.index ?? 0)) steps.push({ t: num(m[2]), min: Number(m[1]), out: isOut(l, m.index ?? 0) });
+    // riga del mash scritta in altro ordine: «Mash out 10 minuti 78°C», «Mash out (78°C) 10 min», «Mash-out a 78°C (10 minuti)»,
+    // «Portare a 78°C e mantenere per 10 minuti (mash out)», «78C 10min»: prendo temperatura e minuti ovunque nella riga
+    if (steps.length === before && /mash|ammost|sosta|saccarific|infusione/i.test(l) && !NOT_MASH.test(l)) {
+      const tm = l.match(/(\d{2}(?:[.,]\d)?)\s*(?:°\s*C?|gradi|C\b)/i);
+      const mm = l.match(/(\d{1,3})\s*(?:min\b|minuti|mins|')/i);
+      if (tm && mm) steps.push({ t: num(tm[1]), min: Number(mm[1]), out: /mash[\s-]*out|mashout/i.test(l) });
+    }
   }
   steps.splice(0, steps.length, ...steps.filter((x, i, a) => x.t >= 40 && x.t <= 80 && x.min > 0 && x.min <= 120 && a.findIndex((y) => y.t === x.t && y.min === x.min) === i)
     .map((x) => ({ ...x, out: x.out || x.t >= 75 || steps.some((y) => y.t === x.t && y.min === x.min && y.out) })));
