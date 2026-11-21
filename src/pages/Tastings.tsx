@@ -116,7 +116,7 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
             </header>
             <dl>
               {FIELDS.filter(([k]) => t[k]).map(([k, label]) => (
-                <div key={k}><dt>{label}</dt><dd className="pre">{t[k]}</dd></div>
+                <div key={k}><dt>{label}</dt><dd className="pre">{String(t[k]).replace(/\s*\(\d{1,3}\)/g, "")}</dd></div>
               ))}
             </dl>
             {t.would_brew_again != null && <p className="small">{t.would_brew_again ? "👍 La rifarei" : "👎 Non la rifarei così"}</p>}
@@ -139,16 +139,33 @@ export function TastingsPanel({ batchId }: { batchId?: string }) {
 /** Caratteristiche a scelta rapida (3–4 opzioni, oppure «Altro» da scrivere). */
 /* Voci delle schede di degustazione (aspetto, schiuma, aroma, gusto, amaro, corpo, bollicine, finale).
    Si salvano nei campi della degustazione: es. aspetto «Velata · schiuma cremosa», gusto «Secco · amaro medio · finale lungo». */
-const CHOICES: { key: string; label: string; options: string[]; field: string; prefix?: string }[] = [
-  { key: "appearance", label: "Aspetto", options: ["Limpida", "Velata", "Torbida"], field: "appearance" },
-  { key: "foam", label: "Schiuma", options: ["Scarsa", "Persistente", "Cremosa"], field: "appearance", prefix: "schiuma" },
+// scale: la voce si valuta con un cursore da 0 a 100 (le parole sono i punti di riferimento sulla scala)
+const CHOICES: { key: string; label: string; options: string[]; field: string; prefix?: string; scale?: boolean }[] = [
+  { key: "appearance", label: "Aspetto", options: ["Limpida", "Velata", "Torbida"], field: "appearance", scale: true },
+  { key: "foam", label: "Schiuma", options: ["Scarsa", "Persistente", "Cremosa"], field: "appearance", prefix: "schiuma", scale: true },
   { key: "aroma", label: "Aroma", options: ["Luppolato", "Maltato", "Fruttato", "Speziato"], field: "aroma" },
-  { key: "flavor", label: "Gusto", options: ["Secco", "Equilibrato", "Dolce", "Acidulo"], field: "flavor" },
-  { key: "bitter", label: "Amaro", options: ["Basso", "Medio", "Alto"], field: "flavor", prefix: "amaro" },
-  { key: "body", label: "Corpo", options: ["Leggero", "Medio", "Pieno"], field: "mouthfeel", prefix: "corpo" },
-  { key: "fizz", label: "Bollicine", options: ["Poche", "Giuste", "Tante"], field: "mouthfeel", prefix: "bollicine" },
-  { key: "finish", label: "Finale", options: ["Corto", "Medio", "Lungo"], field: "flavor", prefix: "finale" },
+  { key: "flavor", label: "Gusto", options: ["Secco", "Equilibrato", "Dolce"], field: "flavor", scale: true },
+  { key: "bitter", label: "Amaro", options: ["Basso", "Medio", "Alto"], field: "flavor", prefix: "amaro", scale: true },
+  { key: "body", label: "Corpo", options: ["Leggero", "Medio", "Pieno"], field: "mouthfeel", prefix: "corpo", scale: true },
+  { key: "fizz", label: "Bollicine", options: ["Poche", "Giuste", "Tante"], field: "mouthfeel", prefix: "bollicine", scale: true },
+  { key: "finish", label: "Finale", options: ["Corto", "Medio", "Lungo"], field: "flavor", prefix: "finale", scale: true },
 ];
+/** Posizione (0–100) di ogni parola della scala. */
+const posOf = (i: number, n: number) => (n <= 1 ? 50 : Math.round((i * 100) / (n - 1)));
+/** Da un valore del cursore alla descrizione: «Medio», oppure «tra medio e alto» per i valori intermedi. */
+function describe(v: number, options: string[]): string {
+  const n = options.length;
+  for (let i = 0; i < n; i++) if (Math.abs(v - posOf(i, n)) <= 8) return options[i];
+  const i = Math.min(n - 2, Math.floor((v / 100) * (n - 1)));
+  return `tra ${options[i].toLowerCase()} e ${options[i + 1].toLowerCase()}`;
+}
+/** Dal testo salvato al valore del cursore: «tra medio e alto (65)» → 65, «Medio» → 50; altrimenti il testo così com'è. */
+function toScale(txt: string, options: string[]): number | string {
+  const m = txt.match(/\((\d{1,3})\)\s*$/);
+  if (m) return Math.min(100, Number(m[1]));
+  const i = options.findIndex((o) => o.toLowerCase() === txt.trim().toLowerCase());
+  return i >= 0 ? posOf(i, options.length) : txt;
+}
 const capF = (x: string) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : "");
 /** Dai campi salvati ai valori delle singole voci. */
 function splitFields(t: Row): Row {
@@ -156,8 +173,8 @@ function splitFields(t: Row): Row {
   for (const f of ["appearance", "aroma", "flavor", "mouthfeel"]) {
     for (const part of String(t[f] ?? "").split(/\s*·\s*/).filter(Boolean)) {
       const c = CHOICES.find((x) => x.field === f && x.prefix && part.toLowerCase().startsWith(x.prefix + " "));
-      if (c) out[c.key] = capF(part.slice(c.prefix!.length + 1).trim());
-      else { const main = CHOICES.find((x) => x.field === f && !x.prefix); if (main && !out[main.key]) out[main.key] = part; else if (!main) out.body = part; }
+      if (c) { const v = capF(part.slice(c.prefix!.length + 1).trim()); out[c.key] = c.scale ? toScale(v, c.options) : v; }
+      else { const main = CHOICES.find((x) => x.field === f && !x.prefix); if (main && out[main.key] == null) out[main.key] = main.scale ? toScale(part, main.options) : part; else if (!main) out.body = part; }
     }
   }
   const pair = String(t.notes ?? "").match(/(?:^|\n)Abbinata a:\s*(.+)$/);
@@ -169,11 +186,35 @@ function splitFields(t: Row): Row {
 function joinFields(t: Row): Row {
   const out: Row = {};
   for (const f of ["appearance", "aroma", "flavor", "mouthfeel"]) {
-    const parts = CHOICES.filter((c) => c.field === f && t[c.key]).map((c) => (c.prefix && c.options.includes(t[c.key]) ? `${c.prefix} ${String(t[c.key]).toLowerCase()}` : t[c.key]));
+    const parts = CHOICES.filter((c) => c.field === f && t[c.key] != null && t[c.key] !== "").map((c) => {
+      const v = t[c.key];
+      if (typeof v === "number") { const d = `${describe(v, c.options)} (${v})`; return c.prefix ? `${c.prefix} ${d.toLowerCase()}` : d; }
+      return c.prefix && c.options.includes(v) ? `${c.prefix} ${String(v).toLowerCase()}` : v;
+    });
     out[f] = parts.length ? capF(parts.join(" · ")) : null;
   }
   out.notes = [t.notes?.trim(), t.pairing?.trim() && `Abbinata a: ${t.pairing.trim()}`].filter(Boolean).join("\n") || null;
   return out;
+}
+
+/** Cursore da 0 a 100 con le parole della scala sotto; finché non lo tocchi la voce non è valutata. */
+function Scale({ label, options, value, onChange }: { label: string; options: string[]; value: number | string | null; onChange: (v: number | null) => void }) {
+  const num = typeof value === "number" ? value : null;
+  const legacy = typeof value === "string" && value ? value : null;   // testo libero scritto prima («altro…»)
+  return (
+    <div className={"tc-scale" + (num == null ? " unset" : "")}>
+      <div className="tc-scale-head">
+        <span className="tc-title">{label}</span>
+        <span className="tc-scale-val">{num != null ? describe(num, options) : legacy ?? "tocca il cursore"}</span>
+        {num != null && <button type="button" className="tc-scale-x" aria-label="Togli" onClick={() => onChange(null)}>✕</button>}
+      </div>
+      <input type="range" min={0} max={100} step={1} value={num ?? 50}
+        onChange={(e) => onChange(Number(e.target.value))} onClick={(e) => num == null && onChange(Number((e.target as HTMLInputElement).value))} />
+      <div className="tc-scale-ticks" style={{ ["--n" as string]: options.length }}>
+        {options.map((o, i) => <button key={o} type="button" style={{ left: `${posOf(i, options.length)}%` }} onClick={() => onChange(posOf(i, options.length))}>{o}</button>)}
+      </div>
+    </div>
+  );
 }
 
 function Choice({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
@@ -242,7 +283,9 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
           <label className="tc-date"><span className="nb-label">Data</span><input type="date" value={t.tasted_on ?? ""} onChange={(e) => set("tasted_on", e.target.value)} /></label>
         </div>
 
-        {CHOICES.map((c) => <Choice key={c.key} label={c.label} options={c.options} value={t[c.key] ?? ""} onChange={(v) => set(c.key, v)} />)}
+        {CHOICES.map((c) => (c.scale
+          ? <Scale key={c.key} label={c.label} options={c.options} value={t[c.key] ?? null} onChange={(v) => set(c.key, v)} />
+          : <Choice key={c.key} label={c.label} options={c.options} value={t[c.key] ?? ""} onChange={(v) => set(c.key, v)} />))}
 
         <label className="block tc-pair"><span className="tc-title">🍽️ Abbinata a</span>
           <input value={t.pairing ?? ""} placeholder="es. pizza margherita, formaggi stagionati…" onChange={(e) => set("pairing", e.target.value)} /></label>

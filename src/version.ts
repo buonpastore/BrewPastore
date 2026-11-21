@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.265", date: "21/11/2026 11:45", text: "Degustazioni: aspetto, schiuma, gusto (secco → dolce), amaro, corpo, bollicine e finale si valutano con un cursore, anche con valori intermedi (es. «tra medio e alto»); toccando una parola sotto il cursore ci si va direttamente, con ✕ si toglie. L’aroma resta a bottoni (luppolato, maltato, fruttato, speziato)" },
   { version: "0.264", date: "21/11/2026 11:20", text: "Timer dei luppoli: − e + ai lati del tempo per togliere o aggiungere un minuto, prima di partire (cambia la durata della bollitura), durante e in pausa; tornando indietro le aggiunte non ancora raggiunte suonano di nuovo" },
   { version: "0.263", date: "21/11/2026 11:00", text: "Import ricetta: il mash-out si riconosce scritto in qualunque ordine («Mash out 10 minuti 78°C», «Mash out (78°C) 10 min», «Mash-out a 78°C (10 minuti)», «Portare a 78°C e mantenere per 10 minuti (mash out)», «78C 10min»…). Cottura: accanto al mash compare tra parentesi il mash-out, es. «66 °C per 60 min (mash-out 78 °C × 10 min)»" },
   { version: "0.262", date: "21/11/2026 10:30", text: "Batch → Inserisci: nei consumi della cotta (energia elettrica e acqua totale) l’app non propone e non salva più valori stimati con «Salva e chiudi»: si scrivono solo a mano. Se mancano, nei costi resta la stima segnata come «stimato»" },
