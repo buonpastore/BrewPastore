@@ -1,6 +1,6 @@
 import { ViewToggle } from "../components/ViewToggle";
 import { Fragment, useEffect, useState } from "react";
-import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, fmtUnitPrice, fmtBaseQty, toBase, type Row } from "../lib";
+import { supabase, eur, num, date, errMsg, MATERIAL_CATEGORIES, fmtUnitPrice, fmtBaseQty, toBase, yeastBags, bagsLabel, type Row } from "../lib";
 import { deleteMaterialsWithoutPurchases } from "../rebuild";
 import { catColor, nameColor } from "../categories";
 
@@ -63,7 +63,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
   };
 
   const removeLine = async (h: Row, m: Row) => {
-    if (!confirm(`Eliminare la riga «${h.description ?? m.name}» (${num(h.quantity, 3)} ${h.unit}, ${eur(h.total_price)}) di ${h.purchases?.supplier ?? ""}?`)) return;
+    if (!confirm(`Eliminare la riga «${h.description ?? m.name}» (${m.category === "lievito" ? bagsLabel(yeastBags(Number(h.quantity), h.unit)) : `${num(h.quantity, 3)} ${h.unit}`}, ${eur(h.total_price)}) di ${h.purchases?.supplier ?? ""}?`)) return;
     const { error } = await supabase.from("purchase_items").delete().eq("id", h.id);
     if (error) return alert(errMsg(error));
     setHistory((x) => x.filter((r) => r.id !== h.id));
@@ -244,7 +244,7 @@ export function Materials({ embedded = false }: { embedded?: boolean }) {
                             <tbody>{history.map((h) => (
                               <tr key={h.id}>
                                 <td>{date(h.purchases?.purchase_date)}<div className="muted small">{h.purchases?.supplier}{h.order_ship ? ` · sped. ordine ${eur(h.order_ship)}` : ""}</div></td>
-                                <td className="nowrap">{isCore(m.category) ? `${num(h.quantity, 3)} ${h.unit}` : `${num(piecesOfLine(h), 1)} pz`}</td>
+                                <td className="nowrap">{m.category === "lievito" ? bagsLabel(yeastBags(Number(h.quantity), h.unit)) : isCore(m.category) ? `${num(h.quantity, 3)} ${h.unit}` : `${num(piecesOfLine(h), 1)} pz`}</td>
                                 <td className="nowrap">{eur(h.total_price)}</td>
                                 <td className="nowrap">{h.ship_share ? `+ ${eur(h.ship_share)}` : "—"}</td>
                                 <td className="nowrap">{lineUp(h, 0)}</td>

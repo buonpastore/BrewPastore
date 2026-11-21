@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   supabase, uploadFile, parseDocument, findOrCreateMaterial, loadMaterials, errMsg, eur, date,
-  MATERIAL_CATEGORIES, UNITS, type ParsedDocument, type Row,
-} from "../lib";
+  MATERIAL_CATEGORIES, UNITS, yeastBags, bagsLabel, YEAST_BAG_G, num, type ParsedDocument, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
 import { RowsEditor } from "../components/RowsEditor";
@@ -282,8 +281,19 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
                         {!it.material_id && <input value={it.material_name} onChange={(e) => setItem(i, { material_name: e.target.value })} />}
                       </td>
                       <td data-label="Categoria"><select value={it.category} onChange={(e) => setItem(i, { category: e.target.value })}>{MATERIAL_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></td>
-                      <td data-label="Quantità"><input type="number" step="any" style={{ width: 80 }} value={it.quantity} onChange={(e) => setItem(i, { quantity: Number(e.target.value) })} /></td>
-                      <td data-label="Unità"><select value={it.unit} onChange={(e) => setItem(i, { unit: e.target.value })}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
+                      {it.category === "lievito" && ["g", "kg"].includes(it.unit) ? (
+                        <>
+                          {/* lievito: si scrive in bustine (1 = 11,5 g), si salva in grammi come prima */}
+                          <td data-label="Bustine"><input type="number" step="1" min="1" style={{ width: 80 }} value={yeastBags(it.quantity, it.unit)}
+                            onChange={(e) => setItem(i, { quantity: Math.max(1, Number(e.target.value) || 1) * YEAST_BAG_G, unit: "g" })} /></td>
+                          <td data-label="Unità" className="muted small">bustine</td>
+                        </>
+                      ) : (
+                        <>
+                          <td data-label="Quantità"><input type="number" step="any" style={{ width: 80 }} value={it.quantity} onChange={(e) => setItem(i, { quantity: Number(e.target.value) })} /></td>
+                          <td data-label="Unità"><select value={it.unit} onChange={(e) => setItem(i, { unit: e.target.value })}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
+                        </>
+                      )}
                       <td data-label="Prezzo €"><input type="number" step="any" style={{ width: 90 }} value={it.total_price} onChange={(e) => setItem(i, { total_price: Number(e.target.value) })} /></td>
                       <td className="rv-del"><button className="icon" title="Togli riga" onClick={() => setItems(items.filter((_, j) => j !== i))}>🗑️</button></td>
                     </tr>
@@ -326,6 +336,7 @@ export function PurchaseDetail() {
     supabase.from("purchases").select("*").eq("id", id!).single().then(({ data }) => setP(data));
     loadMaterials().then(setMaterials);
   }, [id]);
+  const catOf = (r: Row) => materials.find((m) => m.id === r.material_id)?.category;
 
   const remove = async () => {
     if (!confirm("Eliminare l'acquisto e tutte le sue righe?")) return;
@@ -361,11 +372,13 @@ export function PurchaseDetail() {
           fields={[
             { key: "material_id", label: "Materia prima", type: "select", required: true, options: materials.map((m) => ({ value: m.id, label: m.name })) },
             { key: "description", label: "Descrizione" },
-            { key: "quantity", label: "Q.tà", type: "number", required: true },
-            { key: "unit", label: "Unità", type: "select", options: UNITS, required: true },
+            { key: "quantity", label: "Q.tà", type: "number", required: true,
+              render: (v, r) => (catOf(r) === "lievito" ? bagsLabel(yeastBags(Number(v), r.unit)) : num(Number(v), 3)) },
+            { key: "unit", label: "Unità", type: "select", options: UNITS, required: true, render: (v, r) => (catOf(r) === "lievito" ? "" : String(v ?? "")) },
             { key: "total_price", label: "Prezzo riga €", type: "number", required: true, render: (v) => eur(v as number) },
           ]}
           extraColumns={[{ label: "€/unità", render: (r) => {
+            if (catOf(r) === "lievito") return `${eur(r.total_price / yeastBags(Number(r.quantity), r.unit))}/bustina`;
             const q = ["g", "ml"].includes(r.unit) ? r.quantity / 1000 : r.quantity;
             return `${eur(r.total_price / q)}/${["g", "kg"].includes(r.unit) ? "kg" : ["ml", "l"].includes(r.unit) ? "l" : "pz"}`;
           } }]} />

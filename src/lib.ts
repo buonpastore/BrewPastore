@@ -291,19 +291,29 @@ export function priceUnit(category: string, baseUnit: string): { factor: number;
   if (category === "lievito" && baseUnit === "kg") return { factor: 0.0115, label: "pz" };   // 1 pz = bustina da 11,5 g
   return { factor: 1, label: baseUnit };
 }
+/** Lievito sempre in bustine: 1 bustina = 11,5 g (le quantità in g/kg vengono convertite, quelle in pezzi restano). */
+export const YEAST_BAG_G = 11.5;
+export function yeastBags(qty: number, unit: string): number {
+  const u = String(unit ?? "").toLowerCase();
+  const g = u === "kg" ? qty * 1000 : u === "mg" ? qty / 1000 : u === "g" ? qty : null;
+  return g == null ? qty : Math.max(1, Math.round(g / YEAST_BAG_G));
+}
+export const bagsLabel = (n: number) => `${num(n, Number.isInteger(n) ? 0 : 1)} ${n === 1 ? "bustina" : "bustine"}`;
+
 export function fmtUnitPrice(cost: number | null | undefined, category: string, baseUnit: string) {
   if (cost == null) return "—";
   const { factor, label } = priceUnit(category, baseUnit);
   const v = Number(cost) * factor;
   // prezzi molto piccoli (es. luppolo al grammo) con 3 decimali
   const s = v < 1 ? new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(v) : eur(v);
-  return `${s}/${label}`;
+  return `${s}/${category === "lievito" && label === "pz" ? "bustina" : label}`;
 }
 export function fmtBaseQty(qtyBase: number | null | undefined, category: string, baseUnit: string) {
   if (qtyBase == null) return "—";
   const { factor, label } = priceUnit(category, baseUnit);
   const q = factor === 1 ? Number(qtyBase) : Number(qtyBase) / factor;
-  return `${num(q, category === "lievito" ? 1 : 3)} ${label}`;
+  if (category === "lievito" && label === "pz") return bagsLabel(Math.round(q * 10) / 10);
+  return `${num(q, 3)} ${label}`;
 }
 /** quantità nell'unità base (kg, l, pz) */
 export function toBase(qty: number, unit: string) {

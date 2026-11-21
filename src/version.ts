@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.280", date: "21/11/2026 16:45", text: "Lievito sempre in bustine (1 bustina = 11,5 g) e mai in grammi: nel dettaglio degli acquisti (quantità e €/bustina), nell’importazione di un ordine (si scrivono le bustine), nello storico delle materie prime, nei costi medi e nei costi delle birre" },
   { version: "0.279", date: "21/11/2026 16:15", text: "Costi delle birre, materie prime usate: sul telefono ogni ingrediente ha il nome su tutta la riga (niente più nomi spezzati e freccetta da sola) e sotto quantità, prezzo e costo" },
   { version: "0.278", date: "21/11/2026 16:00", text: "Abbinamenti: sotto ogni piatto due pulsanti, «📷 Foto» per vederlo e «📖 Ricetta» per sapere come si prepara" },
   { version: "0.277", date: "21/11/2026 15:45", text: "Degustazioni divisa in due schede: «⭐ Degustazioni» (voti, note e classifica) e «🍽️ Abbinamenti». Negli abbinamenti le birre disponibili sono schede grandi con tappo, stile e famiglia; scegliendone una, sotto compaiono antipasti, primi, secondi e dolci con il perché e le foto" },

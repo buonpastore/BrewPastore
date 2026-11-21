@@ -3,7 +3,7 @@ import { sortByCat, nameColor } from "../categories";
 import { Fragment, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight, BadgeCheck, Hourglass, X, Clock, Scale, Info } from "lucide-react";
-import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, type Row } from "../lib";
+import { supabase, eur, num, date, toBase, fmtUnitPrice, errMsg, bagsLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { type PriceBasis, neededTotals, piecesOfLine, pieceSizes, perPiece, isCore, sizeFromName, isBrewed, computeBatchCost, sumCosts, type Source, ingredientCost, capUnitPrice, bottlePricesFrom, isKit, type BatchCost, type BottlePrices } from "../costs";
 
@@ -285,7 +285,7 @@ function BeerDetail({ recipe, batches, extras, sum, costs, ings, mats, lines, on
 /** Lievito sempre in bustine (1 bustina = 11,5 g). */
 function yeastQty(q: number, unit: string) {
   const n = ["g", "kg", "mg"].includes(unit) ? Math.max(1, Math.round((unit === "kg" ? q * 1000 : unit === "mg" ? q / 1000 : q) / 11.5)) : q;
-  return `${num(n, 1)} pz`;
+  return bagsLabel(n);
 }
 
 /** Fonte di un dato (il peggiore tra i batch): manca > stimato > inserito. */
