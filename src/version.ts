@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.271", date: "21/11/2026 13:45", text: "Materie prime → Acquisti: prima l’elenco degli ordini (gli ultimi 5, poi «Mostra altri» 5 alla volta), sotto l’importazione di un nuovo acquisto e l’inserimento manuale" },
   { version: "0.270", date: "21/11/2026 13:30", text: "Batch: tolte le caselle delle date ripetute sotto i pulsanti di stato; al loro posto un pulsante «📅 Modifica le date» che apre tutte le date del batch e le salva insieme con «Salva»" },
   { version: "0.269", date: "21/11/2026 13:15", text: "Ricette: «Mostra le ricette archiviate» è un pulsante in fondo all’elenco (con quante sono) e non più in alto; le archiviate compaiono dopo tutte le altre" },
   { version: "0.268", date: "21/11/2026 13:00", text: "Pagina del batch più semplice: in alto i pulsanti di stato, poi le date (cotta, fermentazione, imbottigliata, degustata ed esaurita) modificabili direttamente, poi i dati del batch con «Salva e chiudi». Tutte le altre schede (ingredienti, diario, piano di cotta, valori chimici, carbonazione, valutazioni, documenti, chat, tutti i dati, modifiche) stanno in fondo, chiuse sotto «Altro»" },

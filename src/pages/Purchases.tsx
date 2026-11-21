@@ -20,6 +20,9 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
   const { isAdmin } = useAuth();
   const nav = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
+  // si vedono gli ultimi 5 ordini, gli altri 5 alla volta
+  const PAGE = 5;
+  const [shown, setShown] = useState(PAGE);
   const [importing, setImporting] = useState(false);
   const [pasted, setPasted] = useState<File[] | undefined>();
   const [view, setViewState] = useState<"estesa" | "compatta">(() => { try { return localStorage.getItem("bp-acquisti-vista") === "estesa" ? "estesa" : "compatta"; } catch { return "compatta"; } });
@@ -68,32 +71,12 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
   return (
     <div>
       {!embedded && <div className="page-head"><h1>Acquisti materie prime</h1></div>}
-      {isAdmin && (
-        <div className="ing-import">
-          <h3>Importa un acquisto</h3>
-          {!importing && (
-            <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
-              title="📋 Incolla qui" hint="fattura, screenshot, scontrino o testo" />
-          )}
-          <div className="pu-tools">
-            <button className="btn" onClick={manual}>✏️ Inserimento manuale</button>
-            <button className="btn" disabled={rebuilding !== null} onClick={rebuild}>♻️ {rebuilding ?? "Rileggi tutti gli ordini salvati"}</button>
-          </div>
-          {report && (
-            <div className="rebuild-report">
-              {report.ok.map((x) => <div key={x} className="ok small">✓ {x}</div>)}
-              {report.skipped.map((x) => <div key={x} className="muted small">– {x}</div>)}
-              {report.errors.map((x) => <div key={x} className="error small">✗ {x}</div>)}
-            </div>
-          )}
-        </div>
-      )}
       <div className="list-head">
         <span>{rows.length} {rows.length === 1 ? "ordine" : "ordini"}</span>
         <ViewToggle value={full ? "estesa" : "compatta"} onChange={setView} />
       </div>
       <div className={"pu-list" + (full ? " full" : "")}>
-        {rows.map((p) => {
+        {rows.slice(0, shown).map((p) => {
           const its = p.purchase_items as Row[];
           const goods = its.reduce((s, i) => s + Number(i.total_price), 0);
           const d = p.purchase_date ? new Date(p.purchase_date) : null;
@@ -132,6 +115,34 @@ export function Purchases({ embedded = false }: { embedded?: boolean }) {
         })}
         {!rows.length && <p className="muted">Nessun acquisto. Importane uno qui sotto (es. il PDF o il testo dell'ordine Mr Malt).</p>}
       </div>
+      {rows.length > shown && (
+        <button type="button" className="btn full-w" style={{ marginTop: 10 }} onClick={() => setShown((n) => n + PAGE)}>
+          Mostra altri {Math.min(PAGE, rows.length - shown)} (ne restano {rows.length - shown})
+        </button>
+      )}
+      {shown > PAGE && rows.length > PAGE && (
+        <button type="button" className="btn small full-w" style={{ marginTop: 6 }} onClick={() => setShown(PAGE)}>Mostra solo gli ultimi {PAGE}</button>
+      )}
+      {isAdmin && (
+        <div className="ing-import" style={{ marginTop: 18 }}>
+          <h3>Importa un acquisto</h3>
+          {!importing && (
+            <FilePicker compact allowText onFiles={(f) => { setPasted(f); setImporting(true); }} accept="application/pdf,image/*,.eml,.txt,.html"
+              title="📋 Incolla qui" hint="fattura, screenshot, scontrino o testo" />
+          )}
+          <div className="pu-tools">
+            <button className="btn" onClick={manual}>✏️ Inserimento manuale</button>
+            <button className="btn" disabled={rebuilding !== null} onClick={rebuild}>♻️ {rebuilding ?? "Rileggi tutti gli ordini salvati"}</button>
+          </div>
+          {report && (
+            <div className="rebuild-report">
+              {report.ok.map((x) => <div key={x} className="ok small">✓ {x}</div>)}
+              {report.skipped.map((x) => <div key={x} className="muted small">– {x}</div>)}
+              {report.errors.map((x) => <div key={x} className="error small">✗ {x}</div>)}
+            </div>
+          )}
+        </div>
+      )}
       {importing && <ImportPurchase initialFiles={pasted} onClose={() => { setImporting(false); setPasted(undefined); }} />}
     </div>
   );
