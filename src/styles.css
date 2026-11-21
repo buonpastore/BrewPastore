@@ -2200,3 +2200,23 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .tk-imp-flag { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 99px; background: var(--magenta); color: #fff; font-size: .7rem; font-weight: 800; letter-spacing: .02em; vertical-align: middle; }
 .tk-imp-toggle { width: 100%; min-height: 46px; margin: 4px 0 12px; border-radius: 12px; border: 1px dashed var(--line-strong); background: none; color: var(--muted); font: 700 .95rem var(--sans); cursor: pointer; }
 .tk-imp-toggle.on { border: 1px solid var(--magenta); background: color-mix(in srgb, var(--magenta) 16%, transparent); color: var(--magenta); }
+
+/* degustazioni: abbinamenti con il cibo */
+.pairings { margin: 14px 0 22px; }
+.pairings h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.pairings h2 svg { color: var(--violet); }
+.pairing-beers { display: flex; gap: 8px; overflow-x: auto; padding: 8px 2px 6px; scrollbar-width: none; }
+.pairing-beers::-webkit-scrollbar { display: none; }
+.pairing-beer { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; max-width: 240px; }
+.pairing-beer > span { display: grid; min-width: 0; }
+.pairing-beer strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pairing-modal { position: relative; max-width: 560px; }
+.pairing-modal h2 { display: flex; align-items: center; gap: 10px; padding-right: 32px; }
+.pairing-course { margin-top: 14px; }
+.pairing-course h3 { margin: 0 0 8px; color: var(--c); font-size: 1rem; }
+.pairing-dish { display: flex; align-items: center; gap: 12px; padding: 10px; margin-bottom: 8px; border-radius: 14px; background: var(--surface-2); border-left: 3px solid var(--c); color: var(--text); text-decoration: none; }
+.pd-photo { flex: none; width: 54px; height: 54px; display: grid; place-items: center; font-size: 2rem; border-radius: 12px; background: color-mix(in srgb, var(--c) 16%, var(--surface)); }
+.pd-txt { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.pd-txt span { font-size: .84rem; color: var(--muted); line-height: 1.35; }
+.pd-go { flex: none; color: var(--c); }
+.pairing-dish strong, .pairing-dish:visited strong, .pairing-dish:hover strong { color: var(--text); }

@@ -1,3 +1,4 @@
+import { BeerPairings } from "../components/Pairings";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, Minus, Plus } from "lucide-react";
@@ -337,6 +338,7 @@ export function Tastings() {
     <div>
       <div className="page-head"><h1>Degustazioni</h1></div>
       <p className="muted">Ognuno lascia il proprio voto e le proprie note sui batch: qui trovate tutte le degustazioni e la classifica.</p>
+      <BeerPairings />
       <TastingsPanel />
     </div>
   );
