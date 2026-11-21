@@ -26,7 +26,7 @@ export function Recipes() {
     .sort((a, b) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "").localeCompare(String(a.bottling_date ?? a.brew_date ?? a.created_at ?? "")))[0]?.cap_color as string | undefined;
 
   useEffect(() => {
-    supabase.from("recipes").select("*, batches(id, brew_date, bottling_date, created_at, status, cap_color)").order("created_at", { ascending: false })
+    supabase.from("recipes").select("*, batches(id, brew_date, fermentation_start, bottling_date, created_at, status, cap_color)").order("created_at", { ascending: false })
       .then(({ data }) => setRows(data ?? []));
   }, []);
 
@@ -42,9 +42,11 @@ export function Recipes() {
   const match = (r: Row) => (!style || r.style === style) && (r.name + " " + (r.style ?? "")).toLowerCase().includes(q.toLowerCase());
   // le archiviate, se mostrate, vanno in fondo all'elenco
   const archivedCount = rows.filter((r) => r.archived && match(r)).length;
-  // ordine: dalla ricetta con il batch più recente (data di cotta, o di creazione se non ancora cotto);
-  // quelle senza batch dopo, dall'ultima inserita
-  const lastBatch = (r: Row) => ((r.batches ?? []) as Row[]).map((b) => String(b.brew_date ?? String(b.created_at ?? "").slice(0, 10))).sort().pop() ?? "";
+  // ordine: prima le ricette con un batch in corso (cotta, fermentata o imbottigliata), dal batch più recente;
+  // poi le altre (batch degustati, esauriti o nessun batch), dall'ultima ricetta inserita
+  const ACTIVE = ["cotta", "fermentazione", "maturazione", "imbottigliato"];
+  const lastBatch = (r: Row) => ((r.batches ?? []) as Row[]).filter((b) => ACTIVE.includes(b.status))
+    .map((b) => [b.bottling_date, b.fermentation_start, b.brew_date, String(b.created_at ?? "").slice(0, 10)].filter(Boolean).map(String).sort().pop() ?? "").sort().pop() ?? "";
   const byLast = (a: Row, b: Row) => { const x = lastBatch(a), y = lastBatch(b);
     return (x && y ? y.localeCompare(x) : Number(Boolean(y)) - Number(Boolean(x))) || String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")); };
   const list = [...rows.filter((r) => !r.archived && match(r)).sort(byLast), ...(showArchived ? rows.filter((r) => r.archived && match(r)).sort(byLast) : [])];
