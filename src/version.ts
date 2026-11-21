@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.275", date: "21/11/2026 14:45", text: "Task: nuovo pulsante «❗ Segna come importante». Le task importanti sono evidenziate in magenta con l’etichetta «Importante» e stanno in cima, sia nelle Task sia in Home. Da eseguire: 0028_task_importante.sql" },
   { version: "0.274", date: "21/11/2026 14:30", text: "Ricette: in cima quelle con un batch in corso (cotta, fermentata o imbottigliata), dal batch più recente; poi le altre (batch già degustati o esauriti, o nessun batch), dall’ultima ricetta inserita" },
   { version: "0.273", date: "21/11/2026 14:15", text: "Ricette ordinate per data dell’ultimo batch, dalla più recente; le ricette senza batch vengono dopo (dall’ultima inserita), le archiviate sempre in fondo" },
   { version: "0.272", date: "21/11/2026 14:00", text: "Costi delle birre: ogni birra usa sempre il suo ultimo batch fatto (prima l’ultimo imbottigliato) e le birre sono in ordine dal batch più recente; quelle senza batch in fondo" },

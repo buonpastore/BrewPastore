@@ -46,17 +46,19 @@ export function Tasks() {
   const WEEK = 7 * 24 * 3600 * 1000;
   const old = (t: Row) => t.status === "terminata" && Date.now() - new Date(t.done_at ?? t.updated_at ?? t.created_at).getTime() > WEEK;
   const rank = (t: Row) => (t.status === "in_corso" ? 0 : t.status === "inserita" ? 1 : 2);
-  const active = list.filter((t) => !old(t)).sort((a, b) => rank(a) - rank(b));
+  // le importanti in cima (tranne quelle già terminate)
+  const imp = (t: Row) => (t.important && t.status !== "terminata" ? 0 : 1);
+  const active = list.filter((t) => !old(t)).sort((a, b) => imp(a) - imp(b) || rank(a) - rank(b));
   const done = list.filter(old).sort((a, b) => String(b.done_at ?? b.updated_at).localeCompare(String(a.done_at ?? a.updated_at)));
   const open = (tasks ?? []).find((t) => t.id === openId) ?? null;
 
   const Item = ({ t }: { t: Row }) => {
     const st = stateOf(t.status), Icon = st.icon;
     return (
-      <button className={"tk-item " + st.cls} onClick={() => setOpenId(t.id)}>
+      <button className={"tk-item " + st.cls + (t.important && t.status !== "terminata" ? " tk-imp" : "")} onClick={() => setOpenId(t.id)}>
         <Icon size={20} className="tk-ico" />
         <span className="tk-body">
-          <strong>{t.title}</strong>
+          <strong>{t.important && <span className="tk-imp-flag">❗ Importante</span>}{t.title}</strong>
           <span className="muted small">
             {whoOf(t).length ? <>per <b>{whoOf(t).map((id) => (id === me ? "te" : nameOf(id))).join(", ")}</b></> : "da assegnare"}
             {t.due_date && <> · entro il {date(t.due_date)}</>}
@@ -111,9 +113,14 @@ function TaskForm({ initial, profiles, onClose, onSaved }: { initial: Row; profi
     e.preventDefault(); setError("");
     if (!String(t.title ?? "").trim()) return setError("Scrivi cosa c'è da fare");
     setBusy(true);
-    const row: Row = { title: t.title.trim(), description: t.description || null, assignee: who[0] ?? null, assignees: who, due_date: t.due_date || null, updated_at: new Date().toISOString() };
+    const row: Row = { title: t.title.trim(), description: t.description || null, assignee: who[0] ?? null, assignees: who, due_date: t.due_date || null, important: Boolean(t.important), updated_at: new Date().toISOString() };
     const write = (x: Row) => (t.id ? supabase.from("tasks").update(x).eq("id", t.id) : supabase.from("tasks").insert(x));
     let { error } = await write(row);
+    if (error && /important/i.test(error.message)) {   // database non ancora aggiornato (0028): salvo senza il segno
+      const { important: _i, ...rest } = row; void _i;
+      ({ error } = await write(rest));
+      if (!error && row.important) alert("Salvata senza il segno «importante»: per usarlo esegui su Supabase il file 0028_task_importante.sql.");
+    }
     if (error && /assignees/i.test(error.message)) {   // database non ancora aggiornato (0014): salvo solo la prima persona
       const { assignees: _a, ...old } = row;
       ({ error } = await write(old));
@@ -135,6 +142,9 @@ function TaskForm({ initial, profiles, onClose, onSaved }: { initial: Row; profi
             <button key={p.id} type="button" className={"pay-method" + (who.includes(p.id) ? " on" : "")} onClick={() => toggle(p.id)}>{who.includes(p.id) ? "✓ " : ""}{p.display_name}</button>
           ))}
         </div>
+        <button type="button" className={"tk-imp-toggle" + (t.important ? " on" : "")} onClick={() => setT({ ...t, important: !t.important })}>
+          ❗ {t.important ? "Importante" : "Segna come importante"}
+        </button>
         <label className="block"><span>Entro il (facoltativo)</span><input type="date" value={t.due_date ?? ""} onChange={(e) => setT({ ...t, due_date: e.target.value || null })} /></label>
         {error && <p className="error">{error}</p>}
         <div className="qe-sheet-btns">
@@ -191,7 +201,7 @@ function TaskDetail({ task, me, onClose, onChanged, onEdit }: { task: Row; me: s
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal tk-detail" onClick={(e) => e.stopPropagation()}>
         <div className="tk-detail-head">
-          <h2>{task.title}</h2>
+          <h2>{task.important && <span className="tk-imp-flag">❗ Importante</span>}{task.title}</h2>
           <button className="icon" onClick={onClose} aria-label="Chiudi"><X size={22} /></button>
         </div>
         <p className="muted small">

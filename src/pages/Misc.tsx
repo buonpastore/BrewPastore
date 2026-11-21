@@ -434,7 +434,8 @@ function MyTasks() {
   const [list, setList] = useState<Row[]>([]);
   useEffect(() => {
     supabase.from("tasks").select("*").neq("status", "terminata").order("created_at", { ascending: false })
-      .then(({ data }) => setList((data ?? []).filter((t) => me && whoOf(t).includes(me))));
+      .then(({ data }) => setList((data ?? []).filter((t) => me && whoOf(t).includes(me))
+        .sort((a, b) => Number(Boolean(b.important)) - Number(Boolean(a.important)))));   // le importanti in cima
   }, [me]);
   if (!list.length) return null;
   return (
@@ -442,9 +443,9 @@ function MyTasks() {
       <h2>📋 Le tue task</h2>
       <div className="tk-list">
         {list.map((t) => (
-          <Link key={t.id} to="/task" className={"tk-item " + (t.status === "in_corso" ? "ts-doing" : "ts-new")}>
+          <Link key={t.id} to="/task" className={"tk-item " + (t.status === "in_corso" ? "ts-doing" : "ts-new") + (t.important ? " tk-imp" : "")}>
             <span className="tk-body">
-              <strong>{t.title}</strong>
+              <strong>{t.important && <span className="tk-imp-flag">❗ Importante</span>}{t.title}</strong>
               <span className="muted small">da {nameOf(t.created_by)}{t.due_date ? ` · entro il ${date(t.due_date)}` : ""}</span>
             </span>
             <span className={"tk-badge " + (t.status === "in_corso" ? "ts-doing" : "ts-new")}>{t.status === "in_corso" ? "In corso" : "Inserita"}</span>
