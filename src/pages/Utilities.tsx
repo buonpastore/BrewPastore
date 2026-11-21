@@ -392,6 +392,21 @@ function HopTimer() {
   };
   const pause = () => { setSt((s) => (s ? { ...s, start: null, pausedLeft: left } : s)); wake.current?.release().catch(() => undefined); };
   const reset = () => { setSt(null); fired.current.clear(); wake.current?.release().catch(() => undefined); };
+  // − e +: un minuto in meno o in più (prima di partire cambia la durata della bollitura, durante sposta il tempo rimasto)
+  const shift = (min: number) => {
+    const d = min * 60;
+    const next = Math.max(0, Math.min(180 * 60, left + d));
+    if (next === left) return;
+    // tornando indietro nel tempo, le aggiunte non ancora raggiunte devono suonare di nuovo
+    for (const a of adds) if (next > a.at * 60) fired.current.delete(`${a.id}`);
+    if (next > 0) fired.current.delete("fine");
+    setSt((s) => {
+      const b = s?.boil ?? boil;
+      if (!s || (s.start == null && s.pausedLeft == null)) return { batchId: current?.id ?? "", boil: Math.max(1, Math.round(next / 60)), start: null, pausedLeft: null };
+      if (s.start != null) return { ...s, start: s.start + (next - left) * 1000 };
+      return { ...s, boil: b, pausedLeft: next };
+    });
+  };
 
   const mm = Math.floor(left / 60), ss = Math.floor(left % 60);
   return (
@@ -401,12 +416,16 @@ function HopTimer() {
         <p className="muted">Bollitura di <Link to={`/batch/${current.id}`}>{current.code}</Link>: {st?.boil ?? boil} minuti.</p>
       ) : <p className="muted">Nessun batch in corso: il timer usa 60 minuti.</p>}
       <div className={"ut-timer" + (running ? " run" : "")}>
-        <span className="ut-time">{String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}</span>
-        <span className="muted small">alla fine della bollitura</span>
+        <div className="ut-time-row">
+          <button type="button" className="bf-btn" aria-label="Un minuto in meno" onClick={() => shift(-1)}><Minus size={24} /></button>
+          <span className="ut-time">{String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}</span>
+          <button type="button" className="bf-btn" aria-label="Un minuto in più" onClick={() => shift(1)}><Plus size={24} /></button>
+        </div>
+        <span className="muted small">alla fine della bollitura · − e + tolgono o aggiungono un minuto</span>
       </div>
       <div className="ut-timer-btns">
         {running ? <button className="btn" onClick={pause}><Pause size={20} /> Pausa</button>
-          : <button className="btn primary" onClick={start}><Play size={20} /> {st ? "Riprendi" : "Avvia bollitura"}</button>}
+          : <button className="btn primary" onClick={start}><Play size={20} /> {st && (st.start != null || st.pausedLeft != null) ? "Riprendi" : "Avvia bollitura"}</button>}
         <button className="btn" onClick={() => { if (confirm("Azzerare il timer?")) reset(); }}><RotateCcw size={20} /> Azzera</button>
         <button className="btn" onClick={() => { audio.current ??= new AudioContext(); audio.current.resume().then(beep); }}><Bell size={20} /> Prova suono</button>
       </div>

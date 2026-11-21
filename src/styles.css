@@ -2168,3 +2168,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 
 .big-field.dirty { border-color: color-mix(in srgb, var(--gold) 60%, transparent); }
 .bf-dirty { font-size: .72rem; font-weight: 600; color: var(--gold); }
+
+.ut-time-row { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 10px; width: 100%; max-width: 420px; }
+.ut-time-row .ut-time { text-align: center; }
+.ut-time-row .bf-btn { width: 56px; }
