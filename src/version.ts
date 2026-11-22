@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.282", date: "22/11/2026 09:30", text: "Eventi: in fondo alla pagina «Aggiornamenti dell’elenco» con tutti gli aggiornamenti giorno per giorno (eventi aggiunti, aggiornati e tolti). In Home, se la ricerca di quella mattina ha trovato novità, compare «Oggi ho aggiunto N eventi» con i titoli e il link agli eventi" },
   { version: "0.281", date: "21/11/2026 17:00", text: "In tutte le sezioni i pulsanti in alto (es. Ricette, Batch, Degustazioni, Cantina) restano fissi sotto l’intestazione mentre la pagina scorre" },
   { version: "0.280", date: "21/11/2026 16:45", text: "Lievito sempre in bustine (1 bustina = 11,5 g) e mai in grammi: nel dettaglio degli acquisti (quantità e €/bustina), nell’importazione di un ordine (si scrivono le bustine), nello storico delle materie prime, nei costi medi e nei costi delle birre" },
   { version: "0.279", date: "21/11/2026 16:15", text: "Costi delle birre, materie prime usate: sul telefono ogni ingrediente ha il nome su tutta la riga (niente più nomi spezzati e freccetta da sola) e sotto quantità, prezzo e costo" },

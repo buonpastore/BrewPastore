@@ -3,7 +3,62 @@ import { Link } from "react-router-dom";
 import { CalendarDays, ExternalLink, GraduationCap, MapPin, PartyPopper, Factory, Beer } from "lucide-react";
 
 interface BeerEvent { titolo: string; tipo: string; dal: string | null; al: string | null; quando: string; dove: string; regione: string; descrizione: string; link: string }
-interface EventsFile { aggiornato: string; eventi: BeerEvent[] }
+/** Registro degli aggiornamenti dell'elenco (lo scrive la ricerca automatica di ogni mattina). */
+interface EventsLog { data: string; aggiunti: string[]; aggiornati: string[]; tolti: string[]; nota?: string }
+interface EventsFile { aggiornato: string; eventi: BeerEvent[]; storico?: EventsLog[] }
+const fmtDay = (d: string) => { const s = new Date(d + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }); return s.charAt(0).toUpperCase() + s.slice(1); };
+const todayIso = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; };
+
+/** Elenco degli aggiornamenti: per ogni giorno gli eventi aggiunti, aggiornati e tolti. */
+function EventsHistory({ log }: { log: EventsLog[] }) {
+  const [open, setOpen] = useState<string | null>(log[0]?.data ?? null);
+  if (!log.length) return null;
+  const n = (x: number, one: string, many: string) => `${x} ${x === 1 ? one : many}`;
+  return (
+    <section className="ev-log">
+      <h2>🔄 Aggiornamenti dell'elenco</h2>
+      <p className="muted small">Ogni mattina l'app cerca nuovi eventi: qui trovi cosa è cambiato giorno per giorno.</p>
+      {log.map((e) => {
+        const parts = [e.aggiunti.length && n(e.aggiunti.length, "aggiunto", "aggiunti"), e.aggiornati.length && n(e.aggiornati.length, "aggiornato", "aggiornati"), e.tolti.length && n(e.tolti.length, "tolto", "tolti")].filter(Boolean);
+        const isOpen = open === e.data;
+        return (
+          <div key={e.data} className={"ev-log-day" + (isOpen ? " open" : "")}>
+            <button type="button" onClick={() => setOpen(isOpen ? null : e.data)}>
+              <strong>{e.data === todayIso() ? "Oggi" : fmtDay(e.data)}</strong>
+              <span className="muted small">{e.nota ?? (parts.length ? parts.join(" · ") : "nessuna novità")}</span>
+            </button>
+            {isOpen && (
+              <ul>
+                {e.aggiunti.map((x) => <li key={"a" + x} className="add">➕ {x}</li>)}
+                {e.aggiornati.map((x) => <li key={"u" + x} className="upd">✏️ {x}</li>)}
+                {e.tolti.map((x) => <li key={"t" + x} className="del">➖ {x}</li>)}
+                {!e.aggiunti.length && !e.aggiornati.length && !e.tolti.length && <li className="muted">Nessun evento nuovo trovato.</li>}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+/** In Home: se oggi la ricerca automatica ha aggiunto o aggiornato eventi, lo dice. */
+export function EventsNews() {
+  const [log, setLog] = useState<EventsLog | null>(null);
+  useEffect(() => {
+    fetch(`${new URL("eventi.json", document.baseURI).href}?t=${Date.now()}`).then((r) => (r.ok ? r.json() : null))
+      .then((d: EventsFile | null) => { const e = d?.storico?.[0]; if (e && e.data === todayIso() && (e.aggiunti.length || e.aggiornati.length)) setLog(e); })
+      .catch(() => undefined);
+  }, []);
+  if (!log) return null;
+  return (
+    <Link to="/eventi" className="panel ev-news">
+      <strong>📅 Oggi ho {log.aggiunti.length ? `aggiunto ${log.aggiunti.length} ${log.aggiunti.length === 1 ? "evento" : "eventi"}` : ""}{log.aggiunti.length && log.aggiornati.length ? " e " : ""}{log.aggiornati.length ? `aggiornato ${log.aggiornati.length} ${log.aggiornati.length === 1 ? "evento" : "eventi"}` : ""}</strong>
+      <span className="small">{[...log.aggiunti, ...log.aggiornati].slice(0, 3).join(" · ")}{log.aggiunti.length + log.aggiornati.length > 3 ? " …" : ""}</span>
+      <span className="small ev-news-go">Vai agli eventi →</span>
+    </Link>
+  );
+}
 
 const TYPES: Record<string, { label: string; one: string; icon: typeof Beer; color: string }> = {
   festival: { label: "Festival", one: "Festival", icon: PartyPopper, color: "var(--gold)" },
@@ -82,6 +137,7 @@ export function Events() {
         {data && !list.length && <p className="muted">Nessun evento con questi filtri.</p>}
       </div>
       {data && <label className="check" style={{ marginTop: 10 }}><input type="checkbox" checked={past} onChange={(e) => setPast(e.target.checked)} /> mostra anche quelli passati</label>}
+      {data?.storico && <EventsHistory log={data.storico} />}
     </div>
   );
 }

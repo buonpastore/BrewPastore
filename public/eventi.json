@@ -244,5 +244,61 @@
       "descrizione": "Il birrificio agricolo prepara un mese di eventi natalizi con le sue birre: programma e date nell'articolo.",
       "link": "https://www.romagoodnews.it/2026/11/19/il-birrificio-agricolo-podere-676-prepara-un-natale-di-grandi-eventi/"
     }
+  ],
+  "storico": [
+    {
+      "data": "2026-11-22",
+      "aggiunti": [
+        "Natale al birrificio agricolo Podere 676"
+      ],
+      "aggiornati": [],
+      "tolti": []
+    },
+    {
+      "data": "2026-11-21",
+      "aggiunti": [
+        "Corso sulla birra – Assosommelier (Ancona)"
+      ],
+      "aggiornati": [
+        "Beer&Food Attraction 2027 e premiazione Birra dell'Anno (prima «Birra dell'Anno 2027 – premiazione»)",
+        "BAM – Birrifici Aperti Marche"
+      ],
+      "tolti": []
+    },
+    {
+      "data": "2026-11-20",
+      "aggiunti": [
+        "Viaggio nel mondo della birra – corso Unionbirrai (Roma)",
+        "Birra dell'Anno 2027 – premiazione Unionbirrai",
+        "BAM – Birrifici Aperti Marche"
+      ],
+      "aggiornati": [],
+      "tolti": []
+    },
+    {
+      "data": "2026-11-19",
+      "aggiunti": [
+        "Birraio dell'Anno 2027",
+        "6° Corso sulla Birra – A tavola con Bacco",
+        "Umbria Lup & Beer – fiera della birra artigianale e agricola umbra",
+        "UBeer – festival della birra artigianale umbra",
+        "Corso Sommelier della Birra – I livello",
+        "Visita e degustazione da Mastri Birrai Umbri",
+        "Tour e degustazione al Birrificio Flea",
+        "Viaggio nel mondo della birra – corso Unionbirrai",
+        "Italy Beer Week 2027",
+        "Corso di degustazione birra (base) – Fermento Birra",
+        "Corso sulle birre – Assosommelier",
+        "Corso di degustazione birra – Il Tempo Ritrovato",
+        "Natale alla Rocca",
+        "Christmas Beers 2026 – premiazione Unionbirrai",
+        "Birra Turbacci Xmas Fest",
+        "Birre Sotto l'Albero",
+        "Corso degustazione birra – Degustibuss"
+      ],
+      "aggiornati": [],
+      "tolti": [],
+      "nota": "Prima versione dell'elenco"
+    }
   ]
 }

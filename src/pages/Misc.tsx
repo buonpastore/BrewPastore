@@ -1,4 +1,4 @@
-import { MonthEvents } from "./Events";
+import { MonthEvents, EventsNews } from "./Events";
 import { whoOf } from "./Tasks";
 import { LogIn, Minus, Plus, Camera, RotateCcw } from "lucide-react";
 import { UserAvatar } from "../components/UserAvatar";
@@ -133,6 +133,7 @@ export function Dashboard() {
       ) : null}
 
       <MyTasks />
+      <EventsNews />
       <MonthEvents />
 
       {recent.length > 0 && (
