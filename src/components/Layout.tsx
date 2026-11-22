@@ -2,7 +2,7 @@ import { UserAvatar } from "./UserAvatar";
 import { FileViewer } from "./FileViewer";
 import { adminBackup, backToAdmin } from "../impersonate";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   House, BookOpen, Beer, Wheat, Wallet, Wrench, MessageCircle, Settings, LogOut, Star, Coins,
   type LucideIcon,
@@ -24,6 +24,8 @@ interface Group { key: string; label: string; icon: LucideIcon; to: string; colo
 
 /** Pulsanti di sezione tutti su una riga, più piccoli (prova; false = due per riga). */
 const ONE_ROW = true;
+/** Ultima pagina aperta di ogni sezione (su questo telefono). */
+const LAST_KEY = "pastorizia-ultima-pagina";
 
 export const GROUPS: Group[] = [
   { key: "home", label: "Home", icon: House, to: "/", color: "var(--text)" },
@@ -107,6 +109,20 @@ export function Layout() {
     return () => { document.removeEventListener("focusin", onIn); document.removeEventListener("focusout", onOut); };
   }, []);
   const current = groupOf(loc.pathname);
+  // ogni sezione ricorda l'ultima pagina aperta (es. Attività → Chat): tornandoci si riapre lì
+  const [lastPath, setLastPath] = useState<Record<string, string>>(() => { try { return JSON.parse(localStorage.getItem(LAST_KEY) ?? "{}"); } catch { return {}; } });
+  useEffect(() => {
+    if (current.key === "home") return;
+    const here = loc.pathname + loc.search;
+    setLastPath((m) => {
+      if (m[current.key] === here) return m;
+      const next = { ...m, [current.key]: here };
+      try { localStorage.setItem(LAST_KEY, JSON.stringify(next)); } catch { /* niente */ }
+      return next;
+    });
+  }, [loc.pathname, loc.search, current.key]);
+  // toccando la sezione in cui si è già, si torna alla sua prima pagina
+  const groupTo = (g: Group) => (current.key === g.key ? g.to : lastPath[g.key] ?? g.to);
 
   return (
     <div className="app">
@@ -135,7 +151,7 @@ export function Layout() {
           const active = current.key === g.key;
           return (
             <div key={g.key}>
-              <NavLink to={g.to} end={g.to === "/"} className={active ? "active" : ""} style={{ ["--c" as string]: g.color }}>
+              <NavLink to={groupTo(g)} end={g.to === "/"} className={active ? "active" : ""} style={{ ["--c" as string]: g.color }}>
                 <Icon size={19} strokeWidth={2} /> <span>{g.label}</span>
               </NavLink>
               {g.tabs && active && (
@@ -198,7 +214,7 @@ export function Layout() {
           const Icon = g.icon;
           const active = current.key === g.key;
           return (
-            <NavLink key={g.key} to={g.to} end={g.to === "/"} className={active ? "active" : ""} style={{ ["--c" as string]: g.color }}>
+            <NavLink key={g.key} to={groupTo(g)} end={g.to === "/"} className={active ? "active" : ""} style={{ ["--c" as string]: g.color }}>
               <Icon size={22} strokeWidth={active ? 2.4 : 1.8} />
               <span>{g.label}</span>
             </NavLink>
