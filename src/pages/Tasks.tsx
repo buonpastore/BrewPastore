@@ -58,7 +58,7 @@ export function Tasks() {
       <button className={"tk-item " + st.cls + (t.important && t.status !== "terminata" ? " tk-imp" : "")} onClick={() => setOpenId(t.id)}>
         <Icon size={20} className="tk-ico" />
         <span className="tk-body">
-          <strong>{t.important && <span className="tk-imp-flag">❗ Importante</span>}{t.title}</strong>
+          <strong>{t.important && <span className="tk-imp-flag" title="Importante" aria-label="Importante">!</span>}{t.title}</strong>
           <span className="muted small">
             {whoOf(t).length ? <>per <b>{whoOf(t).map((id) => (id === me ? "te" : nameOf(id))).join(", ")}</b></> : "da assegnare"}
             {t.due_date && <> · entro il {date(t.due_date)}</>}
@@ -201,7 +201,7 @@ function TaskDetail({ task, me, onClose, onChanged, onEdit }: { task: Row; me: s
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal tk-detail" onClick={(e) => e.stopPropagation()}>
         <div className="tk-detail-head">
-          <h2>{task.important && <span className="tk-imp-flag">❗ Importante</span>}{task.title}</h2>
+          <h2>{task.important && <span className="tk-imp-flag" title="Importante" aria-label="Importante">!</span>}{task.title}</h2>
           <button className="icon" onClick={onClose} aria-label="Chiudi"><X size={22} /></button>
         </div>
         <p className="muted small">

@@ -2197,7 +2197,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 
 /* task importanti */
 .tk-item.tk-imp { border-color: color-mix(in srgb, var(--magenta) 70%, transparent); border-left-color: var(--magenta); background: color-mix(in srgb, var(--magenta) 10%, var(--surface)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--magenta) 35%, transparent); }
-.tk-imp-flag { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 99px; background: var(--magenta); color: #fff; font-size: .7rem; font-weight: 800; letter-spacing: .02em; vertical-align: middle; }
+.tk-imp-flag { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 8px; border-radius: 50%; background: var(--magenta); color: #fff; font-size: .8rem; font-weight: 900; line-height: 1; vertical-align: 2px; }
 .tk-imp-toggle { width: 100%; min-height: 46px; margin: 4px 0 12px; border-radius: 12px; border: 1px dashed var(--line-strong); background: none; color: var(--muted); font: 700 .95rem var(--sans); cursor: pointer; }
 .tk-imp-toggle.on { border: 1px solid var(--magenta); background: color-mix(in srgb, var(--magenta) 16%, transparent); color: var(--magenta); }
 

@@ -446,7 +446,7 @@ function MyTasks() {
         {list.map((t) => (
           <Link key={t.id} to="/task" className={"tk-item " + (t.status === "in_corso" ? "ts-doing" : "ts-new") + (t.important ? " tk-imp" : "")}>
             <span className="tk-body">
-              <strong>{t.important && <span className="tk-imp-flag">❗ Importante</span>}{t.title}</strong>
+              <strong>{t.important && <span className="tk-imp-flag" title="Importante" aria-label="Importante">!</span>}{t.title}</strong>
               <span className="muted small">da {nameOf(t.created_by)}{t.due_date ? ` · entro il ${date(t.due_date)}` : ""}</span>
             </span>
             <span className={"tk-badge " + (t.status === "in_corso" ? "ts-doing" : "ts-new")}>{t.status === "in_corso" ? "In corso" : "Inserita"}</span>
