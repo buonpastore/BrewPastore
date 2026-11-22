@@ -1,5 +1,5 @@
 {
-  "aggiornato": "2026-11-21",
+  "aggiornato": "2026-11-22",
   "nota": "Eventi a tema birra in Umbria e Centro Italia, aggiornati ogni giorno in automatico.",
   "eventi": [
     {
@@ -232,6 +232,17 @@
       "regione": "Marche",
       "descrizione": "I birrifici marchigiani aprono le porte al pubblico con visite e degustazioni (nel 2024 e nel 2025 dal 6 all'8 dicembre, con una ventina di birrifici).",
       "link": "https://www.beverfood.com/bam-birrifici-aperti-marche-migliori-birre-agricole-e-artigianali-wd/"
+    },
+    {
+      "titolo": "Natale al birrificio agricolo Podere 676",
+      "tipo": "birrificio",
+      "dal": null,
+      "al": null,
+      "quando": "dicembre 2026 (date degli eventi sulla pagina)",
+      "dove": "Podere 676, Fiumicino (RM)",
+      "regione": "Lazio",
+      "descrizione": "Il birrificio agricolo prepara un mese di eventi natalizi con le sue birre: programma e date nell'articolo.",
+      "link": "https://www.romagoodnews.it/2026/11/19/il-birrificio-agricolo-podere-676-prepara-un-natale-di-grandi-eventi/"
     }
   ]
 }
