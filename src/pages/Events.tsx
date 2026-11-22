@@ -71,9 +71,8 @@ export function EventsNews() {
           );
           return e?.link
             ? <a key={x} className="he-row" href={e.link} target="_blank" rel="noopener noreferrer" style={{ ["--c" as string]: t.color }}>{body}</a>
-            : <div key={x} className="he-row" style={{ ["--c" as string]: t.color }}>{body}</div>;
+            : <Link key={x} className="he-row" to="/eventi" style={{ ["--c" as string]: t.color }}>{body}</Link>;
         })}
-        <Link to="/eventi?vista=storico" className="small ev-news-go">Storico degli inserimenti →</Link>
       </div>
     </>
   );
