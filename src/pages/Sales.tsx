@@ -8,6 +8,7 @@ import { loadProduced } from "../cellar";
 import { Revenue, DEFAULT_PRICE } from "./Revenue";
 
 const NEED_0024 = "Per registrare le vendite esegui 0024_vendite.sql nello SQL Editor di Supabase.";
+const NEED_0029 = "Per togliere le bottiglie dalla cantina esegui 0029_vendite_cantina.sql nello SQL Editor di Supabase.";
 const NEED_0026 = "Per segnare come hanno pagato esegui 0026_vendite_pagamento.sql nello SQL Editor di Supabase.";
 const PAYMENTS: { key: string; label: string }[] = [{ key: "contanti", label: "💶 Contanti" }, { key: "paypal", label: "🅿️ PayPal" }, { key: "bonifico", label: "🏦 Bonifico" }];
 const payLabel = (k?: string | null) => PAYMENTS.find((p) => p.key === k)?.label ?? null;
@@ -32,6 +33,25 @@ export function RevenuePage() {
 /** Righe della vendita: quale birra, quante bottiglie, a che prezzo (le vendite vecchie hanno una sola birra sulla vendita). */
 const itemsOf = (s: Row): Row[] => ((s.sale_items as Row[] | undefined)?.length ? s.sale_items as Row[]
   : [{ batch_id: s.batch_id ?? null, bottles: s.bottles, unit_price: s.unit_price }]);
+/** Cantina: aggiunge (delta > 0) o toglie (delta < 0) bottiglie dalla cantina di un socio, mai sotto zero. */
+async function moveCellar(changes: { user: string; batch: string; delta: number }[]) {
+  const sum = new Map<string, { user: string; batch: string; delta: number }>();
+  for (const c of changes) {
+    if (!c.batch || !c.delta) continue;
+    const k = `${c.user}|${c.batch}`;
+    const cur = sum.get(k) ?? { user: c.user, batch: c.batch, delta: 0 };
+    cur.delta += c.delta; sum.set(k, cur);
+  }
+  for (const c of sum.values()) {
+    if (!c.delta) continue;
+    const { data } = await supabase.from("cellar_bottles").select("bottles").eq("user_id", c.user).eq("batch_id", c.batch).maybeSingle();
+    const next = Math.max(0, Number(data?.bottles ?? 0) + c.delta);
+    const { error } = await supabase.from("cellar_bottles").upsert({ user_id: c.user, batch_id: c.batch, bottles: next, updated_at: new Date().toISOString() });
+    if (error) throw error;
+  }
+}
+const cellarOut = (s: Row, sign: 1 | -1) => (s.from_cellar ? itemsOf(s).filter((i) => i.batch_id).map((i) => ({ user: s.seller_id, batch: i.batch_id, delta: sign * Number(i.bottles) })) : []);
+
 const total = (s: Row) => (s.amount != null ? Number(s.amount) : itemsOf(s).reduce((a, i) => a + Number(i.bottles) * Number(i.unit_price), 0));
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -100,6 +120,8 @@ export function Sales() {
     if (!confirm(`Eliminare la vendita a ${s.buyer} (${itemsOf(s).reduce((a, i) => a + Number(i.bottles), 0)} bottiglie, ${eur(total(s))})?`)) return;
     const { error } = await supabase.from("sales").delete().eq("id", s.id);
     if (error) return alert(errMsg(error));
+    // se le bottiglie erano state tolte dalla cantina, ci tornano
+    try { await moveCellar(cellarOut(s, 1)); } catch (e) { alert("Vendita eliminata, ma non sono riuscito a rimettere le bottiglie in cantina: " + errMsg(e)); }
     setReload((x) => x + 1);
   };
   const canEdit = (s: Row) => isAdmin || s.created_by === me || s.seller_id === me;
@@ -238,6 +260,13 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
   const [split, setSplit] = useState<"soci" | "venditore">(sale?.split ?? "soci");
   const [notes, setNotes] = useState<string>(sale?.notes ?? "");
   const [payment, setPayment] = useState<string>(sale?.payment ?? "contanti");
+  // togliere le bottiglie vendute dalla cantina di chi vende
+  const [fromCellar, setFromCellar] = useState<boolean>(Boolean(sale?.from_cellar));
+  const [cellar, setCellar] = useState<Record<string, number>>({});
+  useEffect(() => {
+    supabase.from("cellar_bottles").select("batch_id, bottles").eq("user_id", seller)
+      .then(({ data }) => setCellar(Object.fromEntries((data ?? []).map((c) => [c.batch_id, Number(c.bottles)]))));
+  }, [seller]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -287,14 +316,22 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
       seller_id: seller, buyer: buyer.trim(), sold_on: day || today(), split, payment, notes: notes.trim() || null,
       batch_id: chosen.length === 1 ? chosen[0].batch_id : null, bottles: nBottles,
       unit_price: Math.round((amount / nBottles) * 100) / 100, amount,
+      ...(fromCellar || sale?.from_cellar ? { from_cellar: fromCellar } : {}),
     };
-    const fail = (e: { message: string }) => { setBusy(false); setErr(/payment/i.test(e.message) ? NEED_0026 : /amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
+    const fail = (e: { message: string }) => { setBusy(false); setErr(/from_cellar/i.test(e.message) ? NEED_0029 : /payment/i.test(e.message) ? NEED_0026 : /amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
     let id = sale?.id as string | undefined;
     if (sale) { const { error } = await supabase.from("sales").update(row).eq("id", sale.id); if (error) return fail(error); }
     else { const { data, error } = await supabase.from("sales").insert(row).select("id").single(); if (error) return fail(error); id = data.id; }
     await supabase.from("sale_items").delete().eq("sale_id", id!);
     const { error } = await supabase.from("sale_items").insert(chosen.map((l) => ({ sale_id: id, batch_id: l.batch_id, bottles: l.qty, unit_price: l.price })));
     if (error) return fail(error);
+    // cantina: rimetto quello che la vendita aveva tolto prima e tolgo quello di adesso
+    try {
+      await moveCellar([
+        ...(sale ? cellarOut({ ...sale, sale_items: items }, 1) : []),
+        ...(fromCellar ? chosen.filter((l) => l.batch_id).map((l) => ({ user: seller, batch: l.batch_id!, delta: -l.qty })) : []),
+      ]);
+    } catch (e) { setBusy(false); return setErr("Vendita salvata, ma la cantina non si è aggiornata: " + errMsg(e as { message: string })); }
     setBusy(false);
     onSaved();
   };
@@ -338,6 +375,21 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
           {!beers.length && <p className="muted small">Nessuna birra imbottigliata e non esaurita: usa «Altra birra».</p>}
         </div>
         <div className="sale-total">{nBottles} {nBottles === 1 ? "bottiglia" : "bottiglie"} · totale <strong>{eur(t)}</strong></div>
+
+        <div className={"sale-cellar" + (fromCellar ? " on" : "")}>
+          <label className="check"><input type="checkbox" checked={fromCellar} onChange={(e) => setFromCellar(e.target.checked)} /> <span>🍾 Togli queste bottiglie dalla cantina di <b>{soci.find((p) => p.id === seller)?.display_name ?? "chi vende"}</b></span></label>
+          {fromCellar && chosen.filter((l) => l.batch_id).map((l) => {
+            const b = beers.find((x) => x.id === l.batch_id);
+            const have = (cellar[l.batch_id!] ?? 0) + (sale?.from_cellar && sale.seller_id === seller ? Number(items.find((i) => i.batch_id === l.batch_id)?.bottles ?? 0) : 0);
+            return (
+              <div key={l.key} className={"sc-row" + (l.qty > have ? " short" : "")}>
+                <span>{b ? label(b) : "Birra"}</span>
+                <span>{have} in cantina → <b>{Math.max(0, have - l.qty)}</b>{l.qty > have ? " (non bastano)" : ""}</span>
+              </div>
+            );
+          })}
+          {fromCellar && chosen.some((l) => !l.batch_id) && <p className="muted small">«Altra birra» non è in cantina e non viene tolta.</p>}
+        </div>
 
         <span className="nb-label">I soldi</span>
         <div className="xp-types two">

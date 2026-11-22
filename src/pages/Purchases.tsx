@@ -1,3 +1,4 @@
+import { expenseFromPurchase, type Split } from "../expenses";
 import { ViewToggle } from "../components/ViewToggle";
 import { textOf } from "../ocr";
 import { sortByCat, nameColor, catColor, catLabel, catRank } from "../categories";
@@ -212,6 +213,11 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
   const setItem = (i: number, patch: Partial<ReviewItem>) => setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const goods = items.reduce((s, i) => s + Number(i.total_price || 0), 0);
   const computed = goods + Number(head.shipping_cost || 0);
+  // collegamento con le Spese condivise
+  const { session, profiles } = useAuth();
+  const [toExpense, setToExpense] = useState(true);
+  const [payer, setPayer] = useState<string>(session?.user.id ?? "");
+  const [split, setSplit] = useState<Split>("soci");
 
   const save = async () => {
     setStep("saving"); setError("");
@@ -237,6 +243,10 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
       if (rows.length) {
         const { error } = await supabase.from("purchase_items").insert(rows);
         if (error) throw error;
+      }
+      if (toExpense) {
+        await expenseFromPurchase({ purchaseId: p.id, supplier: p.supplier, day: p.purchase_date, amount: head.total_amount ?? computed,
+          paidBy: payer, split, members: profiles.map((x) => x.id), receiptPath: uploaded[0]?.path ?? null });
       }
       onClose();
       nav(`/acquisti/${p.id}`);
@@ -310,6 +320,8 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
               )}
             </p>
             {head.notes && <p className="note">📝 {head.notes}</p>}
+            <ExpenseChoice on={toExpense} setOn={setToExpense} payer={payer} setPayer={setPayer} split={split} setSplit={setSplit}
+              profiles={profiles} me={session?.user.id ?? ""} amount={head.total_amount ?? computed} />
           </>
         )}
         {error && <p className="error">{error}</p>}
@@ -319,6 +331,69 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
           {step === "saving" && <button className="btn primary" disabled>Salvo…</button>}
           <button className="btn" onClick={onClose}>Chiudi</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** «Aggiungi anche alle Spese condivise»: chi ha pagato e se si divide tra i soci. */
+function ExpenseChoice({ on, setOn, payer, setPayer, split, setSplit, profiles, me, amount }: {
+  on: boolean; setOn: (v: boolean) => void; payer: string; setPayer: (v: string) => void; split: Split; setSplit: (v: Split) => void;
+  profiles: Row[]; me: string; amount: number;
+}) {
+  const n = Math.max(1, profiles.length);
+  return (
+    <div className={"pu-expense" + (on ? " on" : "")}>
+      <label className="check"><input type="checkbox" checked={on} onChange={(e) => setOn(e.target.checked)} /> <span>💶 Aggiungi anche alle <b>Spese condivise</b></span></label>
+      {on && (
+        <>
+          <span className="nb-label">Chi l'ha pagato</span>
+          <div className="xp-types">
+            {profiles.map((p) => <button key={p.id} type="button" className={"pay-method" + (payer === p.id ? " on" : "")} onClick={() => setPayer(p.id)}>{p.display_name}{p.id === me ? " (tu)" : ""}</button>)}
+          </div>
+          <span className="nb-label">Come si divide</span>
+          <div className="xp-types two">
+            <button type="button" className={"pay-method" + (split === "soci" ? " on" : "")} onClick={() => setSplit("soci")}>Diviso tra i soci<small>{eur(amount / n)} a testa</small></button>
+            <button type="button" className={"pay-method" + (split === "io" ? " on" : "")} onClick={() => setSplit("io")}>Lo paga solo chi l'ha pagato<small>non si divide</small></button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Nel dettaglio dell'ordine: la spesa collegata, oppure il modo di crearla. */
+function PurchaseExpense({ p, goods }: { p: Row; goods: number }) {
+  const { session, profiles, nameOf, isAdmin } = useAuth();
+  const me = session?.user.id ?? "";
+  const [exp, setExp] = useState<Row | null | undefined>(undefined);
+  const [adding, setAdding] = useState(false);
+  const [on, setOn] = useState(true);
+  const [payer, setPayer] = useState(me);
+  const [split, setSplit] = useState<Split>("soci");
+  const [err, setErr] = useState("");
+  const [reload, setReload] = useState(0);
+  useEffect(() => { supabase.from("expenses").select("id, paid_by, amount").eq("purchase_id", p.id).limit(1).then(({ data }) => setExp(data?.[0] ?? null)); }, [p.id, reload]);
+  const amount = p.total_amount != null ? Number(p.total_amount) : goods + Number(p.shipping_cost ?? 0);
+  if (exp === undefined) return null;
+  if (exp) return <Link to="/spese" className="pu-expense-link">💶 Nelle Spese condivise: {eur(exp.amount)} pagato da <b>{nameOf(exp.paid_by)}</b> →</Link>;
+  if (!isAdmin) return null;
+  if (!adding) return <button className="btn full-w" onClick={() => setAdding(true)}>💶 Aggiungi alle Spese condivise</button>;
+  const save = async () => {
+    setErr("");
+    try {
+      const { data: doc } = await supabase.from("documents").select("storage_path").eq("purchase_id", p.id).limit(1);
+      await expenseFromPurchase({ purchaseId: p.id, supplier: p.supplier, day: p.purchase_date ?? new Date().toISOString().slice(0, 10), amount, paidBy: payer, split, members: profiles.map((x) => x.id), receiptPath: doc?.[0]?.storage_path ?? null });
+      setAdding(false); setReload((x) => x + 1);
+    } catch (e) { setErr(errMsg(e)); }
+  };
+  return (
+    <div className="panel">
+      <ExpenseChoice on={on} setOn={setOn} payer={payer} setPayer={setPayer} split={split} setSplit={setSplit} profiles={profiles} me={me} amount={amount} />
+      {err && <p className="error">{err}</p>}
+      <div className="half-actions" style={{ marginTop: 10 }}>
+        <button className="btn" onClick={() => setAdding(false)}>Annulla</button>
+        <button className="btn primary" disabled={!on} onClick={save}>Aggiungi {eur(amount)}</button>
       </div>
     </div>
   );
@@ -354,6 +429,7 @@ export function PurchaseDetail() {
           <h1>{p.supplier} <span className="muted">{date(p.purchase_date)}</span></h1>
         </div>
       </div>
+      <div style={{ marginBottom: 14 }}><PurchaseExpense p={p} goods={goods} /></div>
       <div className="panel">
         <RecordForm table="purchases" row={p} canEdit={isAdmin} onSaved={setP} sections={[{ fields: [
           { key: "supplier", label: "Fornitore", required: true },

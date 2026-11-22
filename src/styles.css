@@ -2265,3 +2265,16 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ev-log-day li.del { color: var(--magenta); }
 .panel.ev-news { display: grid; gap: 4px; text-decoration: none; color: var(--text); border-left: 4px solid var(--violet); padding: 14px 16px; }
 .panel.ev-news .ev-news-go { color: var(--violet); font-weight: 700; }
+
+/* acquisti ↔ spese condivise */
+.pu-expense { margin-top: 12px; padding: 12px; border-radius: 12px; border: 1px dashed var(--line-strong); }
+.pu-expense.on { border: 1px solid color-mix(in srgb, var(--teal) 55%, transparent); background: color-mix(in srgb, var(--teal) 7%, transparent); }
+.pu-expense .nb-label { margin-top: 10px; }
+.pu-expense-link { display: block; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--teal) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--teal) 45%, transparent); color: var(--text); text-decoration: none; }
+a.mini-btn { text-decoration: none; }
+
+/* vendite ↔ cantina */
+.sale-cellar { margin: 4px 0 12px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--line-strong); }
+.sale-cellar.on { border: 1px solid color-mix(in srgb, var(--violet) 55%, transparent); background: color-mix(in srgb, var(--violet) 8%, transparent); }
+.sale-cellar .sc-row { display: flex; justify-content: space-between; gap: 10px; font-size: .86rem; margin-top: 6px; }
+.sale-cellar .sc-row.short { color: var(--magenta); }

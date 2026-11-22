@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Camera, Receipt, Check, Hourglass, ChevronDown, ChevronRight, Paperclip, Trash2 } from "lucide-react";
+import { Camera, Receipt, Check, Hourglass, ChevronDown, ChevronRight, Paperclip, Trash2, ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase, uploadFile, openFile, errMsg, eur, date, type Row } from "../lib";
 import { useAuth } from "../auth";
 
@@ -91,7 +92,8 @@ export function Expenses() {
         </ul>
         {!closed(e) && e.paid_by === me && <p className="xp-recv">Da ricevere: <strong>{eur(toReceive)}</strong></p>}
         <div className="xp-actions">
-          {e.receipt_path && <button className="mini-btn" onClick={() => openFile(e.receipt_path)}><Paperclip size={14} /> <span>Scontrino</span></button>}
+          {e.purchase_id && <Link className="mini-btn" to={`/acquisti/${e.purchase_id}`}><ShoppingCart size={14} /> <span>Vedi l'ordine</span></Link>}
+          {e.receipt_path && <button className="mini-btn" onClick={() => openFile(e.receipt_path)}><Paperclip size={14} /> <span>{e.purchase_id ? "Documento" : "Scontrino"}</span></button>}
           {!e.receipt_path && canEdit && (
             <label className="mini-btn"><Paperclip size={14} /> <span>Aggiungi scontrino</span>
               <input type="file" accept="image/*,application/pdf" hidden onChange={(ev) => ev.target.files?.[0] && attachReceipt(e, ev.target.files[0])} /></label>
