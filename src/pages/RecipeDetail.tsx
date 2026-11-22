@@ -1,5 +1,5 @@
 import { DedupeButton } from "../components/DedupeButton";
-import { Beer } from "lucide-react";
+import { Beer, Copy, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase, errMsg, date, sg, MATERIAL_CATEGORIES, UNITS, loadMaterials, normStatus, statusLabel, type Row } from "../lib";
@@ -104,12 +104,19 @@ export function RecipeDetail() {
 
   return (
     <div>
-      <div className="page-head">
+      <div className="page-head recipe-head">
         <div>
           <Link to="/ricette" className="muted small">← Ricette</Link>
           <h1>{recipe.name}</h1>
           <div className="muted style-line">{recipe.style}<FamousBeers style={recipe.style} /></div>
         </div>
+        {isAdmin && (
+          <div className="head-icons">
+            <button type="button" title="Modifica la scheda" aria-label="Modifica" onClick={() => { setTab("scheda"); setEditScheda(true); }}><Pencil size={19} /></button>
+            <button type="button" title="Duplica la ricetta" aria-label="Duplica" onClick={duplicate}><Copy size={19} /></button>
+            <button type="button" className="danger" title="Elimina la ricetta" aria-label="Elimina" onClick={() => setDeleting(true)}><Trash2 size={19} /></button>
+          </div>
+        )}
       </div>
 
       {deleting && (
@@ -132,9 +139,8 @@ export function RecipeDetail() {
           <>
             <RecipeOverview recipe={recipe} />
             {isAdmin && (
-              <div className="half-actions" style={{ marginTop: 16 }}>
-                <button className="btn" onClick={() => setEditScheda(true)}>✏️ Modifica scheda</button>
-                <button className="btn" onClick={async () => {
+              <div style={{ marginTop: 16 }}>
+                <button className="btn full-w" onClick={async () => {
               const { data: ings } = await supabase.from("recipe_ingredients").select("*").eq("recipe_id", recipe.id).order("sort_order");
               const text = buildProcedure({
                 mashTemp: recipe.mash_temp_c, mashTime: recipe.mash_time_min, boil: recipe.boil_time_min,
@@ -218,12 +224,6 @@ export function RecipeDetail() {
           </>
         )}
       </div>
-      {isAdmin && (
-        <div className="half-actions bottom-delete">
-          <button className="btn" onClick={duplicate}>⧉ Duplica</button>
-          <button className="btn danger" onClick={() => setDeleting(true)}>🗑️ Elimina</button>
-        </div>
-      )}
     </div>
   );
 }

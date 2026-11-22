@@ -2286,3 +2286,9 @@ a.mini-btn { text-decoration: none; }
 .ev-news-list .ev-news-tag.nuovo { background: color-mix(in srgb, var(--hop) 22%, transparent); color: var(--hop); }
 .ev-news-list .ev-news-tag.aggiornato { background: color-mix(in srgb, var(--gold) 22%, transparent); color: var(--gold); }
 .ev-news-list .ev-news-go { display: block; padding: 10px 2px 4px; color: var(--violet); font-weight: 700; text-decoration: none; border-top: 1px solid var(--line); }
+
+/* ricetta: modifica, duplica, elimina in alto a destra (solo icone) */
+.recipe-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.head-icons { display: flex; gap: 8px; flex: none; margin-top: 22px; }
+.head-icons button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer; padding: 0; }
+.head-icons button.danger { color: var(--magenta); border-color: color-mix(in srgb, var(--magenta) 45%, transparent); }
