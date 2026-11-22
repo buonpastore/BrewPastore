@@ -239,7 +239,7 @@ export function BeerWheel() {
   if (all == null) return <p>Caricamento…</p>;
   return (
     <div>
-      <div className="wheel-title"><h1>La ruota</h1>
+      <div className="wheel-title"><h1>Gira la bottiglia</h1>
         <button className="icon-btn" title={muted ? "Suono spento" : "Suono acceso"} aria-label={muted ? "Accendi il suono" : "Spegni il suono"} onClick={() => setMuted(!muted)}>{muted ? <VolumeX size={20} /> : <Volume2 size={20} />}</button>
       </div>
       {!all.length ? <p className="note">Non c'è ancora nessuna birra imbottigliata da mettere intorno alla bottiglia.</p> : (

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.294", date: "22/11/2026 13:40", text: "La ruota: il pulsante in alto resta «Ruota», il titolo della pagina torna «Gira la bottiglia»" },
   { version: "0.293", date: "22/11/2026 13:30", text: "Utilità → Svago: «Gira la bottiglia» ora si chiama «La ruota» (pulsante «Ruota»)" },
   { version: "0.292", date: "22/11/2026 13:15", text: "Impostazioni (tocca la foto in alto a destra): nuovo «Cerca nell’app». Scrivi cosa cerchi (es. spese, vendite, acido lattico, password) e vedi dove si trova; toccando il risultato ci vai" },
   { version: "0.291", date: "22/11/2026 12:50", text: "Ricetta: Modifica, Duplica ed Elimina sono tre iconcine in alto a destra, accanto al nome; tolti i pulsanti in fondo e «Modifica scheda» (resta «Genera riassunto»)" },
