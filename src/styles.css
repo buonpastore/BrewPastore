@@ -2257,7 +2257,7 @@ button.cmp-row { cursor: pointer; font-weight: 600; }
 .ev-log { margin-top: 28px; }
 .ev-log h2 { margin-bottom: 4px; }
 .ev-log-day { border: 1px solid var(--line); border-radius: 12px; margin-top: 8px; background: var(--surface); overflow: hidden; }
-.ev-log-day > button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 10px 14px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.ev-log-head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 10px 14px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .ev-log-day.open { border-color: color-mix(in srgb, var(--violet) 50%, transparent); }
 .ev-log-day ul { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 4px; font-size: .88rem; }
 .ev-log-day li.add { color: var(--hop); }
@@ -2278,3 +2278,4 @@ a.mini-btn { text-decoration: none; }
 .sale-cellar.on { border: 1px solid color-mix(in srgb, var(--violet) 55%, transparent); background: color-mix(in srgb, var(--violet) 8%, transparent); }
 .sale-cellar .sc-row { display: flex; justify-content: space-between; gap: 10px; font-size: .86rem; margin-top: 6px; }
 .sale-cellar .sc-row.short { color: var(--magenta); }
+.ev-log { margin-top: 6px; }

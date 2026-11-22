@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { CalendarDays, ExternalLink, GraduationCap, MapPin, PartyPopper, Factory, Beer } from "lucide-react";
 
 interface BeerEvent { titolo: string; tipo: string; dal: string | null; al: string | null; quando: string; dove: string; regione: string; descrizione: string; link: string }
@@ -11,23 +11,20 @@ const todayIso = () => { const n = new Date(); return `${n.getFullYear()}-${Stri
 
 /** Elenco degli aggiornamenti: per ogni giorno gli eventi aggiunti, aggiornati e tolti. */
 function EventsHistory({ log }: { log: EventsLog[] }) {
-  const [open, setOpen] = useState<string | null>(log[0]?.data ?? null);
-  if (!log.length) return null;
+  if (!log.length) return <p className="muted">Nessun aggiornamento registrato.</p>;
   const n = (x: number, one: string, many: string) => `${x} ${x === 1 ? one : many}`;
   return (
     <section className="ev-log">
-      <h2>🔄 Aggiornamenti dell'elenco</h2>
-      <p className="muted small">Ogni mattina l'app cerca nuovi eventi: qui trovi cosa è cambiato giorno per giorno.</p>
+      <p className="muted small">Ogni mattina l'app cerca nuovi eventi: qui trovi tutto quello che ha inserito, aggiornato o tolto, giorno per giorno.</p>
       {log.map((e) => {
         const parts = [e.aggiunti.length && n(e.aggiunti.length, "aggiunto", "aggiunti"), e.aggiornati.length && n(e.aggiornati.length, "aggiornato", "aggiornati"), e.tolti.length && n(e.tolti.length, "tolto", "tolti")].filter(Boolean);
-        const isOpen = open === e.data;
         return (
-          <div key={e.data} className={"ev-log-day" + (isOpen ? " open" : "")}>
-            <button type="button" onClick={() => setOpen(isOpen ? null : e.data)}>
+          <div key={e.data} className="ev-log-day open">
+            <div className="ev-log-head">
               <strong>{e.data === todayIso() ? "Oggi" : fmtDay(e.data)}</strong>
-              <span className="muted small">{e.nota ?? (parts.length ? parts.join(" · ") : "nessuna novità")}</span>
-            </button>
-            {isOpen && (
+              <span className="muted small">{[e.nota, parts.length ? parts.join(" · ") : "nessuna novità"].filter(Boolean).join(" · ")}</span>
+            </div>
+            {(
               <ul>
                 {e.aggiunti.map((x) => <li key={"a" + x} className="add">➕ {x}</li>)}
                 {e.aggiornati.map((x) => <li key={"u" + x} className="upd">✏️ {x}</li>)}
@@ -52,11 +49,14 @@ export function EventsNews() {
   }, []);
   if (!log) return null;
   return (
-    <Link to="/eventi" className="panel ev-news">
+    <>
+    <h2>🆕 Novità sugli eventi</h2>
+    <Link to="/eventi?vista=storico" className="panel ev-news">
       <strong>📅 Oggi ho {log.aggiunti.length ? `aggiunto ${log.aggiunti.length} ${log.aggiunti.length === 1 ? "evento" : "eventi"}` : ""}{log.aggiunti.length && log.aggiornati.length ? " e " : ""}{log.aggiornati.length ? `aggiornato ${log.aggiornati.length} ${log.aggiornati.length === 1 ? "evento" : "eventi"}` : ""}</strong>
       <span className="small">{[...log.aggiunti, ...log.aggiornati].slice(0, 3).join(" · ")}{log.aggiunti.length + log.aggiornati.length > 3 ? " …" : ""}</span>
-      <span className="small ev-news-go">Vai agli eventi →</span>
+      <span className="small ev-news-go">Vedi lo storico →</span>
     </Link>
+    </>
   );
 }
 
@@ -96,9 +96,27 @@ export function Events() {
       .sort((a, b) => (a.dal ? 0 : 1) - (b.dal ? 0 : 1) || String(a.dal ?? "").localeCompare(String(b.dal ?? "")));
   }, [data, where, kind, past, today]);
   const kinds = [...new Set((data?.eventi ?? []).map((e) => (TYPES[e.tipo] ? e.tipo : "altro")))];
+  // due schede: gli eventi e lo storico degli inserimenti
+  const [sp, setSp] = useSearchParams();
+  const tab = sp.get("vista") === "storico" ? "storico" : "eventi";
+  const tabs = (
+    <div className="pv-views sub-switch">
+      <button className={"pv-view" + (tab === "eventi" ? " on" : "")} onClick={() => setSp({}, { replace: true })}>📅 Eventi</button>
+      <button className={"pv-view" + (tab === "storico" ? " on" : "")} onClick={() => setSp({ vista: "storico" }, { replace: true })}>🔄 Storico inserimenti</button>
+    </div>
+  );
+  if (tab === "storico") return (
+    <div>
+      {tabs}
+      <div className="page-head"><h1>Storico inserimenti</h1></div>
+      {err && <p className="error">{err}</p>}
+      {data && <EventsHistory log={data.storico ?? []} />}
+    </div>
+  );
 
   return (
     <div>
+      {tabs}
       <div className="page-head"><h1>Eventi</h1></div>
       <p className="muted">Festival, corsi e degustazioni di birra in Umbria e nel Centro Italia.{data && <> Aggiornato il {new Date(data.aggiornato + "T12:00:00").toLocaleDateString("it-IT")}.</>}</p>
       {err && <p className="error">{err}</p>}
@@ -137,7 +155,6 @@ export function Events() {
         {data && !list.length && <p className="muted">Nessun evento con questi filtri.</p>}
       </div>
       {data && <label className="check" style={{ marginTop: 10 }}><input type="checkbox" checked={past} onChange={(e) => setPast(e.target.checked)} /> mostra anche quelli passati</label>}
-      {data?.storico && <EventsHistory log={data.storico} />}
     </div>
   );
 }
