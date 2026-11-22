@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { CalendarDays, ExternalLink, GraduationCap, MapPin, PartyPopper, Factory, Beer } from "lucide-react";
+import { History, CalendarDays, ExternalLink, GraduationCap, MapPin, PartyPopper, Factory, Beer } from "lucide-react";
 
 interface BeerEvent { titolo: string; tipo: string; dal: string | null; al: string | null; quando: string; dove: string; regione: string; descrizione: string; link: string }
 /** Registro degli aggiornamenti dell'elenco (lo scrive la ricerca automatica di ogni mattina). */
@@ -99,16 +99,14 @@ export function Events() {
   // due schede: gli eventi e lo storico degli inserimenti
   const [sp, setSp] = useSearchParams();
   const tab = sp.get("vista") === "storico" ? "storico" : "eventi";
-  const tabs = (
-    <div className="pv-views sub-switch">
-      <button className={"pv-view" + (tab === "eventi" ? " on" : "")} onClick={() => setSp({}, { replace: true })}>📅 Eventi</button>
-      <button className={"pv-view" + (tab === "storico" ? " on" : "")} onClick={() => setSp({ vista: "storico" }, { replace: true })}>🔄 Storico inserimenti</button>
-    </div>
-  );
   if (tab === "storico") return (
     <div>
-      {tabs}
-      <div className="page-head"><h1>Storico inserimenti</h1></div>
+      <div className="page-head">
+        <div>
+          <button type="button" className="link muted small" onClick={() => setSp({}, { replace: true })}>← Eventi</button>
+          <h1>Storico inserimenti</h1>
+        </div>
+      </div>
       {err && <p className="error">{err}</p>}
       {data && <EventsHistory log={data.storico ?? []} />}
     </div>
@@ -116,8 +114,12 @@ export function Events() {
 
   return (
     <div>
-      {tabs}
-      <div className="page-head"><h1>Eventi</h1></div>
+      <div className="page-head head-with-toggle">
+        <h1>Eventi</h1>
+        <button type="button" className="ev-hist-btn" title="Storico inserimenti" aria-label="Storico inserimenti" onClick={() => setSp({ vista: "storico" }, { replace: true })}>
+          <History size={20} />
+        </button>
+      </div>
       <p className="muted">Festival, corsi e degustazioni di birra in Umbria e nel Centro Italia.{data && <> Aggiornato il {new Date(data.aggiornato + "T12:00:00").toLocaleDateString("it-IT")}.</>}</p>
       {err && <p className="error">{err}</p>}
 

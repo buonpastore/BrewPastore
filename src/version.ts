@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.285", date: "22/11/2026 11:15", text: "Eventi: tolte le due schede; lo storico degli inserimenti si apre con l’iconcina a destra del titolo «Eventi» e si torna indietro con «← Eventi»" },
   { version: "0.284", date: "22/11/2026 11:00", text: "Eventi: due schede, «📅 Eventi» e «🔄 Storico inserimenti» con tutti gli aggiornamenti giorno per giorno già aperti. In Home le novità sugli eventi hanno una sezione tutta loro («🆕 Novità sugli eventi»), staccata dalle task" },
   { version: "0.283", date: "22/11/2026 10:30", text: "Collegamenti tra sezioni. Acquisti: importando un ordine c’è «💶 Aggiungi anche alle Spese condivise» (chi l’ha pagato, diviso tra i soci o solo suo); la spesa è collegata all’ordine con il documento allegato e in Spese c’è «Vedi l’ordine»; negli ordini già salvati c’è il pulsante per aggiungerla. Vendite: «🍾 Togli queste bottiglie dalla cantina» di chi vende, con quante ne restano; eliminando o modificando la vendita le bottiglie tornano a posto. Da eseguire: 0029_vendite_cantina.sql" },
   { version: "0.282", date: "22/11/2026 09:30", text: "Eventi: in fondo alla pagina «Aggiornamenti dell’elenco» con tutti gli aggiornamenti giorno per giorno (eventi aggiunti, aggiornati e tolti). In Home, se la ricerca di quella mattina ha trovato novità, compare «Oggi ho aggiunto N eventi» con i titoli e il link agli eventi" },

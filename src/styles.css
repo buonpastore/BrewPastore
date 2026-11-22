@@ -2279,3 +2279,5 @@ a.mini-btn { text-decoration: none; }
 .sale-cellar .sc-row { display: flex; justify-content: space-between; gap: 10px; font-size: .86rem; margin-top: 6px; }
 .sale-cellar .sc-row.short { color: var(--magenta); }
 .ev-log { margin-top: 6px; }
+
+.ev-hist-btn { width: 42px; height: 42px; display: grid; place-items: center; flex: none; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--violet) 55%, transparent); background: color-mix(in srgb, var(--violet) 12%, transparent); color: var(--violet); cursor: pointer; padding: 0; }
