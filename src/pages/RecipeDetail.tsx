@@ -127,7 +127,7 @@ export function RecipeDetail() {
       <div className="panel">
         {tab === "scheda" && (editScheda && isAdmin ? (
           <RecordForm table="recipes" row={recipe} sections={RECIPE_SECTIONS} canEdit={isAdmin} startEditing
-            onSaved={(r) => { setRecipe(r); setEditScheda(false); }} onCancel={() => setEditScheda(false)} />
+            onSaved={(r) => { if (r.name !== recipe.name) renameBatches(r.id, r.name); setRecipe(r); setEditScheda(false); }} onCancel={() => setEditScheda(false)} />
         ) : (
           <>
             <RecipeOverview recipe={recipe} />
@@ -246,4 +246,14 @@ const stepDate = (b: Row) => (["degustato", "esaurito"].includes(normStatus(b.st
 function sortByProcess(rows: Row[]): Row[] {
   const rank = (b: Row) => { const i = STAGE.indexOf(normStatus(b.status)); return i < 0 ? 0 : i; };
   return [...rows].sort((a, b) => rank(a) - rank(b) || String(stepDate(a) ?? a.created_at ?? "").localeCompare(String(stepDate(b) ?? b.created_at ?? "")));
+}
+
+/** Rinominando una ricetta, i suoi batch chiamati «Nome #N» prendono il nome nuovo (il numero resta). */
+async function renameBatches(recipeId: string, name: string) {
+  const { data } = await supabase.from("batches").select("id, code").eq("recipe_id", recipeId);
+  for (const b of data ?? []) {
+    const m = String(b.code ?? "").match(/#\s*(\d+)\s*$/);
+    const code = m ? `${name} #${m[1]}` : null;
+    if (code && code !== b.code) await supabase.from("batches").update({ code }).eq("id", b.id);
+  }
 }

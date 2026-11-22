@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.290", date: "22/11/2026 12:30", text: "Rinominando una ricetta, anche i suoi batch prendono il nome nuovo (es. «Double IPA #2» → «Doppio Malto #2», il numero resta)" },
   { version: "0.289", date: "22/11/2026 12:10", text: "Home, novità sugli eventi: tolto il link allo storico; ogni riga apre la pagina dell’evento (o l’elenco degli eventi se l’evento non ha una pagina)" },
   { version: "0.288", date: "22/11/2026 12:00", text: "Ogni sezione ricorda l’ultima pagina aperta: se sei in Attività → Chat, vai in Produzione e torni su Attività, si riapre la Chat (anche le pagine interne, es. un batch o un ordine). Toccando di nuovo la sezione in cui sei già si torna alla sua prima pagina" },
   { version: "0.287", date: "22/11/2026 11:45", text: "Home, novità sugli eventi: ogni evento nuovo o aggiornato è una riga a sé (con data e luogo); toccandola si apre la pagina dell’evento. In fondo il link allo storico degli inserimenti" },
