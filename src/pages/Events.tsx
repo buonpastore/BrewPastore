@@ -39,23 +39,42 @@ function EventsHistory({ log }: { log: EventsLog[] }) {
   );
 }
 
-/** In Home: se oggi la ricerca automatica ha aggiunto o aggiornato eventi, lo dice. */
+/** In Home: se oggi la ricerca automatica ha aggiunto o aggiornato eventi, li elenca; toccandone uno si apre l'evento. */
 export function EventsNews() {
   const [log, setLog] = useState<EventsLog | null>(null);
+  const [events, setEvents] = useState<BeerEvent[]>([]);
   useEffect(() => {
     fetch(`${new URL("eventi.json", document.baseURI).href}?t=${Date.now()}`).then((r) => (r.ok ? r.json() : null))
-      .then((d: EventsFile | null) => { const e = d?.storico?.[0]; if (e && e.data === todayIso() && (e.aggiunti.length || e.aggiornati.length)) setLog(e); })
+      .then((d: EventsFile | null) => {
+        const e = d?.storico?.[0];
+        if (e && e.data === todayIso() && (e.aggiunti.length || e.aggiornati.length)) { setLog(e); setEvents(d?.eventi ?? []); }
+      })
       .catch(() => undefined);
   }, []);
   if (!log) return null;
+  // il titolo nello storico può avere una nota tra parentesi («… (data confermata)»): cerco l'evento anche per inizio del titolo
+  const find = (x: string) => events.find((e) => e.titolo === x) ?? events.find((e) => x.startsWith(e.titolo));
+  const rows = [...log.aggiunti.map((x) => ({ x, kind: "nuovo" })), ...log.aggiornati.map((x) => ({ x, kind: "aggiornato" }))];
   return (
     <>
-    <h2>🆕 Novità sugli eventi</h2>
-    <Link to="/eventi?vista=storico" className="panel ev-news">
-      <strong>📅 Oggi ho {log.aggiunti.length ? `aggiunto ${log.aggiunti.length} ${log.aggiunti.length === 1 ? "evento" : "eventi"}` : ""}{log.aggiunti.length && log.aggiornati.length ? " e " : ""}{log.aggiornati.length ? `aggiornato ${log.aggiornati.length} ${log.aggiornati.length === 1 ? "evento" : "eventi"}` : ""}</strong>
-      <span className="small">{[...log.aggiunti, ...log.aggiornati].slice(0, 3).join(" · ")}{log.aggiunti.length + log.aggiornati.length > 3 ? " …" : ""}</span>
-      <span className="small ev-news-go">Vedi lo storico →</span>
-    </Link>
+      <h2>🆕 Novità sugli eventi</h2>
+      <div className="panel home-events ev-news-list">
+        {rows.map(({ x, kind }) => {
+          const e = find(x);
+          const t = typeOf(e?.tipo ?? "altro"); const Icon = t.icon;
+          const body = (
+            <>
+              <span className={"ev-news-tag " + kind}>{kind}</span>
+              <span className="he-body"><strong>{e?.titolo ?? x}</strong>{e && <small><Icon size={12} /> {e.quando} · {e.dove}</small>}</span>
+              {e?.link && <ExternalLink size={16} className="he-go" />}
+            </>
+          );
+          return e?.link
+            ? <a key={x} className="he-row" href={e.link} target="_blank" rel="noopener noreferrer" style={{ ["--c" as string]: t.color }}>{body}</a>
+            : <div key={x} className="he-row" style={{ ["--c" as string]: t.color }}>{body}</div>;
+        })}
+        <Link to="/eventi?vista=storico" className="small ev-news-go">Storico degli inserimenti →</Link>
+      </div>
     </>
   );
 }

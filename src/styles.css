@@ -2281,3 +2281,8 @@ a.mini-btn { text-decoration: none; }
 .ev-log { margin-top: 6px; }
 
 .ev-hist-btn { width: 42px; height: 42px; display: grid; place-items: center; flex: none; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--violet) 55%, transparent); background: color-mix(in srgb, var(--violet) 12%, transparent); color: var(--violet); cursor: pointer; padding: 0; }
+
+.ev-news-list .ev-news-tag { flex: none; padding: 2px 8px; border-radius: 99px; font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.ev-news-list .ev-news-tag.nuovo { background: color-mix(in srgb, var(--hop) 22%, transparent); color: var(--hop); }
+.ev-news-list .ev-news-tag.aggiornato { background: color-mix(in srgb, var(--gold) 22%, transparent); color: var(--gold); }
+.ev-news-list .ev-news-go { display: block; padding: 10px 2px 4px; color: var(--violet); font-weight: 700; text-decoration: none; border-top: 1px solid var(--line); }

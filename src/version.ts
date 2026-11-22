@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.287", date: "22/11/2026 11:45", text: "Home, novità sugli eventi: ogni evento nuovo o aggiornato è una riga a sé (con data e luogo); toccandola si apre la pagina dell’evento. In fondo il link allo storico degli inserimenti" },
   { version: "0.286", date: "22/11/2026 11:30", text: "Task importanti: al posto della scritta «Importante» solo un punto esclamativo in un tondino magenta prima del titolo, con la task evidenziata come prima" },
   { version: "0.285", date: "22/11/2026 11:15", text: "Eventi: tolte le due schede; lo storico degli inserimenti si apre con l’iconcina a destra del titolo «Eventi» e si torna indietro con «← Eventi»" },
   { version: "0.284", date: "22/11/2026 11:00", text: "Eventi: due schede, «📅 Eventi» e «🔄 Storico inserimenti» con tutti gli aggiornamenti giorno per giorno già aperti. In Home le novità sugli eventi hanno una sezione tutta loro («🆕 Novità sugli eventi»), staccata dalle task" },
