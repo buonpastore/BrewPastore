@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.293", date: "22/11/2026 13:30", text: "Utilità → Svago: «Gira la bottiglia» ora si chiama «La ruota» (pulsante «Ruota»)" },
   { version: "0.292", date: "22/11/2026 13:15", text: "Impostazioni (tocca la foto in alto a destra): nuovo «Cerca nell’app». Scrivi cosa cerchi (es. spese, vendite, acido lattico, password) e vedi dove si trova; toccando il risultato ci vai" },
   { version: "0.291", date: "22/11/2026 12:50", text: "Ricetta: Modifica, Duplica ed Elimina sono tre iconcine in alto a destra, accanto al nome; tolti i pulsanti in fondo e «Modifica scheda» (resta «Genera riassunto»)" },
   { version: "0.290", date: "22/11/2026 12:30", text: "Rinominando una ricetta, anche i suoi batch prendono il nome nuovo (es. «Double IPA #2» → «Doppio Malto #2», il numero resta)" },

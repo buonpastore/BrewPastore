@@ -37,7 +37,7 @@ export const SEARCH_INDEX: SearchEntry[] = [
   E("🎚️", "Pressione bar/PSI", "Utilità → Strumenti", "/utilita/pressione", "bar psi kpa convertitore"),
   E("⏱️", "Timer dei luppoli", "Utilità → Strumenti", "/utilita/timer", "bollitura timer gittate"),
   E("🍼", "Conta bottiglie", "Utilità → Svago", "/utilita/bottiglie", "bottiglie 66 33 cl"),
-  E("🎡", "Gira la bottiglia", "Utilità → Svago", "/utilita/ruota", "ruota gioco caso"),
+  E("🎡", "La ruota (gira la bottiglia)", "Utilità → Svago", "/utilita/ruota", "ruota gira bottiglia gioco caso"),
   // Impostazioni
   E("👤", "Il mio profilo, foto e password", "Impostazioni → Utente", "/impostazioni?tab=utente", "nome foto avatar password cambiare"),
   E("🎨", "Colori e tema", "Impostazioni → Aspetto", "/impostazioni?tab=aspetto", "colori tema chiaro scuro"),

@@ -67,7 +67,7 @@ export const GROUPS: Group[] = [
       { to: "/utilita/timer", label: "Timer luppoli", short: "Timer", icon: Timer, color: "var(--hop)", sub: "strumenti" },
       // svago
       { to: "/utilita/bottiglie", label: "Conta bottiglie", short: "Bottiglie", icon: Milk, color: "var(--gold)", sub: "svago" },
-      { to: "/utilita/ruota", label: "Gira la bottiglia", short: "Gira", icon: Disc3, color: "var(--teal)", sub: "svago" },
+      { to: "/utilita/ruota", label: "La ruota", short: "Ruota", icon: Disc3, color: "var(--teal)", sub: "svago" },
     ],
   },
 ];
