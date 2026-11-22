@@ -2292,3 +2292,16 @@ a.mini-btn { text-decoration: none; }
 .head-icons { display: flex; gap: 8px; flex: none; margin-top: 22px; }
 .head-icons button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer; padding: 0; }
 .head-icons button.danger { color: var(--magenta); border-color: color-mix(in srgb, var(--magenta) 45%, transparent); }
+
+/* Impostazioni: cerca nell'app */
+.app-search { margin: 0 0 16px; }
+.app-search-box { display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); }
+.app-search-box input { flex: 1; border: 0; background: none; min-height: 48px; color: var(--text); font-size: 1rem; outline: none; box-shadow: none; padding: 0; }
+.app-search-box button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
+.app-search-res { margin-top: 8px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); overflow: hidden; }
+.app-search-res > button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.app-search-res > button:last-child { border-bottom: 0; }
+.app-search-res p { margin: 0; padding: 12px 14px; }
+.asr-emoji { font-size: 1.3rem; flex: none; width: 28px; text-align: center; }
+.asr-txt { display: grid; flex: 1; min-width: 0; }
+.asr-go { color: var(--gold); font-size: 1.4rem; flex: none; }

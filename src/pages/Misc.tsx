@@ -1,6 +1,7 @@
 import { MonthEvents, EventsNews } from "./Events";
 import { whoOf } from "./Tasks";
-import { LogIn, Minus, Plus, Camera, RotateCcw } from "lucide-react";
+import { LogIn, Minus, Plus, Camera, RotateCcw, Search } from "lucide-react";
+import { searchApp } from "../searchIndex";
 import { UserAvatar } from "../components/UserAvatar";
 import { loginAs } from "../impersonate";
 import { Tabs } from "../components/Layout";
@@ -9,7 +10,7 @@ import { CapGallery, CapDot } from "../components/CapColor";
 import { lastStep } from "../components/PreviousBatches";
 import { getThemePref, setThemePref, sunTimes, type ThemePref, ACCENT_KEYS, ACCENT_LABELS, ACCENT_DEFAULTS, getAccents, setAccent, resetAccents, type AccentKey } from "../theme";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, normStatus, statusLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ChatPanel } from "../components/ChatPanel";
@@ -260,7 +261,11 @@ function AccentPicker() {
 
 export function Settings() {
   const { isAdmin, profiles, profile } = useAuth();
-  const [settingsTab, setSettingsTab] = useState(() => (/versioni|storico/.test(window.location.hash) ? "app" : /impianto/.test(window.location.hash) ? "impianto" : "utente"));
+  const [settingsTab, setSettingsTab] = useState(() => {
+    const h = window.location.hash;
+    const m = h.match(/[?&]tab=(\w+)/);
+    return m ? m[1] : /versioni|storico/.test(h) ? "app" : /impianto/.test(h) ? "impianto" : "utente";
+  });
   const [settings, setSettings] = useState<Row[]>([]);
   const [name, setName] = useState(profile?.display_name ?? "");
   // il profilo arriva dopo il primo disegno: riempio il nome appena è pronto
@@ -285,6 +290,7 @@ export function Settings() {
       <div className="page-head">
         <h1>Impostazioni</h1>
       </div>
+      <AppSearch onSettingsTab={setSettingsTab} />
       <Tabs grid active={tab} onChange={(k) => setSettingsTab(k)} tabs={[
         ["utente", "Utente"], ["aspetto", "Aspetto"], ["costi", "Costi fissi"],
         ["impianto", "Impianto"], ["tappi", "Tappi"], ["utenti", "Soci"], ["app", "App e storico"],
@@ -590,6 +596,39 @@ function Releases() {
       </ol>
       {CHANGELOG.length > 8 && (
         <button className="btn small" onClick={() => setAll(!all)}>{all ? "Mostra solo le ultime" : `Mostra tutte le ${CHANGELOG.length} versioni`}</button>
+      )}
+    </div>
+  );
+}
+
+
+/** Cerca nell'app: scrivi cosa cerchi (es. «spese», «acido lattico», «vendite») e tocca il risultato per andarci. */
+function AppSearch({ onSettingsTab }: { onSettingsTab: (t: string) => void }) {
+  const [q, setQ] = useState("");
+  const nav = useNavigate();
+  const res = searchApp(q);
+  const go = (to: string) => {
+    const m = to.match(/^\/impostazioni\?tab=(\w+)/);
+    if (m) { onSettingsTab(m[1]); setQ(""); window.scrollTo({ top: 0 }); return; }
+    nav(to);
+  };
+  return (
+    <div className="app-search">
+      <div className="app-search-box">
+        <Search size={18} />
+        <input type="text" enterKeyHint="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca nell'app (es. spese, vendite, acido lattico)…" />
+        {q && <button type="button" aria-label="Cancella" onClick={() => setQ("")}>✕</button>}
+      </div>
+      {q.trim().length >= 2 && (
+        <div className="app-search-res">
+          {res.length ? res.slice(0, 8).map((e) => (
+            <button key={e.title + e.to} type="button" onClick={() => go(e.to)}>
+              <span className="asr-emoji">{e.emoji}</span>
+              <span className="asr-txt"><strong>{e.title}</strong><span className="muted small">{e.where}</span></span>
+              <span className="asr-go">›</span>
+            </button>
+          )) : <p className="muted small">Nessun risultato per «{q}».</p>}
+        </div>
       )}
     </div>
   );
