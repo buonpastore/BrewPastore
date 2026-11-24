@@ -1,5 +1,5 @@
 {
-  "aggiornato": "2026-11-23",
+  "aggiornato": "2026-11-24",
   "nota": "Eventi a tema birra in Umbria e Centro Italia, aggiornati ogni giorno in automatico.",
   "eventi": [
     {
@@ -246,6 +246,12 @@
     }
   ],
   "storico": [
+    {
+      "data": "2026-11-24",
+      "aggiunti": [],
+      "aggiornati": [],
+      "tolti": []
+    },
     {
       "data": "2026-11-23",
       "aggiunti": [],
