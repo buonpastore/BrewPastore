@@ -1,5 +1,5 @@
 {
-  "aggiornato": "2026-11-24",
+  "aggiornato": "2026-11-25",
   "nota": "Eventi a tema birra in Umbria e Centro Italia, aggiornati ogni giorno in automatico.",
   "eventi": [
     {
@@ -34,6 +34,17 @@
       "regione": "Umbria",
       "descrizione": "Mercatino di Natale con stand enogastronomici: non è dedicato alla birra, ma di solito ci sono produttori locali. Buono anche per cercare birre di Natale umbre.",
       "link": "https://www.umbriaeventi.com/natale-umbria.htm"
+    },
+    {
+      "titolo": "BAM – Birrifici Aperti Marche",
+      "tipo": "birrificio",
+      "dal": "2026-12-05",
+      "al": "2026-12-06",
+      "quando": "sabato 5 e domenica 6 dicembre 2026",
+      "dove": "22 birrifici in tutte le Marche",
+      "regione": "Marche",
+      "descrizione": "Quarta edizione: i birrifici agricoli e artigianali marchigiani aprono le porte con visite, degustazioni e musica.",
+      "link": "https://cronachedibirra.it/eventi/94438/prossimi-eventi-birrifici-aperti-marche-due-iniziative-a-torino-e-una-dedicata-al-belgio-birrario/"
     },
     {
       "titolo": "Christmas Beers 2026 – premiazione Unionbirrai",
@@ -223,22 +234,11 @@
       "link": "https://www.umbriatourism.it/en/dettaglio-offerta/-/dettaglio/tour-e-degustazione-birrificio-flea_5039_service_en"
     },
     {
-      "titolo": "BAM – Birrifici Aperti Marche",
-      "tipo": "birrificio",
-      "dal": null,
-      "al": null,
-      "quando": "primo weekend di dicembre (data 2026 da confermare)",
-      "dove": "birrifici di tutte le Marche",
-      "regione": "Marche",
-      "descrizione": "I birrifici marchigiani aprono le porte al pubblico con visite e degustazioni (nel 2024 e nel 2025 dal 6 all'8 dicembre, con una ventina di birrifici).",
-      "link": "https://www.beverfood.com/bam-birrifici-aperti-marche-migliori-birre-agricole-e-artigianali-wd/"
-    },
-    {
       "titolo": "Natale al birrificio agricolo Podere 676",
       "tipo": "birrificio",
       "dal": null,
       "al": null,
-      "quando": "dicembre 2026 (date degli eventi sulla pagina)",
+      "quando": "dicembre 2026 (tra gli appuntamenti, tombole l'8 e il 20 dicembre)",
       "dove": "Podere 676, Fiumicino (RM)",
       "regione": "Lazio",
       "descrizione": "Il birrificio agricolo prepara un mese di eventi natalizi con le sue birre: programma e date nell'articolo.",
@@ -246,6 +246,15 @@
     }
   ],
   "storico": [
+    {
+      "data": "2026-11-25",
+      "aggiunti": [],
+      "aggiornati": [
+        "BAM – Birrifici Aperti Marche (date confermate: 5–6 dicembre)",
+        "Natale al birrificio agricolo Podere 676 (aggiunte le date delle tombole)"
+      ],
+      "tolti": []
+    },
     {
       "data": "2026-11-24",
       "aggiunti": [],
