@@ -1,3 +1,4 @@
+import { setLinkedCash } from "../cash";
 import { expenseFromPurchase, type Split } from "../expenses";
 import { ViewToggle } from "../components/ViewToggle";
 import { textOf } from "../ocr";
@@ -218,6 +219,7 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
   const [toExpense, setToExpense] = useState(true);
   const [payer, setPayer] = useState<string>(session?.user.id ?? "");
   const [split, setSplit] = useState<Split>("soci");
+  const [fund, setFund] = useState(0);   // quanto paga il fondo cassa
 
   const save = async () => {
     setStep("saving"); setError("");
@@ -244,8 +246,11 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
         const { error } = await supabase.from("purchase_items").insert(rows);
         if (error) throw error;
       }
-      if (toExpense) {
-        await expenseFromPurchase({ purchaseId: p.id, supplier: p.supplier, day: p.purchase_date, amount: head.total_amount ?? computed,
+      const orderTotal = head.total_amount ?? computed;
+      const fromFund = Math.min(fund, orderTotal);
+      if (fromFund > 0) await setLinkedCash({ purchase_id: p.id }, { amount: -fromFund, kind: "acquisto", description: `Ordine ${p.supplier}`, day: p.purchase_date });
+      if (toExpense && orderTotal - fromFund > 0.004) {
+        await expenseFromPurchase({ purchaseId: p.id, supplier: p.supplier, day: p.purchase_date, amount: orderTotal - fromFund,
           paidBy: payer, split, members: profiles.map((x) => x.id), receiptPath: uploaded[0]?.path ?? null });
       }
       onClose();
@@ -320,8 +325,11 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
               )}
             </p>
             {head.notes && <p className="note">📝 {head.notes}</p>}
-            <ExpenseChoice on={toExpense} setOn={setToExpense} payer={payer} setPayer={setPayer} split={split} setSplit={setSplit}
-              profiles={profiles} me={session?.user.id ?? ""} amount={head.total_amount ?? computed} />
+            <FundSplit total={head.total_amount ?? computed} fund={fund} setFund={setFund} />
+            {(head.total_amount ?? computed) - fund > 0.004 && (
+              <ExpenseChoice on={toExpense} setOn={setToExpense} payer={payer} setPayer={setPayer} split={split} setSplit={setSplit}
+                profiles={profiles} me={session?.user.id ?? ""} amount={(head.total_amount ?? computed) - fund} />
+            )}
           </>
         )}
         {error && <p className="error">{error}</p>}
@@ -331,6 +339,25 @@ export function ImportPurchase({ onClose, initialFiles }: { onClose: () => void;
           {step === "saving" && <button className="btn primary" disabled>Salvo…</button>}
           <button className="btn" onClick={onClose}>Chiudi</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Chi paga l'ordine: quanto il fondo cassa e quanto voi (il resto, che può andare nelle Spese condivise). */
+export function FundSplit({ total, fund, setFund }: { total: number; fund: number; setFund: (n: number) => void }) {
+  const [text, setText] = useState(fund ? String(fund).replace(".", ",") : "");
+  const set = (n: number) => { const v = Math.max(0, Math.min(total, Math.round(n * 100) / 100)); setFund(v); setText(v ? String(v).replace(".", ",") : ""); };
+  return (
+    <div className="fund-split">
+      <span className="nb-label">💰 Chi paga</span>
+      <div className="fs-row">
+        <label><span>Dal fondo cassa €</span><input inputMode="decimal" value={text} placeholder="0,00" onChange={(e) => setText(e.target.value)} onBlur={() => set(Number(text.replace(",", ".")) || 0)} /></label>
+        <div className="fs-us"><span>Da noi</span><strong>{eur(Math.max(0, total - fund))}</strong></div>
+      </div>
+      <div className="fs-quick">
+        <button type="button" className={"chip" + (fund >= total - 0.004 && total > 0 ? " on" : "")} onClick={() => set(total)}>Tutto dal fondo</button>
+        <button type="button" className={"chip" + (!fund ? " on" : "")} onClick={() => set(0)}>Niente dal fondo</button>
       </div>
     </div>
   );
@@ -373,27 +400,37 @@ function PurchaseExpense({ p, goods }: { p: Row; goods: number }) {
   const [split, setSplit] = useState<Split>("soci");
   const [err, setErr] = useState("");
   const [reload, setReload] = useState(0);
-  useEffect(() => { supabase.from("expenses").select("id, paid_by, amount").eq("purchase_id", p.id).limit(1).then(({ data }) => setExp(data?.[0] ?? null)); }, [p.id, reload]);
-  const amount = p.total_amount != null ? Number(p.total_amount) : goods + Number(p.shipping_cost ?? 0);
+  const [fundMove, setFundMove] = useState<Row | null>(null);
+  const [fund, setFund] = useState(0);
+  useEffect(() => {
+    supabase.from("expenses").select("id, paid_by, amount").eq("purchase_id", p.id).limit(1).then(({ data }) => setExp(data?.[0] ?? null));
+    supabase.from("cash_movements").select("id, amount").eq("purchase_id", p.id).limit(1).then(({ data }) => setFundMove(data?.[0] ?? null));
+  }, [p.id, reload]);
+  const total = p.total_amount != null ? Number(p.total_amount) : goods + Number(p.shipping_cost ?? 0);
+  const amount = Math.max(0, total - fund);
   if (exp === undefined) return null;
-  if (exp) return <Link to="/spese" className="pu-expense-link">💶 Nelle Spese condivise: {eur(exp.amount)} pagato da <b>{nameOf(exp.paid_by)}</b> →</Link>;
+  const fundLine = fundMove ? <Link to="/ricavi?vista=vendite" className="pu-expense-link fund">💰 Dal fondo cassa: {eur(-Number(fundMove.amount))} →</Link> : null;
+  if (exp || (fundMove && !isAdmin)) return <>{fundLine}{exp && <Link to="/spese" className="pu-expense-link">💶 Nelle Spese condivise: {eur(exp.amount)} pagato da <b>{nameOf(exp.paid_by)}</b> →</Link>}</>;
   if (!isAdmin) return null;
-  if (!adding) return <button className="btn full-w" onClick={() => setAdding(true)}>💶 Aggiungi alle Spese condivise</button>;
+  if (fundMove && !adding) return fundLine;
+  if (!adding) return <button className="btn full-w" onClick={() => setAdding(true)}>💰 Chi l'ha pagato: fondo cassa o Spese condivise</button>;
   const save = async () => {
     setErr("");
     try {
       const { data: doc } = await supabase.from("documents").select("storage_path").eq("purchase_id", p.id).limit(1);
-      await expenseFromPurchase({ purchaseId: p.id, supplier: p.supplier, day: p.purchase_date ?? new Date().toISOString().slice(0, 10), amount, paidBy: payer, split, members: profiles.map((x) => x.id), receiptPath: doc?.[0]?.storage_path ?? null });
+      if (fund > 0) await setLinkedCash({ purchase_id: p.id }, { amount: -Math.min(fund, total), kind: "acquisto", description: `Ordine ${p.supplier}`, day: p.purchase_date ?? new Date().toISOString().slice(0, 10) });
+      if (amount > 0.004 && on) await expenseFromPurchase({ purchaseId: p.id, supplier: p.supplier, day: p.purchase_date ?? new Date().toISOString().slice(0, 10), amount, paidBy: payer, split, members: profiles.map((x) => x.id), receiptPath: doc?.[0]?.storage_path ?? null });
       setAdding(false); setReload((x) => x + 1);
     } catch (e) { setErr(errMsg(e)); }
   };
   return (
     <div className="panel">
-      <ExpenseChoice on={on} setOn={setOn} payer={payer} setPayer={setPayer} split={split} setSplit={setSplit} profiles={profiles} me={me} amount={amount} />
+      {!fundMove && <FundSplit total={total} fund={fund} setFund={setFund} />}
+      {amount > 0.004 && <ExpenseChoice on={on} setOn={setOn} payer={payer} setPayer={setPayer} split={split} setSplit={setSplit} profiles={profiles} me={me} amount={amount} />}
       {err && <p className="error">{err}</p>}
       <div className="half-actions" style={{ marginTop: 10 }}>
         <button className="btn" onClick={() => setAdding(false)}>Annulla</button>
-        <button className="btn primary" disabled={!on} onClick={save}>Aggiungi {eur(amount)}</button>
+        <button className="btn primary" disabled={!(fund > 0) && !(on && amount > 0.004)} onClick={save}>Salva</button>
       </div>
     </div>
   );

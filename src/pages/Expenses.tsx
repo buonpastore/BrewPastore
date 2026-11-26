@@ -1,3 +1,4 @@
+import { addCash, setLinkedCash } from "../cash";
 import { useEffect, useState } from "react";
 import { Camera, Receipt, Check, Hourglass, ChevronDown, ChevronRight, Paperclip, Trash2, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -157,7 +158,11 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
   const [receipt, setReceipt] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const total = Number(amount.replace(",", ".")) || 0;
+  const whole = Number(amount.replace(",", ".")) || 0;
+  // parte pagata dal fondo cassa: il resto si divide tra chi partecipa
+  const [fundTxt, setFundTxt] = useState("");
+  const fund = Math.min(whole, Math.max(0, Number(fundTxt.replace(",", ".")) || 0));
+  const total = Math.round((whole - fund) * 100) / 100;
   const n = participants.length || 1;
   const each = Math.floor((total / n) * 100) / 100;
 
@@ -165,7 +170,15 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
     ev.preventDefault(); setError("");
     const description = type === "Altro" ? other.trim() : type;
     if (!description) return setError("Scrivi cos'è la spesa");
-    if (!total) return setError("Inserisci l'importo");
+    if (!whole) return setError("Inserisci l'importo");
+    // tutta dal fondo cassa: niente da dividere, solo l'uscita dal fondo
+    if (!total && fund) {
+      setBusy(true);
+      try { await addCash({ amount: -fund, kind: "spesa", description, day }); onSaved(); onClose(); }
+      catch (x) { setError(errMsg(x)); }
+      setBusy(false);
+      return;
+    }
     if (!participants.length) return setError("Scegli chi partecipa");
     if (mode === "custom") {
       const sum = participants.reduce((t, id) => t + (Number((custom[id] ?? "0").replace(",", ".")) || 0), 0);
@@ -174,8 +187,9 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
     setBusy(true);
     try {
       const receipt_path = receipt ? await uploadFile(`expenses/${me}`, receipt) : null;
-      const { data, error } = await supabase.from("expenses").insert({ description, amount: total, expense_date: day, paid_by: paidBy, receipt_path }).select().single();
+      const { data, error } = await supabase.from("expenses").insert({ description: fund ? `${description} (+ ${eur(fund)} dal fondo cassa)` : description, amount: total, expense_date: day, paid_by: paidBy, receipt_path }).select().single();
       if (error) throw error;
+      if (fund) await setLinkedCash({ expense_id: data.id }, { amount: -fund, kind: "spesa", description, day });
       // parti uguali (i centesimi di resto li prende chi ha pagato) oppure divisione personalizzata
       const rest = Math.round((total - each * n) * 100) / 100;
       const restTo = participants.includes(paidBy) ? paidBy : participants[0];
@@ -199,6 +213,7 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
         {type === "Altro" && <label className="block"><span>Cosa?</span><input autoFocus value={other} onChange={(e) => setOther(e.target.value)} placeholder="es. tappi, detergenti, pentola…" /></label>}
         <div className="form-grid">
           <label><span>Importo €</span><input required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" /></label>
+          <label><span>💰 Di cui dal fondo cassa €</span><input inputMode="decimal" value={fundTxt} onChange={(e) => setFundTxt(e.target.value)} placeholder="0,00" /></label>
           <label><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>
           {isAdmin && (
             <label><span>Chi l'ha pagata</span>
@@ -206,6 +221,7 @@ function NewExpense({ profiles, me, isAdmin, onClose, onSaved }: { profiles: Row
             </label>
           )}
         </div>
+        {fund > 0 && <p className="muted small">💰 Il fondo cassa paga {eur(fund)}{total > 0 ? `: tra i soci si divide ${eur(total)}` : ": non c'è niente da dividere"}.</p>}
         <span className="nb-label">Divisione</span>
         <div className="xp-types two">
           <button type="button" className={"pay-method" + (mode === "equal" ? " on" : "")} onClick={() => setMode("equal")}>Parti uguali</button>

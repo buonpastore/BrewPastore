@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.295", date: "26/11/2026 10:30", text: "Nuovo fondo cassa. Vendite: in cima quanto c’è nel fondo (con versamenti, prelievi e tutti i movimenti); di partenza l’incasso va nel fondo e per ogni birra si sceglie chi la dà, così le bottiglie si tolgono dalla sua cantina; gli incassi dei singoli sono in una sezione a parte. Acquisti: «Chi paga» con quanto dal fondo cassa e quanto da voi (il resto può andare nelle Spese condivise). Spese condivise: «di cui dal fondo cassa». Quello che paga il fondo viene tolto dal fondo. Da eseguire: 0030_fondo_cassa.sql" },
   { version: "0.294", date: "22/11/2026 13:40", text: "La ruota: il pulsante in alto resta «Ruota», il titolo della pagina torna «Gira la bottiglia»" },
   { version: "0.293", date: "22/11/2026 13:30", text: "Utilità → Svago: «Gira la bottiglia» ora si chiama «La ruota» (pulsante «Ruota»)" },
   { version: "0.292", date: "22/11/2026 13:15", text: "Impostazioni (tocca la foto in alto a destra): nuovo «Cerca nell’app». Scrivi cosa cerchi (es. spese, vendite, acido lattico, password) e vedi dove si trova; toccando il risultato ci vai" },

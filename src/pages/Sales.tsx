@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Calculator, Handshake, Minus, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import { Calculator, Handshake, Minus, Pencil, Plus, Trash2, Users, Wallet, X } from "lucide-react";
+import { loadCash, cashBalance, setLinkedCash, addCash, isCashMissing, NEED_0030 } from "../cash";
 import { supabase, eur, date, errMsg, isEnded, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { CapDot, useCapColors } from "../components/CapColor";
@@ -50,7 +51,7 @@ async function moveCellar(changes: { user: string; batch: string; delta: number 
     if (error) throw error;
   }
 }
-const cellarOut = (s: Row, sign: 1 | -1) => (s.from_cellar ? itemsOf(s).filter((i) => i.batch_id).map((i) => ({ user: s.seller_id, batch: i.batch_id, delta: sign * Number(i.bottles) })) : []);
+const cellarOut = (s: Row, sign: 1 | -1) => (s.from_cellar ? itemsOf(s).filter((i) => i.batch_id).map((i) => ({ user: i.giver_id ?? s.seller_id, batch: i.batch_id, delta: sign * Number(i.bottles) })) : []);
 
 const total = (s: Row) => (s.amount != null ? Number(s.amount) : itemsOf(s).reduce((a, i) => a + Number(i.bottles) * Number(i.unit_price), 0));
 const today = () => new Date().toISOString().slice(0, 10);
@@ -66,6 +67,12 @@ export function Sales() {
   const [editing, setEditing] = useState<Row | "new" | null>(null);
   const [view, setView] = useState<"vendite" | "clienti">("vendite");
   const [reload, setReload] = useState(0);
+  // fondo cassa
+  const [cash, setCash] = useState<Row[]>([]);
+  const [cashErr, setCashErr] = useState("");
+  const [cashForm, setCashForm] = useState<"versamento" | "prelievo" | null>(null);
+  const [showMoves, setShowMoves] = useState(false);
+  useEffect(() => { loadCash().then(({ rows, error }) => { setCash(rows); setCashErr(error); }); }, [reload]);
 
   useEffect(() => {
     (async () => {
@@ -91,7 +98,7 @@ export function Sales() {
   const conti = useMemo(() => {
     const m = new Map<string, { incassato: number; spetta: number }>(soci.map((p) => [p.id, { incassato: 0, spetta: 0 }]));
     const get = (id: string) => { if (!m.has(id)) m.set(id, { incassato: 0, spetta: 0 }); return m.get(id)!; };
-    for (const s of list) {
+    for (const s of list.filter((x) => x.split !== "cassa")) {   // le vendite nel fondo cassa non sono soldi dei singoli
       const t = total(s);
       get(s.seller_id).incassato += t;
       if (s.split === "venditore") get(s.seller_id).spetta += t;
@@ -101,7 +108,9 @@ export function Sales() {
   }, [list, soci]);
   const tot = list.reduce((a, s) => a + total(s), 0);
   const bottles = list.reduce((a, s) => a + itemsOf(s).reduce((x, i) => x + Number(i.bottles), 0), 0);
-  const divisi = list.filter((s) => s.split !== "venditore").reduce((a, s) => a + total(s), 0);
+  const divisi = list.filter((s) => s.split === "soci").reduce((a, s) => a + total(s), 0);
+  const personal = list.filter((s) => s.split !== "cassa");
+  const balance = cashBalance(cash);
 
   // clienti: a chi abbiamo venduto, quanto e quando
   const clienti = useMemo(() => {
@@ -131,6 +140,44 @@ export function Sales() {
       <button className="btn primary full-w" onClick={() => setEditing("new")} disabled={!!err && err === NEED_0024}><Plus size={18} /> Nuova vendita</button>
       {err && <p className="error" style={{ marginTop: 12 }}>{err}</p>}
 
+      {/* l'informazione principale: quanto c'è nel fondo cassa */}
+      <div className="cash-card">
+        <div className="cash-top">
+          <span><Wallet size={18} /> Fondo cassa</span>
+          <strong className={balance < 0 ? "neg" : ""}>{cashErr ? "—" : eur(balance)}</strong>
+        </div>
+        {cashErr ? <p className="muted small">{cashErr}</p> : (
+          <>
+            <div className="cash-btns">
+              <button type="button" className="btn small" onClick={() => setCashForm("versamento")}><Plus size={15} /> Versamento</button>
+              <button type="button" className="btn small" onClick={() => setCashForm("prelievo")}><Minus size={15} /> Prelievo</button>
+              <button type="button" className="btn small" onClick={() => setShowMoves(!showMoves)}>{showMoves ? "Chiudi movimenti" : `Movimenti (${cash.length})`}</button>
+            </div>
+            {showMoves && (
+              <ul className="cash-moves">
+                {cash.map((m) => (
+                  <li key={m.id}>
+                    <span className="cm-date">{date(m.moved_on)}</span>
+                    <span className="cm-desc">{m.description || m.kind}</span>
+                    <strong className={Number(m.amount) < 0 ? "neg" : "pos"}>{Number(m.amount) > 0 ? "+" : ""}{eur(Number(m.amount))}</strong>
+                    {(isAdmin || m.created_by === me) && !m.sale_id && !m.purchase_id && !m.expense_id && (
+                      <button type="button" className="icon-btn" title="Elimina" onClick={async () => {
+                        if (!confirm(`Eliminare il movimento «${m.description || m.kind}» di ${eur(Number(m.amount))}?`)) return;
+                        const { error } = await supabase.from("cash_movements").delete().eq("id", m.id);
+                        if (error) return alert(errMsg(error));
+                        setReload((x) => x + 1);
+                      }}><Trash2 size={14} /></button>
+                    )}
+                  </li>
+                ))}
+                {!cash.length && <li className="muted small">Nessun movimento ancora.</li>}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
+      {cashForm && <CashForm kind={cashForm} onClose={() => setCashForm(null)} onSaved={() => { setCashForm(null); setReload((x) => x + 1); }} />}
+
       {sales && list.length > 0 && (
         <>
           <div className="sales-kpi">
@@ -139,7 +186,9 @@ export function Sales() {
             <div style={{ ["--c" as string]: "var(--magenta)" }}><small>Clienti</small><strong>{clienti.length}</strong></div>
           </div>
 
-          <h3 className="sales-h"><Users size={16} /> Soldi dei soci</h3>
+          {personal.length > 0 && (
+          <details className="sales-personal">
+          <summary><Users size={16} /> Incassi dei singoli soci <span className="muted small">(vendite non messe nel fondo)</span></summary>
           <div className="table-wrap">
             <table className="sales-soci">
               <thead><tr><th>Socio</th><th>Ha incassato</th><th>Gli spetta</th><th>Conto</th></tr></thead>
@@ -160,7 +209,9 @@ export function Sales() {
               </tbody>
             </table>
           </div>
-          <p className="muted small">«Gli spetta»: la sua parte delle vendite da dividere ({eur(divisi)} in {soci.length}) più tutto quello che ha venduto tenendosi l'incasso. Chi ha incassato più di quanto gli spetta deve dare la differenza agli altri.</p>
+          <p className="muted small">«Gli spetta»: la sua parte delle vendite da dividere ({eur(divisi)} in {soci.length}) più tutto quello che ha venduto tenendosi l'incasso. Chi ha incassato più di quanto gli spetta deve dare la differenza agli altri. Le vendite nel fondo cassa non contano qui.</p>
+          </details>
+          )}
 
           <div className="pv-views sub-switch" style={{ marginTop: 18 }}>
             <button className={"pv-view" + (view === "vendite" ? " on" : "")} onClick={() => setView("vendite")}>🧾 Vendite</button>
@@ -183,14 +234,14 @@ export function Sales() {
                         return (
                           <span key={k}>
                             {b ? <CapDot color={b.cap_color} /> : <i className="sr-nocap" />}
-                            <b>{i.bottles}×</b> {beerName(i.batch_id) ?? "birra"} <span className="muted">a {eur(i.unit_price)}</span>
+                            <b>{i.bottles}×</b> {beerName(i.batch_id) ?? "birra"} <span className="muted">a {eur(i.unit_price)}{i.giver_id ? ` · da ${nameOf(i.giver_id)}` : ""}</span>
                           </span>
                         );
                       })}
                     </div>
                     <div className="sr-meta">
                       <span>venduta da <b>{nameOf(s.seller_id)}</b></span>
-                      <span className={"sr-split " + (s.split === "venditore" ? "own" : "shared")}>{s.split === "venditore" ? "se la tiene chi vende" : `divisa tra i soci · ${eur(total(s) / soci.length)} a testa`}</span>
+                      <span className={"sr-split " + (s.split === "venditore" ? "own" : s.split === "cassa" ? "cash" : "shared")}>{s.split === "cassa" ? "💰 nel fondo cassa" : s.split === "venditore" ? "se la tiene chi vende" : `divisa tra i soci · ${eur(total(s) / soci.length)} a testa`}</span>
                     </div>
                     {s.notes && <div className="muted small">{s.notes}</div>}
                     {canEdit(s) && (
@@ -249,7 +300,7 @@ function MiniStep({ value, step, digits, unit, onChange }: { value: number; step
   );
 }
 
-type Line = { key: string; batch_id: string | null; qty: number; price: number };
+type Line = { key: string; batch_id: string | null; qty: number; price: number; giver: string };
 
 function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: {
   sale: Row | null; me: string; soci: Row[]; batches: Row[]; buyers: string[]; items: Row[]; onClose: () => void; onSaved: () => void;
@@ -257,16 +308,17 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
   const [seller, setSeller] = useState<string>(sale?.seller_id ?? me);
   const [buyer, setBuyer] = useState<string>(sale?.buyer ?? "");
   const [day, setDay] = useState<string>(sale?.sold_on ?? today());
-  const [split, setSplit] = useState<"soci" | "venditore">(sale?.split ?? "soci");
+  // di partenza i soldi vanno nel fondo cassa
+  const [split, setSplit] = useState<"cassa" | "soci" | "venditore">(sale?.split ?? "cassa");
   const [notes, setNotes] = useState<string>(sale?.notes ?? "");
   const [payment, setPayment] = useState<string>(sale?.payment ?? "contanti");
-  // togliere le bottiglie vendute dalla cantina di chi vende
-  const [fromCellar, setFromCellar] = useState<boolean>(Boolean(sale?.from_cellar));
-  const [cellar, setCellar] = useState<Record<string, number>>({});
+  // le bottiglie si tolgono dalla cantina di chi le dà (di partenza sì)
+  const [fromCellar, setFromCellar] = useState<boolean>(sale ? Boolean(sale.from_cellar) : true);
+  const [cellar, setCellar] = useState<Record<string, number>>({});   // «socio|batch» → bottiglie
   useEffect(() => {
-    supabase.from("cellar_bottles").select("batch_id, bottles").eq("user_id", seller)
-      .then(({ data }) => setCellar(Object.fromEntries((data ?? []).map((c) => [c.batch_id, Number(c.bottles)]))));
-  }, [seller]);
+    supabase.from("cellar_bottles").select("user_id, batch_id, bottles")
+      .then(({ data }) => setCellar(Object.fromEntries((data ?? []).map((c) => [`${c.user_id}|${c.batch_id}`, Number(c.bottles)]))));
+  }, []);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -277,8 +329,8 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
     return last;
   }, [batches, items]);
   const [lines, setLines] = useState<Line[]>(() => [
-    ...beers.map((b) => { const it = items.find((i) => i.batch_id === b.id); return { key: b.id, batch_id: b.id, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0 }; }),
-    (() => { const it = items.find((i) => !i.batch_id || !beers.some((b) => b.id === i.batch_id)); return { key: "altro", batch_id: null, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0 }; })(),
+    ...beers.map((b) => { const it = items.find((i) => i.batch_id === b.id); return { key: b.id, batch_id: b.id, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0, giver: it?.giver_id ?? sale?.seller_id ?? me }; }),
+    (() => { const it = items.find((i) => !i.batch_id || !beers.some((b) => b.id === i.batch_id)); return { key: "altro", batch_id: null, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0, giver: it?.giver_id ?? sale?.seller_id ?? me }; })(),
   ]);
   const setLine = (key: string, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
@@ -318,18 +370,22 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
       unit_price: Math.round((amount / nBottles) * 100) / 100, amount,
       ...(fromCellar || sale?.from_cellar ? { from_cellar: fromCellar } : {}),
     };
-    const fail = (e: { message: string }) => { setBusy(false); setErr(/from_cellar/i.test(e.message) ? NEED_0029 : /payment/i.test(e.message) ? NEED_0026 : /amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
+    const fail = (e: { message: string }) => { setBusy(false); setErr(isCashMissing(e.message) ? NEED_0030 : /from_cellar/i.test(e.message) ? NEED_0029 : /payment/i.test(e.message) ? NEED_0026 : /amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
     let id = sale?.id as string | undefined;
     if (sale) { const { error } = await supabase.from("sales").update(row).eq("id", sale.id); if (error) return fail(error); }
     else { const { data, error } = await supabase.from("sales").insert(row).select("id").single(); if (error) return fail(error); id = data.id; }
     await supabase.from("sale_items").delete().eq("sale_id", id!);
-    const { error } = await supabase.from("sale_items").insert(chosen.map((l) => ({ sale_id: id, batch_id: l.batch_id, bottles: l.qty, unit_price: l.price })));
+    const { error } = await supabase.from("sale_items").insert(chosen.map((l) => ({ sale_id: id, batch_id: l.batch_id, bottles: l.qty, unit_price: l.price, giver_id: l.giver })));
     if (error) return fail(error);
+    // fondo cassa: l'incasso entra nel fondo (o ne esce, se la vendita non è più nel fondo)
+    try {
+      await setLinkedCash({ sale_id: id! }, { amount: split === "cassa" ? amount : 0, kind: "vendita", description: `Vendita a ${buyer.trim()}`, day: day || today() });
+    } catch (e) { setBusy(false); return setErr("Vendita salvata, ma il fondo cassa non si è aggiornato: " + errMsg(e as { message: string })); }
     // cantina: rimetto quello che la vendita aveva tolto prima e tolgo quello di adesso
     try {
       await moveCellar([
         ...(sale ? cellarOut({ ...sale, sale_items: items }, 1) : []),
-        ...(fromCellar ? chosen.filter((l) => l.batch_id).map((l) => ({ user: seller, batch: l.batch_id!, delta: -l.qty })) : []),
+        ...(fromCellar ? chosen.filter((l) => l.batch_id).map((l) => ({ user: l.giver, batch: l.batch_id!, delta: -l.qty })) : []),
       ]);
     } catch (e) { setBusy(false); return setErr("Vendita salvata, ma la cantina non si è aggiornata: " + errMsg(e as { message: string })); }
     setBusy(false);
@@ -342,7 +398,7 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
         <button className="icon-btn famous-x" aria-label="Chiudi" onClick={onClose}><X size={18} /></button>
         <h2>{sale ? "Modifica vendita" : "Nuova vendita"}</h2>
 
-        <span className="nb-label">Chi vende</span>
+        <span className="nb-label">Chi ha fatto la vendita</span>
         <div className="xp-types">
           {soci.map((p) => <button key={p.id} type="button" className={"pay-method" + (seller === p.id ? " on" : "")} onClick={() => setSeller(p.id)}>{p.display_name}{p.id === me ? " (tu)" : ""}</button>)}
         </div>
@@ -363,11 +419,17 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
                   <MiniStep value={l.qty} step={1} digits={0} onChange={(q) => (q > l.qty && l.qty === 0 ? addOne(l) : setLine(l.key, { qty: q }))} />
                 </div>
                 {l.qty > 0 && (
-                  <div className="sb-price">
-                    <span className="muted small">a bottiglia</span>
-                    <MiniStep value={l.price} step={0.5} digits={2} unit="€" onChange={(p) => setLine(l.key, { price: p })} />
-                    <strong>{eur(l.qty * l.price)}</strong>
-                  </div>
+                  <>
+                    <div className="sb-price">
+                      <span className="muted small">a bottiglia</span>
+                      <MiniStep value={l.price} step={0.5} digits={2} unit="€" onChange={(p) => setLine(l.key, { price: p })} />
+                      <strong>{eur(l.qty * l.price)}</strong>
+                    </div>
+                    <div className="sb-giver">
+                      <span className="muted small">le dà</span>
+                      {soci.map((p) => <button key={p.id} type="button" className={"chip" + (l.giver === p.id ? " on" : "")} onClick={() => setLine(l.key, { giver: p.id })}>{p.display_name}</button>)}
+                    </div>
+                  </>
                 )}
               </div>
             );
@@ -377,14 +439,16 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
         <div className="sale-total">{nBottles} {nBottles === 1 ? "bottiglia" : "bottiglie"} · totale <strong>{eur(t)}</strong></div>
 
         <div className={"sale-cellar" + (fromCellar ? " on" : "")}>
-          <label className="check"><input type="checkbox" checked={fromCellar} onChange={(e) => setFromCellar(e.target.checked)} /> <span>🍾 Togli queste bottiglie dalla cantina di <b>{soci.find((p) => p.id === seller)?.display_name ?? "chi vende"}</b></span></label>
+          <label className="check"><input type="checkbox" checked={fromCellar} onChange={(e) => setFromCellar(e.target.checked)} /> <span>🍾 Togli le bottiglie dalla cantina di chi le dà</span></label>
           {fromCellar && chosen.filter((l) => l.batch_id).map((l) => {
             const b = beers.find((x) => x.id === l.batch_id);
-            const have = (cellar[l.batch_id!] ?? 0) + (sale?.from_cellar && sale.seller_id === seller ? Number(items.find((i) => i.batch_id === l.batch_id)?.bottles ?? 0) : 0);
+            const before = items.find((i) => i.batch_id === l.batch_id);
+            const back = sale?.from_cellar && before && (before.giver_id ?? sale.seller_id) === l.giver ? Number(before.bottles) : 0;
+            const have = (cellar[`${l.giver}|${l.batch_id}`] ?? 0) + back;
             return (
               <div key={l.key} className={"sc-row" + (l.qty > have ? " short" : "")}>
-                <span>{b ? label(b) : "Birra"}</span>
-                <span>{have} in cantina → <b>{Math.max(0, have - l.qty)}</b>{l.qty > have ? " (non bastano)" : ""}</span>
+                <span>{b ? label(b) : "Birra"} · <b>{soci.find((p) => p.id === l.giver)?.display_name ?? ""}</b></span>
+                <span>{have} → <b>{Math.max(0, have - l.qty)}</b>{l.qty > have ? " (non bastano)" : ""}</span>
               </div>
             );
           })}
@@ -392,7 +456,8 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
         </div>
 
         <span className="nb-label">I soldi</span>
-        <div className="xp-types two">
+        <div className="xp-types">
+          <button type="button" className={"pay-method" + (split === "cassa" ? " on" : "")} onClick={() => setSplit("cassa")}>💰 Nel fondo cassa<small>{eur(t)}</small></button>
           <button type="button" className={"pay-method" + (split === "soci" ? " on" : "")} onClick={() => setSplit("soci")}>Divisi tra i soci<small>{eur(t / Math.max(1, soci.length))} a testa</small></button>
           <button type="button" className={"pay-method" + (split === "venditore" ? " on" : "")} onClick={() => setSplit("venditore")}>Li tiene chi vende<small>{eur(t)}</small></button>
         </div>
@@ -406,6 +471,40 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
         <div className="half-actions" style={{ marginTop: 14 }}>
           <button className="btn" onClick={onClose}>Annulla</button>
           <button className="btn primary" disabled={busy} onClick={save}>{busy ? "Salvo…" : sale ? "Salva" : "Registra vendita"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Versamento nel fondo cassa (soldi messi dai soci) o prelievo a mano. */
+function CashForm({ kind, onClose, onSaved }: { kind: "versamento" | "prelievo"; onClose: () => void; onSaved: () => void }) {
+  const [amount, setAmount] = useState(0);
+  const [desc, setDesc] = useState("");
+  const [day, setDay] = useState(today());
+  const [err, setErr] = useState("");
+  const save = async () => {
+    if (!(amount > 0)) return setErr("Metti l'importo.");
+    try {
+      await addCash({ amount: kind === "prelievo" ? -amount : amount, kind, description: desc.trim() || (kind === "versamento" ? "Versamento nel fondo" : "Prelievo dal fondo"), day });
+      onSaved();
+    } catch (e) { setErr(errMsg(e as { message: string })); }
+  };
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal sale-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="icon-btn famous-x" aria-label="Chiudi" onClick={onClose}><X size={18} /></button>
+        <h2>{kind === "versamento" ? "💰 Versamento nel fondo" : "💸 Prelievo dal fondo"}</h2>
+        <div className="sb-price" style={{ border: 0, paddingTop: 0 }}>
+          <span className="muted small">Importo</span>
+          <MiniStep value={amount} step={5} digits={2} unit="€" onChange={setAmount} />
+        </div>
+        <label className="block"><span>Per cosa</span><input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={kind === "versamento" ? "es. quota iniziale dei soci" : "es. bombola CO₂"} /></label>
+        <label className="block"><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>
+        {err && <p className="error">{err}</p>}
+        <div className="half-actions" style={{ marginTop: 12 }}>
+          <button className="btn" onClick={onClose}>Annulla</button>
+          <button className="btn primary" onClick={save}>Salva</button>
         </div>
       </div>
     </div>
