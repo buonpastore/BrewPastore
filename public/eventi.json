@@ -25,6 +25,17 @@
       "link": "https://www.iltemporitrovato.org/corsi/cucina-vino/degustazione-birra/corso-degustazione-birra-firenze/"
     },
     {
+      "titolo": "Richiamini – A Year Flew By (festa da Birra Perugia)",
+      "tipo": "birrificio",
+      "dal": "2026-11-28",
+      "al": null,
+      "quando": "sabato 28 novembre 2026, dalle 16 alle 21",
+      "dove": "Birra Perugia, Pontenuovo di Torgiano (PG)",
+      "regione": "Umbria",
+      "descrizione": "Festa per il primo anno dei Richiamini al birrificio: musica dal vivo e dj (Alex Moments, Matt Brown, Feelz…) con le birre di Birra Perugia.",
+      "link": "https://www.instagram.com/birraperugia/"
+    },
+    {
       "titolo": "Natale alla Rocca",
       "tipo": "mercatino",
       "dal": "2026-12-05",
@@ -260,7 +271,8 @@
     {
       "data": "2026-11-26",
       "aggiunti": [
-        "Natale a tutta Birra – Perugia accende il Natale"
+        "Natale a tutta Birra – Perugia accende il Natale",
+        "Richiamini – A Year Flew By (festa da Birra Perugia)"
       ],
       "aggiornati": [],
       "tolti": []
