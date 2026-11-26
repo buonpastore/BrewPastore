@@ -243,12 +243,25 @@
       "regione": "Lazio",
       "descrizione": "Il birrificio agricolo prepara un mese di eventi natalizi con le sue birre: programma e date nell'articolo.",
       "link": "https://www.romagoodnews.it/2026/11/19/il-birrificio-agricolo-podere-676-prepara-un-natale-di-grandi-eventi/"
+    },
+    {
+      "titolo": "Natale a tutta Birra – Perugia accende il Natale",
+      "tipo": "degustazione",
+      "dal": null,
+      "al": null,
+      "quando": "tra il 28 novembre 2026 e il 6 gennaio 2027 (giorno e ora sul programma del Comune)",
+      "dove": "Perugia",
+      "regione": "Umbria",
+      "descrizione": "Incontro dedicato alla birra dentro il programma natalizio di Perugia (dal 28 novembre, anteprima il 27 con l'accensione dell'albero in piazza IV Novembre).",
+      "link": "https://www.assisinews.it/eventi/si-accende-il-natale-2026-a-perugia-tanti-eventi-per-famiglie-giovani-e-bambini-il-programma/"
     }
   ],
   "storico": [
     {
       "data": "2026-11-26",
-      "aggiunti": [],
+      "aggiunti": [
+        "Natale a tutta Birra – Perugia accende il Natale"
+      ],
       "aggiornati": [],
       "tolti": []
     },
