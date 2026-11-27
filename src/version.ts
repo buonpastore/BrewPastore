@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.300", date: "27/11/2026 11:15", text: "Ricetta: le iconcine condividi, modifica, duplica ed elimina stanno sulla riga di «← Ricette», a destra, e non vanno più a capo sotto il nome" },
   { version: "0.299", date: "27/11/2026 11:00", text: "Task: quelle terminate non compaiono più nell’elenco (prima restavano una settimana) e nemmeno in Home; stanno tutte in fondo sotto «Task terminate», che si apre toccandolo" },
   { version: "0.298", date: "27/11/2026 10:45", text: "Task: dopo «Confermo, la faccio» o «Non posso» la finestra si chiude da sola e si torna all’elenco" },
   { version: "0.297", date: "27/11/2026 10:30", text: "Ricetta: nuova iconcina «Condividi» in alto (accanto a modifica, duplica, elimina) con un testo pronto per chi riceve la birra: nome, stile, gradi, amaro e colore, origine e caratteristiche dello stile e gli abbinamenti per portata; si manda con «WhatsApp», si copia con «Copia» o si condivide con le altre app. Task: quando qualcuno conferma che la fa, la task passa da sola da «Inserita» a «In corso»" },

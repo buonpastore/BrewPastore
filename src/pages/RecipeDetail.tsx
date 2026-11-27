@@ -106,21 +106,22 @@ export function RecipeDetail() {
   return (
     <div>
       <div className="page-head recipe-head">
-        <div>
+        {/* in alto: «← Ricette» a sinistra e le iconcine a destra, sulla stessa riga */}
+        <div className="rh-top">
           <Link to="/ricette" className="muted small">← Ricette</Link>
-          <h1>{recipe.name}</h1>
-          <div className="muted style-line">{recipe.style}<FamousBeers style={recipe.style} /></div>
+          <div className="head-icons">
+            <ShareBeer recipe={recipe} />
+            {isAdmin && (
+              <>
+                <button type="button" title="Modifica la scheda" aria-label="Modifica" onClick={() => { setTab("scheda"); setEditScheda(true); }}><Pencil size={18} /></button>
+                <button type="button" title="Duplica la ricetta" aria-label="Duplica" onClick={duplicate}><Copy size={18} /></button>
+                <button type="button" className="danger" title="Elimina la ricetta" aria-label="Elimina" onClick={() => setDeleting(true)}><Trash2 size={18} /></button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="head-icons">
-          <ShareBeer recipe={recipe} />
-          {isAdmin && (
-            <>
-              <button type="button" title="Modifica la scheda" aria-label="Modifica" onClick={() => { setTab("scheda"); setEditScheda(true); }}><Pencil size={19} /></button>
-              <button type="button" title="Duplica la ricetta" aria-label="Duplica" onClick={duplicate}><Copy size={19} /></button>
-              <button type="button" className="danger" title="Elimina la ricetta" aria-label="Elimina" onClick={() => setDeleting(true)}><Trash2 size={19} /></button>
-            </>
-          )}
-        </div>
+        <h1>{recipe.name}</h1>
+        <div className="muted style-line">{recipe.style}<FamousBeers style={recipe.style} /></div>
       </div>
 
       {deleting && (
