@@ -2366,3 +2366,4 @@ a.mini-btn { text-decoration: none; }
 .rc-card { position: relative; }
 .rc-card .rc-title { padding-right: 40px; }
 .rc-share { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer; padding: 0; z-index: 2; }
+.tk-badge.ts-wait { background: color-mix(in srgb, var(--violet) 20%, transparent); color: var(--violet); white-space: nowrap; }

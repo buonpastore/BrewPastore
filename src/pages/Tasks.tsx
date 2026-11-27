@@ -21,6 +21,14 @@ export const answerOf = (t: Row, id: string): "si" | "no" | null =>
   (Array.isArray(t.confirmed) && t.confirmed.includes(id) ? "si" : Array.isArray(t.declined) && t.declined.includes(id) ? "no" : null);
 /** Persone che non hanno ancora risposto. */
 export const pendingOf = (t: Row): string[] => (t.status === "terminata" ? [] : toConfirm(t).filter((id) => !answerOf(t, id)));
+/** Stato da mostrare: «In attesa di conferma» finché qualcuno deve rispondere; quando tutti hanno confermato, «In corso». */
+export function shownState(t: Row): { label: string; cls: string } {
+  if (t.status === "terminata") return { label: "Terminata", cls: "ts-done" };
+  if (pendingOf(t).length) return { label: "In attesa di conferma", cls: "ts-wait" };
+  if (toConfirm(t).length && toConfirm(t).some((id) => answerOf(t, id) === "si")) return { label: "In corso", cls: "ts-doing" };
+  const s = STATES.find((x) => x.key === t.status) ?? STATES[0];
+  return { label: s.label, cls: s.cls };
+}
 
 export function Tasks() {
   const { session, profiles, nameOf } = useAuth();
@@ -73,7 +81,7 @@ export function Tasks() {
             : pendingOf(t).length ? <span className="tk-wait">⏳ da confermare: {pendingOf(t).map(nameOf).join(", ")}</span>
             : toConfirm(t).some((id) => answerOf(t, id) === "no") ? <span className="tk-no">✋ {toConfirm(t).filter((id) => answerOf(t, id) === "no").map(nameOf).join(", ")} non può</span> : null}
         </span>
-        <span className={"tk-badge " + st.cls}>{st.label}</span>
+        <span className={"tk-badge " + shownState(t).cls}>{shownState(t).label}</span>
       </button>
     );
   };
@@ -207,7 +215,9 @@ function TaskDetail({ task, me, onClose, onChanged, onEdit }: { task: Row; me: s
     const { error } = await supabase.rpc("task_answer", { p_task: task.id, p_yes: yes });
     if (error) return alert(/task_answer|function|schema cache/i.test(error.message) ? "Per le conferme delle task esegui su Supabase il file 0031_task_conferme.sql." : errMsg(error));
     // appena qualcuno conferma che la fa, la task passa da «Inserita» a «In corso»
-    if (yes && task.status === "inserita") await supabase.from("tasks").update({ status: "in_corso", updated_at: new Date().toISOString() }).eq("id", task.id);
+    // quando tutti quelli coinvolti hanno confermato, la task passa a «In corso»
+    const stillWaiting = pendingOf(task).filter((id) => id !== me);
+    if (yes && task.status === "inserita" && !stillWaiting.length) await supabase.from("tasks").update({ status: "in_corso", updated_at: new Date().toISOString() }).eq("id", task.id);
     onChanged(); onClose();   // risposto: si torna all'elenco delle task
   };
   const isImg = (p: string) => /\.(png|jpe?g|webp|gif|heic)$/i.test(p);

@@ -1,5 +1,5 @@
 import { MonthEvents, EventsNews } from "./Events";
-import { whoOf, pendingOf } from "./Tasks";
+import { whoOf, pendingOf, shownState } from "./Tasks";
 import { LogIn, Minus, Plus, Camera, RotateCcw, Search } from "lucide-react";
 import { searchApp } from "../searchIndex";
 import { UserAvatar } from "../components/UserAvatar";
@@ -455,7 +455,7 @@ function MyTasks() {
               <strong>{t.important && <span className="tk-imp-flag" title="Importante" aria-label="Importante">!</span>}{t.title}</strong>
               <span className="muted small">da {nameOf(t.created_by)}{t.due_date ? ` · entro il ${date(t.due_date)}` : ""}</span>
             </span>
-            <span className={"tk-badge " + (pendingOf(t).includes(me ?? "") ? "ts-ask" : t.status === "in_corso" ? "ts-doing" : "ts-new")}>{pendingOf(t).includes(me ?? "") ? "Da confermare" : t.status === "in_corso" ? "In corso" : "Inserita"}</span>
+            <span className={"tk-badge " + (pendingOf(t).includes(me ?? "") ? "ts-ask" : shownState(t).cls)}>{pendingOf(t).includes(me ?? "") ? "Da confermare" : shownState(t).label}</span>
           </Link>
         ))}
       </div>
