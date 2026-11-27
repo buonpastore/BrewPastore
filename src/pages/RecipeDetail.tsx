@@ -13,6 +13,7 @@ import { ImportRecipe } from "./ImportRecipe";
 import { FilePicker } from "../components/FilePicker";
 import { STYLE_OPTIONS } from "../styles-list";
 import { FamousBeers } from "../components/FamousBeers";
+import { ShareBeer } from "../components/ShareBeer";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { BrewDay } from "./BrewDay";
 import { RecipeOverview } from "./RecipeOverview";
@@ -110,13 +111,16 @@ export function RecipeDetail() {
           <h1>{recipe.name}</h1>
           <div className="muted style-line">{recipe.style}<FamousBeers style={recipe.style} /></div>
         </div>
-        {isAdmin && (
-          <div className="head-icons">
-            <button type="button" title="Modifica la scheda" aria-label="Modifica" onClick={() => { setTab("scheda"); setEditScheda(true); }}><Pencil size={19} /></button>
-            <button type="button" title="Duplica la ricetta" aria-label="Duplica" onClick={duplicate}><Copy size={19} /></button>
-            <button type="button" className="danger" title="Elimina la ricetta" aria-label="Elimina" onClick={() => setDeleting(true)}><Trash2 size={19} /></button>
-          </div>
-        )}
+        <div className="head-icons">
+          <ShareBeer recipe={recipe} />
+          {isAdmin && (
+            <>
+              <button type="button" title="Modifica la scheda" aria-label="Modifica" onClick={() => { setTab("scheda"); setEditScheda(true); }}><Pencil size={19} /></button>
+              <button type="button" title="Duplica la ricetta" aria-label="Duplica" onClick={duplicate}><Copy size={19} /></button>
+              <button type="button" className="danger" title="Elimina la ricetta" aria-label="Elimina" onClick={() => setDeleting(true)}><Trash2 size={19} /></button>
+            </>
+          )}
+        </div>
       </div>
 
       {deleting && (

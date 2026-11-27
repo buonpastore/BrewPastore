@@ -207,6 +207,8 @@ function TaskDetail({ task, me, onClose, onChanged, onEdit }: { task: Row; me: s
   const answer = async (yes: boolean) => {
     const { error } = await supabase.rpc("task_answer", { p_task: task.id, p_yes: yes });
     if (error) return alert(/task_answer|function|schema cache/i.test(error.message) ? "Per le conferme delle task esegui su Supabase il file 0031_task_conferme.sql." : errMsg(error));
+    // appena qualcuno conferma che la fa, la task passa da «Inserita» a «In corso»
+    if (yes && task.status === "inserita") await supabase.from("tasks").update({ status: "in_corso", updated_at: new Date().toISOString() }).eq("id", task.id);
     onChanged();
   };
   const isImg = (p: string) => /\.(png|jpe?g|webp|gif|heic)$/i.test(p);
