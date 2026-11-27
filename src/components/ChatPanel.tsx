@@ -183,7 +183,19 @@ export function ChatPanel({ recipeId, batchId }: Props) {
     return () => { supabase.removeChannel(ch); };
   }, [recipeId, batchId, loadPolls]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ block: "nearest" }); }, [msgs.length]);
+  // sempre in fondo, sull'ultimo messaggio (anche dopo che le foto si sono caricate)
+  const listRef = useRef<HTMLDivElement>(null);
+  const firstScroll = useRef(true);
+  useEffect(() => {
+    if (!msgs.length) return;
+    const toEnd = () => {
+      const el = listRef.current; if (el) el.scrollTop = el.scrollHeight;
+      if (firstScroll.current) endRef.current?.scrollIntoView({ block: "end" });
+    };
+    toEnd();
+    const t1 = window.setTimeout(toEnd, 300), t2 = window.setTimeout(() => { toEnd(); firstScroll.current = false; }, 1200);
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
+  }, [msgs.length]);
 
   const post = async (row: Row) => {
     const { data, error } = await supabase.from("messages").insert({ recipe_id: recipeId ?? null, batch_id: batchId ?? null, ...row }).select().single();
@@ -245,7 +257,7 @@ export function ChatPanel({ recipeId, batchId }: Props) {
 
   return (
     <div className="chat">
-      <div className="chat-msgs">
+      <div className="chat-msgs" ref={listRef} onLoadCapture={() => { const el = listRef.current; if (el) el.scrollTop = el.scrollHeight; }}>
         {msgs.length === 0 && <p className="muted">Nessun messaggio. Scrivi il primo!</p>}
         {msgs.map((m) => {
           const poll = polls[m.id];

@@ -176,7 +176,6 @@ export function ChatPage() {
   return (
     <div>
       <h1>Chat</h1>
-      <p className="muted">Chat generale. Ogni ricetta e ogni batch hanno anche una chat dedicata nella loro scheda.</p>
       <div className="panel"><ChatPanel /></div>
     </div>
   );
