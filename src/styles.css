@@ -2386,3 +2386,16 @@ a.mini-btn { text-decoration: none; }
 .cel-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 .cel-fund-ico { width: 34px; height: 34px; display: grid; place-items: center; font-size: 1.3rem; border-radius: 50%; background: var(--surface-2); }
 .split-fund { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; margin-bottom: 10px; border-radius: 12px; background: color-mix(in srgb, var(--gold) 10%, transparent); font-weight: 700; }
+
+/* Passaggi del batch: avanza, data, cancella */
+.bsteps { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 18px; }
+.bstep { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 4px; border-radius: 14px; border: 1px solid var(--line); background: color-mix(in srgb, var(--c) 8%, var(--surface)); }
+.bstep.sel { border-color: var(--c); box-shadow: 0 0 0 1px var(--c) inset; }
+.bstep-name { flex: 1; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; background: none; border: 0; color: var(--text); font: 700 1rem var(--sans); text-align: left; cursor: pointer; }
+.bstep-ico { font-size: 1.2rem; }
+.bstep-date { width: 138px; min-height: 40px; font-size: .9rem; }
+span.bstep-date { display: inline-flex; align-items: center; color: var(--muted); }
+.bstep-del { color: var(--danger, #e5484d); }
+.bstep-next { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; border-radius: 14px; border: 2px dashed var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--text); font: 600 1.05rem var(--sans); cursor: pointer; }
+.bstep-next strong { color: var(--c); }
+.qe-step-title { margin: 0 0 12px; font-size: 1.15rem; }

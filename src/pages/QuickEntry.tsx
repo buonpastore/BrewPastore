@@ -1,5 +1,6 @@
 import { CapPicker, BottleSplit } from "../components/CapColor";
 import { useAuth } from "../auth";
+import { Link } from "react-router-dom";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus, Plus, Check, Save, Trash2, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
@@ -242,18 +243,16 @@ function QuickEvents({ batch, canEdit }: { batch: Row; canEdit: boolean }) {
   );
 }
 
-/** Inserimento rapido dei dati del batch, pensato per il telefono durante la cotta. */
-/** Fasi da tenere aperte in base allo stato del batch. */
-export function phasesFor(status?: string | null): string[] {
-  switch (status) {
-    case "fermentazione": case "maturazione": return ["Fermentazione"];
-    case "imbottigliato": return ["Imbottigliamento"];
-    case "degustato": case "finito": case "esaurito": return ["Imbottigliamento"];
-    default: return ["Acqua", "Correzione acqua del mash", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"];
-  }
-}
+/** Fasi (gruppi di dati) di ogni passaggio del batch. */
+const STEP_PHASES: Record<string, string[]> = {
+  cotta: ["Acqua", "Correzione acqua del mash", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"],
+  fermentazione: ["Fermentazione"],
+  imbottigliato: ["Imbottigliamento"],
+};
+const STEP_TITLE: Record<string, string> = { cotta: "Dati della cotta", fermentazione: "Dati della fermentazione", imbottigliato: "Dati dell'imbottigliamento", degustato: "Degustazione", esaurito: "Esaurita" };
 
-export function QuickEntry({ batch: rawBatch, recipe, canEdit, onSaved, onDelete, focusKey = 0, focusStatus, onAfterSave }: { batch: Row; recipe?: Row | null; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; focusKey?: number; focusStatus?: string | null; onAfterSave?: () => void }) {
+/** Inserimento dei dati del passaggio scelto, pensato per il telefono. */
+export function QuickEntry({ batch: rawBatch, recipe, canEdit, onSaved, onDelete, step = "cotta", onAfterSave }: { batch: Row; recipe?: Row | null; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; step?: string; onAfterSave?: () => void }) {
   // acido lattico del mash (dalle correzioni dell'acqua), mostrato come un campo del batch
   const [lactic, setLactic] = useState<number | null>(null);
   const [lacticKey, setLacticKey] = useState(0);
@@ -265,14 +264,11 @@ export function QuickEntry({ batch: rawBatch, recipe, canEdit, onSaved, onDelete
   const sug = suggestions(batch, recipe ?? undefined);
   const reached = phasesReached(batch);
   const { profiles } = useAuth();
-  const [open, setOpen] = useState<Set<string>>(() => new Set(phasesFor(batch.status)));
+  const phases = PHASES.filter((p) => (STEP_PHASES[step] ?? []).includes(p.title));
+  // la cotta ha tante fasi: si aprono una alla volta; le altre sono già aperte
+  const [open, setOpen] = useState<Set<string>>(() => new Set(step === "cotta" ? [] : STEP_PHASES[step] ?? []));
+  useEffect(() => { setOpen(new Set(step === "cotta" ? [] : STEP_PHASES[step] ?? [])); }, [step]);
   const rootRef = useRef<HTMLDivElement>(null);
-  // dopo un pulsante di stato: apri solo le fasi interessanti e portale in vista
-  useEffect(() => {
-    if (!focusKey) return;
-    setOpen(new Set(phasesFor(focusStatus ?? batch.status)));
-    window.setTimeout(() => rootRef.current?.querySelector(".qe-phase.open")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
-  }, [focusKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const toggle = (t: string) => setOpen((o) => { const n = new Set(o); if (n.has(t)) n.delete(t); else n.add(t); return n; });
   const flushers = useRef(new Set<() => Promise<void>>()).current;
   const [saveMsg, setSaveMsg] = useState("");
@@ -297,7 +293,10 @@ export function QuickEntry({ batch: rawBatch, recipe, canEdit, onSaved, onDelete
   return (
     <FlushCtx.Provider value={flushers}>
     <div className="quick-entry" ref={rootRef}>
-      {PHASES.map((p) => {
+      <h2 className="qe-step-title">{STEP_TITLE[step] ?? ""}</h2>
+      {step === "degustato" && <p className="muted">Le degustazioni si scrivono in <Link to="/degustazioni">Produzione → Degustazioni</Link>.</p>}
+      {step === "esaurita" || step === "esaurito" ? <p className="muted">La birra è finita: non c'è più in nessuna cantina.</p> : null}
+      {phases.map((p) => {
         const done = p.fields.filter((f) => batch[f.key] != null && batch[f.key] !== "").length;
         return (
           <section key={p.title} className={"qe-phase" + (open.has(p.title) ? " open" : "")} style={{ ["--c" as string]: p.color }}>
