@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Copy, MessageCircle, Share2, X } from "lucide-react";
 import { num, type Row } from "../lib";
 import { abvOf, ebcName, ibuName } from "../beerLook";
@@ -34,7 +35,7 @@ export function beerShareText(r: Row): string {
 }
 
 /** Iconcina «Condividi»: apre il testo, da copiare o mandare su WhatsApp. */
-export function ShareBeer({ recipe }: { recipe: Row }) {
+export function ShareBeer({ recipe, className, size = 18 }: { recipe: Row; className?: string; size?: number }) {
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState("");
   const text = beerShareText(recipe);
@@ -47,9 +48,11 @@ export function ShareBeer({ recipe }: { recipe: Row }) {
   };
   return (
     <>
-      <button type="button" title="Condividi la birra" aria-label="Condividi" onClick={() => { setMsg(""); setOpen(true); }}><Share2 size={19} /></button>
-      {open && (
-        <div className="modal-backdrop" onClick={() => setOpen(false)}>
+      <button type="button" className={className} title="Condividi la birra" aria-label="Condividi"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMsg(""); setOpen(true); }}><Share2 size={size} /></button>
+      {/* la finestra va fuori dalla pagina, così funziona anche dentro una scheda cliccabile (elenco ricette) */}
+      {open && createPortal(
+        <div className="modal-backdrop" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
           <div className="modal share-modal" onClick={(e) => e.stopPropagation()}>
             <button className="icon-btn famous-x" aria-label="Chiudi" onClick={() => setOpen(false)}><X size={18} /></button>
             <h2><Share2 size={20} /> Condividi la birra</h2>
@@ -63,7 +66,7 @@ export function ShareBeer({ recipe }: { recipe: Row }) {
             {msg && <p className="ok small">{msg}</p>}
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   );
 }

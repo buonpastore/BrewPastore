@@ -2361,3 +2361,8 @@ a.mini-btn { text-decoration: none; }
 .share-btns .btn svg { flex: none; }
 .share-btns .share-wa { grid-column: 1 / -1; background: #25d366; border-color: #25d366; color: #06301a; font-weight: 800; }
 .share-btns .btn:only-of-type { grid-column: 1 / -1; }
+
+/* condividi anche dall'elenco delle ricette */
+.rc-card { position: relative; }
+.rc-card .rc-title { padding-right: 40px; }
+.rc-share { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer; padding: 0; z-index: 2; }

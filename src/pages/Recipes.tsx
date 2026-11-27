@@ -1,3 +1,4 @@
+import { ShareBeer } from "../components/ShareBeer";
 import { ViewToggle, useViewMode } from "../components/ViewToggle";
 import { BookOpen, Beer, Leaf } from "lucide-react";
 import { CapDot, useCapColors } from "../components/CapColor";
@@ -92,6 +93,7 @@ export function Recipes() {
           const last = (r.batches as Row[]).map((b) => b.brew_date).filter(Boolean).sort().pop();
           return (
             <Link key={r.id} to={`/ricette/${r.id}`} className="card rc-card" style={{ ["--rc" as string]: accentAt(rows.indexOf(r)) }}>
+              <ShareBeer recipe={r} className="rc-share" size={16} />
               <h3 className="rc-title">{r.name} <CapDot color={capOf(r)} size={22} /> {r.archived && <span className="badge">archiviata</span>}</h3>
               <div className="rc-style">{r.style ?? "stile non indicato"}</div>
               <div className="rc-traits">

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.302", date: "27/11/2026 11:45", text: "Ricette: l’iconcina «Condividi» c’è anche nell’elenco, in alto a destra di ogni birra, senza dover aprire la ricetta" },
   { version: "0.301", date: "27/11/2026 11:30", text: "Condividi la birra: pulsanti rifatti, «Invia su WhatsApp» verde a tutta larghezza e sotto «Copia» e «Altre app» affiancati e uguali" },
   { version: "0.300", date: "27/11/2026 11:15", text: "Ricetta: le iconcine condividi, modifica, duplica ed elimina stanno sulla riga di «← Ricette», a destra, e non vanno più a capo sotto il nome" },
   { version: "0.299", date: "27/11/2026 11:00", text: "Task: quelle terminate non compaiono più nell’elenco (prima restavano una settimana) e nemmeno in Home; stanno tutte in fondo sotto «Task terminate», che si apre toccandolo" },
