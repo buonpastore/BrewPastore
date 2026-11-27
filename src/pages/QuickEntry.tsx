@@ -248,6 +248,7 @@ const STEP_PHASES: Record<string, string[]> = {
   imbottigliato: ["Imbottigliamento"],
 };
 const STEP_TITLE: Record<string, string> = { cotta: "Dati della cotta", fermentazione: "Dati della fermentazione", imbottigliato: "Dati dell'imbottigliamento", degustato: "Degustazione", esaurito: "Esaurita" };
+const STEP_FIELD: Record<string, string> = { cotta: "brew_date", fermentazione: "fermentation_start", imbottigliato: "bottling_date", degustato: "first_tasting_date" };
 
 /** Inserimento dei dati del passaggio scelto, pensato per il telefono. */
 export function QuickEntry({ batch: rawBatch, recipe, canEdit, onSaved, onDelete, step = "cotta", onAfterSave }: { batch: Row; recipe?: Row | null; canEdit: boolean; onSaved: (b: Row) => void; onDelete?: () => void; step?: string; onAfterSave?: () => void }) {
@@ -291,7 +292,7 @@ export function QuickEntry({ batch: rawBatch, recipe, canEdit, onSaved, onDelete
   return (
     <FlushCtx.Provider value={flushers}>
     <div className="quick-entry" ref={rootRef}>
-      <h2 className="qe-step-title">{STEP_TITLE[step] ?? ""}</h2>
+      <h2 className="qe-step-title">{STEP_TITLE[step] ?? ""}{STEP_FIELD[step] && !batch[STEP_FIELD[step]] && <small className="muted"> · da fare</small>}</h2>
       {step === "degustato" && <p className="muted">Le degustazioni si scrivono in <Link to="/degustazioni">Produzione → Degustazioni</Link>.</p>}
       {step === "esaurita" || step === "esaurito" ? <p className="muted">La birra è finita: non c'è più in nessuna cantina.</p> : null}
       {phases.map((p) => {

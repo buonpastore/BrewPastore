@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.312", date: "28/11/2026 01:20", text: "Batch: entrando vedi subito i dati della fase da fare adesso (es. dopo la cotta, quelli della fermentazione). Le fasi fatte mostrano un riassunto in una riga (OG, litri, FG, bottiglie…): toccale per aprire i dati, ritoccale per richiuderli. Quando avanzi si aprono i dati della fase appena segnata." },
   { version: "0.311", date: "28/11/2026 01:00", text: "Chat: tolta la descrizione in alto e si apre sempre in fondo, sull'ultimo messaggio." },
   { version: "0.310", date: "28/11/2026 00:45", text: "Batch: tolti i «Consumi della cotta», la corrente è automatica (4,5 kWh a cotta, nei costi). Accanto ad «Avanza» c'è «Torna a…» per annullare l'ultima fase e tornare a quella precedente." },
   { version: "0.309", date: "28/11/2026 00:20", text: "Diario di fermentazione: non si vedono più le vecchie note automatiche «Stato: Cotta» e simili." },

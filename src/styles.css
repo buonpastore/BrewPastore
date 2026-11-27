@@ -2405,3 +2405,5 @@ span.bstep-date { display: inline-flex; align-items: center; color: var(--muted)
 .bstep-back strong { color: var(--text); }
 .bstep-move .bstep-next { padding: 0 10px; font-size: .95rem; text-align: center; }
 .bstep-move strong { white-space: nowrap; }
+.bstep-txt { display: flex; flex-direction: column; line-height: 1.2; }
+.bstep-txt small { font: 500 .78rem var(--sans); color: var(--muted); margin-top: 2px; }

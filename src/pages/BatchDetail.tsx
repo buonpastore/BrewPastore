@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { supabase, errMsg, sg, date, normStatus, statusLabel, type Row } from "../lib";
+import { supabase, errMsg, sg, num, date, normStatus, statusLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { QuickEntry } from "./QuickEntry";
 import { DeleteDialog } from "../components/DeleteDialog";
@@ -24,6 +24,25 @@ function stepsDone(b: Row): number {
   return Math.max(fromStatus, fromDates);
 }
 
+/** Passaggio di cui mostrare i dati entrando: quello da fare adesso (il successivo); a birra esaurita, l'ultimo. */
+function defaultStep(b: Row): string {
+  const done = stepsDone(b), next = STEPS[done];
+  return next && next.status !== "esaurito" ? next.status : STEPS[Math.max(0, done - 1)].status;
+}
+
+/** Riassunto in una riga dei dati di un passaggio fatto. */
+function stepSummary(b: Row, status: string): string {
+  const l = (v: unknown) => `${num(Number(v), 1)} L`;
+  const parts: (string | false)[] =
+    status === "cotta" ? [b.original_gravity != null && `OG ${sg(b.original_gravity)}`, b.volume_fermenter_l != null && l(b.volume_fermenter_l)]
+    : status === "fermentazione" ? [b.final_gravity != null && `FG ${sg(b.final_gravity)}`, b.abv != null && `${num(Number(b.abv), 1)}% vol`]
+    : status === "imbottigliato" ? [b.bottles_count != null && `${b.bottles_count} bottiglie`, b.volume_bottled_l != null && l(b.volume_bottled_l), b.priming_sugar_g != null && `${num(Number(b.priming_sugar_g), 0)} g zucchero`]
+    : [];
+  const s = parts.filter(Boolean).join(" · ");
+  return s || (STEP_HAS_DATA.includes(status) ? "dati da inserire" : "");
+}
+const STEP_HAS_DATA = ["cotta", "fermentazione", "imbottigliato"];
+
 /** Passaggi del batch: avanzare, cambiare la data, annullare l'ultimo, scegliere di quale vedere i dati. */
 function BatchSteps({ batch, canEdit, selected, onSelect, onSaved }: { batch: Row; canEdit: boolean; selected: string; onSelect: (s: string) => void; onSaved: (b: Row) => void }) {
   const done = stepsDone(batch);
@@ -44,14 +63,16 @@ function BatchSteps({ batch, canEdit, selected, onSelect, onSaved }: { batch: Ro
   const undo = async (i: number) => {
     const s = STEPS[i];
     if (!confirm(`Annullare «${s.label}»${batch[s.field] ? ` del ${date(batch[s.field])}` : ""} e tornare a «${i > 0 ? STEPS[i - 1].label : "da cuocere"}»? I dati inseriti restano.`)) return;
-    if (await update({ status: i > 0 ? STEPS[i - 1].status : "pianificato", [s.field]: null })) onSelect(i > 0 ? STEPS[i - 1].status : "cotta");
+    if (await update({ status: i > 0 ? STEPS[i - 1].status : "pianificato", [s.field]: null })) onSelect(s.status);   // di nuovo da fare
   };
   return (
     <div className="bsteps">
       {STEPS.slice(0, done).map((s, i) => (
         <div key={s.status} className={"bstep" + (selected === s.status ? " sel" : "")} style={{ ["--c" as string]: s.color }}>
-          <button type="button" className="bstep-name" onClick={() => onSelect(s.status)}>
-            <span className="bstep-ico">{s.icon}</span>{s.label}
+          {/* tocca per aprire i dati del passaggio; ritocca per richiuderli */}
+          <button type="button" className="bstep-name" onClick={() => onSelect(selected === s.status ? defaultStep(batch) : s.status)}>
+            <span className="bstep-ico">{s.icon}</span>
+            <span className="bstep-txt">{s.label}{stepSummary(batch, s.status) && <small>{stepSummary(batch, s.status)}</small>}</span>
           </button>
           {canEdit
             ? <input type="date" className="bstep-date" value={batch[s.field] ?? ""} aria-label={`Data: ${s.label}`} onChange={(e) => update({ [s.field]: e.target.value || null })} />
@@ -62,7 +83,7 @@ function BatchSteps({ batch, canEdit, selected, onSelect, onSaved }: { batch: Ro
         <div className={"bstep-move" + (done > 0 && next ? " two" : "")}>
           {done > 0 && (
             <button type="button" className="bstep-back" onClick={() => undo(done - 1)} title={`Annulla «${STEPS[done - 1].label}»`}>
-              <ArrowLeft size={18} /> Torna a <strong>{done > 1 ? STEPS[done - 2].label : "da cuocere"}</strong>
+              <ArrowLeft size={18} /> <span>Annulla <strong>{STEPS[done - 1].label}</strong></span>
             </button>
           )}
           {next && (
@@ -118,7 +139,7 @@ export function BatchDetail() {
   useEffect(() => {
     supabase.from("batches").select("*").eq("id", id!).single().then(({ data }) => {
       setBatch(data);
-      if (data) setStep(STEPS[Math.max(0, stepsDone(data) - 1)].status);
+      if (data) setStep(defaultStep(data));
       if (data) supabase.from("recipes").select("*").eq("id", data.recipe_id).single().then(({ data: r }) => setRecipe(r));
     });
   }, [id]);
