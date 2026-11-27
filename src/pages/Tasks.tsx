@@ -15,6 +15,12 @@ const STATES: { key: string; label: string; icon: typeof CircleDot; cls: string 
 const stateOf = (k: string) => STATES.find((s) => s.key === k) ?? STATES[0];
 /** Persone a cui è assegnata (più persone; per le task vecchie il solo «assignee»). */
 export const whoOf = (t: Row): string[] => (Array.isArray(t.assignees) && t.assignees.length ? t.assignees : t.assignee ? [t.assignee] : []);
+/** Chi deve confermare: le persone a cui la task è stata data da un altro (chi se la assegna da solo non conferma). */
+export const toConfirm = (t: Row): string[] => whoOf(t).filter((id) => id !== t.created_by);
+export const answerOf = (t: Row, id: string): "si" | "no" | null =>
+  (Array.isArray(t.confirmed) && t.confirmed.includes(id) ? "si" : Array.isArray(t.declined) && t.declined.includes(id) ? "no" : null);
+/** Persone che non hanno ancora risposto. */
+export const pendingOf = (t: Row): string[] => (t.status === "terminata" ? [] : toConfirm(t).filter((id) => !answerOf(t, id)));
 
 export function Tasks() {
   const { session, profiles, nameOf } = useAuth();
@@ -64,6 +70,9 @@ export function Tasks() {
             {t.due_date && <> · entro il {date(t.due_date)}</>}
             {notesCount[t.id] ? <> · {notesCount[t.id]} note</> : null}
           </span>
+          {pendingOf(t).includes(me) ? <span className="tk-ask">👋 Confermi che la fai?</span>
+            : pendingOf(t).length ? <span className="tk-wait">⏳ da confermare: {pendingOf(t).map(nameOf).join(", ")}</span>
+            : toConfirm(t).some((id) => answerOf(t, id) === "no") ? <span className="tk-no">✋ {toConfirm(t).filter((id) => answerOf(t, id) === "no").map(nameOf).join(", ")} non può</span> : null}
         </span>
         <span className={"tk-badge " + st.cls}>{st.label}</span>
       </button>
@@ -195,6 +204,11 @@ function TaskDetail({ task, me, onClose, onChanged, onEdit }: { task: Row; me: s
     if (error) return alert(errMsg(error));
     onChanged(); onClose();
   };
+  const answer = async (yes: boolean) => {
+    const { error } = await supabase.rpc("task_answer", { p_task: task.id, p_yes: yes });
+    if (error) return alert(/task_answer|function|schema cache/i.test(error.message) ? "Per le conferme delle task esegui su Supabase il file 0031_task_conferme.sql." : errMsg(error));
+    onChanged();
+  };
   const isImg = (p: string) => /\.(png|jpe?g|webp|gif|heic)$/i.test(p);
 
   return (
@@ -209,6 +223,24 @@ function TaskDetail({ task, me, onClose, onChanged, onEdit }: { task: Row; me: s
           {task.due_date && <> · entro il {date(task.due_date)}</>}
         </p>
         {task.description && <p className="tk-desc">{task.description}</p>}
+
+        {toConfirm(task).length > 0 && (
+          <>
+            <span className="nb-label">Conferme</span>
+            <div className="tk-confirm">
+              {toConfirm(task).map((id) => {
+                const a = answerOf(task, id);
+                return <div key={id} className={"tkc-row " + (a ?? "wait")}><span>{nameOf(id)}{id === me ? " (tu)" : ""}</span><b>{a === "si" ? "✓ la fa" : a === "no" ? "✋ non può" : "⏳ deve confermare"}</b></div>;
+              })}
+              {toConfirm(task).includes(me) && task.status !== "terminata" && (
+                <div className="tkc-btns">
+                  <button className={"btn" + (answerOf(task, me) === "si" ? " primary" : "")} onClick={() => answer(true)}>👍 Confermo, la faccio</button>
+                  <button className={"btn" + (answerOf(task, me) === "no" ? " danger" : "")} onClick={() => answer(false)}>✋ Non posso</button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         <span className="nb-label">Stato</span>
         <div className="tk-states">

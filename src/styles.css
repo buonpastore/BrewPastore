@@ -2332,3 +2332,21 @@ a.mini-btn { text-decoration: none; }
 .fund-split .fs-us span { font-size: .78rem; color: var(--muted); font-weight: 600; }
 .fund-split .fs-quick { display: flex; gap: 6px; margin-top: 8px; }
 .pu-expense-link.fund { margin-bottom: 8px; background: color-mix(in srgb, var(--gold) 12%, var(--surface)); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+
+/* task: conferme */
+.tk-ask, .tk-wait, .tk-no { display: block; margin-top: 4px; font-size: .78rem; font-weight: 700; }
+.tk-ask { color: var(--gold); }
+.tk-wait { color: var(--muted); font-weight: 600; }
+.tk-no { color: var(--magenta); }
+.tk-badge.ts-ask { background: color-mix(in srgb, var(--gold) 22%, transparent); color: var(--gold); }
+.tk-confirm { display: grid; gap: 6px; margin-bottom: 8px; }
+.tkc-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); font-size: .9rem; }
+.tkc-row.si b { color: var(--hop); }
+.tkc-row.no b { color: var(--magenta); }
+.tkc-row.wait b { color: var(--gold); }
+.tkc-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.tkc-btns .btn { justify-content: center; }
+.tk-confirm { width: 100%; min-width: 0; box-sizing: border-box; }
+.tkc-row { min-width: 0; box-sizing: border-box; }
+.tkc-btns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tkc-btns .btn { min-width: 0; white-space: normal; padding-left: 8px; padding-right: 8px; line-height: 1.2; }
