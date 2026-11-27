@@ -5,6 +5,7 @@ import { num, type Row } from "../lib";
 import { abvOf, ebcName, ibuName } from "../beerLook";
 import { findStyle } from "../styleGuide";
 import { COURSES, pairingFor } from "../pairings";
+import { STYLE_STORY } from "../styleStories";
 
 /** Testo da mandare a chi riceve la birra: stile, caratteristiche (10–15 righe) e abbinamenti. */
 export function beerShareText(r: Row): string {
@@ -25,9 +26,10 @@ export function beerShareText(r: Row): string {
       `👃 Aroma: ${s.aroma}`,
       `👅 Gusto: ${s.taste}`,
     ] : []),
+    ...(found && STYLE_STORY[found.name] ? ["", `📖 ${STYLE_STORY[found.name]}`] : []),
     "",
     `🍽️ *Con cosa abbinarla* (${p.family})`,
-    ...COURSES.map((c) => `${c.emoji} ${c.label}: ${p.dishes[c.key].map((d) => d.name).join(", ")}`),
+    ...COURSES.flatMap((c) => ["", `${c.emoji} *${c.label}*`, ...p.dishes[c.key].map((d) => `• ${d.name} — ${d.why}`)]),
     "",
     "Prodotta in casa da Buon Pastore 🐑 — salute!",
   ];

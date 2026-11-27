@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.307", date: "27/11/2026 14:40", text: "Condividi la birra: oltre allo schema c'è una breve descrizione di come dovrebbe essere lo stile, e sotto tutti gli abbinamenti divisi per portata, ciascuno con il perché." },
   { version: "0.306", date: "27/11/2026 14:10", text: "Gli stati dei batch dicono cosa sta succedendo adesso: cotta → «In fermentazione», fermentata → «In imbottigliamento», imbottigliata → «In degustazione». Se hai segnato un passaggio per sbaglio (es. «Fermentata oggi»), toccalo di nuovo nel batch e conferma: si annulla e la birra torna allo stato precedente." },
   { version: "0.305", date: "27/11/2026 13:30", text: "Fondo birre e proposte di vendita. Cantina: nuova scheda «Fondo» con le bottiglie in comune (e in «Di tutti»); nelle tue birre si vede quante sono prenotate. Imbottigliamento: quante bottiglie vanno nel fondo, il resto si divide tra i soci. Vendite: le bottiglie si possono dare da un socio o dal fondo; nuovo pulsante «Proposta» per le birre richieste ma non ancora vendute: chi deve darle conferma con «Gliele do» e restano prenotate, poi «Conferma vendita» la trasforma in una vendita vera. Da eseguire: 0032_fondo_birre_proposte.sql" },
   { version: "0.304", date: "27/11/2026 12:15", text: "Ricette: in alto a destra di ogni birra, nell’elenco e dentro la ricetta, c’è lo stato del suo ultimo batch (cotta, in fermentazione, imbottigliata, degustata, esaurita)" },
