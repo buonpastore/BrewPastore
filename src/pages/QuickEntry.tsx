@@ -183,7 +183,9 @@ function QuickEvents({ batch, canEdit }: { batch: Row; canEdit: boolean }) {
   const [last, setLast] = useState<Row[]>([]);
   const [reload, setReload] = useState(0);
   useEffect(() => {
-    supabase.from("batch_events").select("*").eq("batch_id", batch.id).order("event_at", { ascending: false }).limit(4).then(({ data }) => setLast(data ?? []));
+    supabase.from("batch_events").select("*").eq("batch_id", batch.id).order("event_at", { ascending: false }).limit(20)
+      // le vecchie note automatiche («Stato: Cotta», «Annullato: …») non servono: non le mostro
+      .then(({ data }) => setLast((data ?? []).filter((e) => !(e.kind === "nota" && /^(Stato|Annullato): /.test(e.notes ?? ""))).slice(0, 4)));
   }, [batch.id, reload]);
 
   const add = async () => {

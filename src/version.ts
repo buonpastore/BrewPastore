@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.309", date: "28/11/2026 00:20", text: "Diario di fermentazione: non si vedono più le vecchie note automatiche «Stato: Cotta» e simili." },
   { version: "0.308", date: "27/11/2026 15:20", text: "Pagina del batch più semplice: in alto i passaggi fatti, ognuno con la sua data da cambiare al volo; il cestino cancella l'ultimo passaggio; «Avanza» segna il successivo con la data di oggi. Tocca un passaggio per vederne e modificarne i dati. Tolto il menu «Altro» e le note automatiche nel diario." },
   { version: "0.307", date: "27/11/2026 14:40", text: "Condividi la birra: oltre allo schema c'è una breve descrizione di come dovrebbe essere lo stile, e sotto tutti gli abbinamenti divisi per portata, ciascuno con il perché." },
   { version: "0.306", date: "27/11/2026 14:10", text: "Gli stati dei batch dicono cosa sta succedendo adesso: cotta → «In fermentazione», fermentata → «In imbottigliamento», imbottigliata → «In degustazione». Se hai segnato un passaggio per sbaglio (es. «Fermentata oggi»), toccalo di nuovo nel batch e conferma: si annulla e la birra torna allo stato precedente." },
