@@ -312,7 +312,7 @@ export function QuickEntry({ batch: rawBatch, recipe, canEdit, onSaved, onDelete
                   {p.fields.map((f) => <BigField key={f.key} f={f} batch={batch} canEdit={canEdit} onSaved={onSaved} suggest={sug[f.key]} accept={reached.has(p.title)} />)}
                 </div>
                 {p.title === "Fermentazione" && <QuickEvents batch={batch} canEdit={canEdit} />}
-                {p.title === "Imbottigliamento" && <BottleSplit bottles={batch.bottles_count} people={profiles} />}
+                {p.title === "Imbottigliamento" && <BottleSplit bottles={batch.bottles_count} people={profiles} batchId={batch.id} />}
                 {p.title === "Imbottigliamento" && <CapPicker batch={batch} canEdit={canEdit} onSaved={onSaved} />}
                 {p.title === "Imbottigliamento" && <BottleCalc batch={batch} canEdit={canEdit} onSaved={onSaved} />}
               </>

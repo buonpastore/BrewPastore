@@ -1,6 +1,7 @@
+import { FONDO, moveBottles, loadStock, isBottlesMissing, NEED_0032 } from "../bottles";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Calculator, Handshake, Minus, Pencil, Plus, Trash2, Users, Wallet, X } from "lucide-react";
+import { Calculator, ClipboardList, Handshake, Minus, Pencil, Plus, Trash2, Users, Wallet, X } from "lucide-react";
 import { loadCash, cashBalance, setLinkedCash, addCash, isCashMissing, NEED_0030 } from "../cash";
 import { supabase, eur, date, errMsg, isEnded, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -34,24 +35,9 @@ export function RevenuePage() {
 /** Righe della vendita: quale birra, quante bottiglie, a che prezzo (le vendite vecchie hanno una sola birra sulla vendita). */
 const itemsOf = (s: Row): Row[] => ((s.sale_items as Row[] | undefined)?.length ? s.sale_items as Row[]
   : [{ batch_id: s.batch_id ?? null, bottles: s.bottles, unit_price: s.unit_price }]);
-/** Cantina: aggiunge (delta > 0) o toglie (delta < 0) bottiglie dalla cantina di un socio, mai sotto zero. */
-async function moveCellar(changes: { user: string; batch: string; delta: number }[]) {
-  const sum = new Map<string, { user: string; batch: string; delta: number }>();
-  for (const c of changes) {
-    if (!c.batch || !c.delta) continue;
-    const k = `${c.user}|${c.batch}`;
-    const cur = sum.get(k) ?? { user: c.user, batch: c.batch, delta: 0 };
-    cur.delta += c.delta; sum.set(k, cur);
-  }
-  for (const c of sum.values()) {
-    if (!c.delta) continue;
-    const { data } = await supabase.from("cellar_bottles").select("bottles").eq("user_id", c.user).eq("batch_id", c.batch).maybeSingle();
-    const next = Math.max(0, Number(data?.bottles ?? 0) + c.delta);
-    const { error } = await supabase.from("cellar_bottles").upsert({ user_id: c.user, batch_id: c.batch, bottles: next, updated_at: new Date().toISOString() });
-    if (error) throw error;
-  }
-}
-const cellarOut = (s: Row, sign: 1 | -1) => (s.from_cellar ? itemsOf(s).filter((i) => i.batch_id).map((i) => ({ user: i.giver_id ?? s.seller_id, batch: i.batch_id, delta: sign * Number(i.bottles) })) : []);
+/** Bottiglie di una vendita da rimettere (+1) o togliere (−1): dalla cantina di chi le dà o dal fondo birre. */
+const cellarOut = (s: Row, sign: 1 | -1) => (s.from_cellar ? itemsOf(s).filter((i) => i.batch_id).map((i) => ({ user: i.from_fund ? FONDO : (i.giver_id ?? s.seller_id), batch: i.batch_id, delta: sign * Number(i.bottles) })) : []);
+const moveCellar = moveBottles;
 
 const total = (s: Row) => (s.amount != null ? Number(s.amount) : itemsOf(s).reduce((a, i) => a + Number(i.bottles) * Number(i.unit_price), 0));
 const today = () => new Date().toISOString().slice(0, 10);
@@ -65,6 +51,11 @@ export function Sales() {
   const [batches, setBatches] = useState<Row[]>([]);
   const [err, setErr] = useState("");
   const [editing, setEditing] = useState<Row | "new" | null>(null);
+  // proposte di vendita
+  const [props, setProps] = useState<Row[]>([]);
+  const [propErr, setPropErr] = useState("");
+  const [propForm, setPropForm] = useState(false);
+  const [selling, setSelling] = useState<Row | null>(null);   // proposta da trasformare in vendita
   const [view, setView] = useState<"vendite" | "clienti">("vendite");
   const [reload, setReload] = useState(0);
   // fondo cassa
@@ -73,6 +64,21 @@ export function Sales() {
   const [cashForm, setCashForm] = useState<"versamento" | "prelievo" | null>(null);
   const [showMoves, setShowMoves] = useState(false);
   useEffect(() => { loadCash().then(({ rows, error }) => { setCash(rows); setCashErr(error); }); }, [reload]);
+  useEffect(() => {
+    supabase.from("sale_proposals").select("*, sale_proposal_items(*)").eq("status", "aperta").order("created_at", { ascending: false })
+      .then(({ data, error }) => { setPropErr(error ? (isBottlesMissing(error.message) ? NEED_0032 : errMsg(error)) : ""); setProps(data ?? []); });
+  }, [reload]);
+  const answerItem = async (i: Row, ok: boolean) => {
+    const { error } = await supabase.from("sale_proposal_items").update({ giver_status: ok ? "ok" : "no" }).eq("id", i.id);
+    if (error) return alert(errMsg(error));
+    setReload((x) => x + 1);
+  };
+  const cancelProp = async (p: Row) => {
+    if (!confirm(`Annullare la proposta per ${p.buyer}? Le bottiglie prenotate tornano libere.`)) return;
+    const { error } = await supabase.from("sale_proposals").update({ status: "annullata" }).eq("id", p.id);
+    if (error) return alert(errMsg(error));
+    setReload((x) => x + 1);
+  };
 
   useEffect(() => {
     (async () => {
@@ -137,7 +143,10 @@ export function Sales() {
 
   return (
     <div className="sales">
-      <button className="btn primary full-w" onClick={() => setEditing("new")} disabled={!!err && err === NEED_0024}><Plus size={18} /> Nuova vendita</button>
+      <div className="sales-new">
+        <button className="btn primary" onClick={() => setEditing("new")} disabled={!!err && err === NEED_0024}><Plus size={18} /> Nuova vendita</button>
+        <button className="btn" onClick={() => setPropForm(true)}><ClipboardList size={18} /> Proposta</button>
+      </div>
       {err && <p className="error" style={{ marginTop: 12 }}>{err}</p>}
 
       {/* l'informazione principale: quanto c'è nel fondo cassa */}
@@ -177,6 +186,54 @@ export function Sales() {
         )}
       </div>
       {cashForm && <CashForm kind={cashForm} onClose={() => setCashForm(null)} onSaved={() => { setCashForm(null); setReload((x) => x + 1); }} />}
+
+      {/* proposte: birre richieste ma non ancora vendute */}
+      {(props.length > 0 || propErr) && (
+        <div className="props">
+          <h3 className="sales-h"><ClipboardList size={16} /> Proposte di vendita <span className="muted small">({props.length})</span></h3>
+          {propErr && <p className="muted small">{propErr}</p>}
+          {props.map((p) => {
+            const its = (p.sale_proposal_items ?? []) as Row[];
+            const ready = its.length > 0 && its.every((i) => i.giver_status === "ok");
+            const tot = its.reduce((a, i) => a + Number(i.bottles) * Number(i.unit_price), 0);
+            const mineToAnswer = its.filter((i) => !i.from_fund && i.giver_id === me && i.giver_status === "attesa");
+            return (
+              <div key={p.id} className={"prop-card" + (ready ? " ready" : "")}>
+                <div className="sr-top"><strong>{p.buyer}</strong><strong className="sr-tot">{eur(tot)}</strong></div>
+                <div className="sr-meta"><span>chiesta a <b>{nameOf(p.requested_by)}</b> · {date(p.created_at)}</span></div>
+                <div className="sr-items">
+                  {its.map((i) => {
+                    const b = batchOf(i.batch_id);
+                    return (
+                      <span key={i.id}>
+                        {b ? <CapDot color={b.cap_color} /> : <i className="sr-nocap" />}
+                        <b>{i.bottles}×</b> {beerName(i.batch_id) ?? "birra"} <span className="muted">da {i.from_fund ? "Fondo birre" : nameOf(i.giver_id)}</span>
+                        <em className={"pi-st " + i.giver_status}>{i.giver_status === "ok" ? "✓" : i.giver_status === "no" ? "✋ no" : "⏳"}</em>
+                      </span>
+                    );
+                  })}
+                </div>
+                {p.notes && <div className="muted small">{p.notes}</div>}
+                {mineToAnswer.length > 0 && (
+                  <div className="prop-ask">
+                    <span>Te le chiedono: le dai tu?</span>
+                    <div className="half-actions">
+                      <button className="btn primary" onClick={() => Promise.all(mineToAnswer.map((i) => answerItem(i, true)))}>✓ Gliele do</button>
+                      <button className="btn" onClick={() => Promise.all(mineToAnswer.map((i) => answerItem(i, false)))}>✋ Non posso</button>
+                    </div>
+                  </div>
+                )}
+                {(p.requested_by === me || isAdmin) && (
+                  <div className="half-actions" style={{ marginTop: 8 }}>
+                    <button className="btn" onClick={() => cancelProp(p)}>Annulla</button>
+                    <button className="btn primary" disabled={!ready} title={ready ? "" : "Aspetta che chi dà le bottiglie confermi"} onClick={() => setSelling(p)}>{ready ? "Conferma vendita" : "Aspetta le conferme"}</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {sales && list.length > 0 && (
         <>
@@ -275,6 +332,19 @@ export function Sales() {
       )}
       {sales && !list.length && !err && <p className="muted" style={{ marginTop: 14 }}>Nessuna vendita ancora. Con «Nuova vendita» segnate a chi vendete le bottiglie: qui vedrete quanto avete incassato e quanto spetta a ciascuno.</p>}
 
+      {propForm && (
+        <SaleForm mode="proposta" sale={null} me={me} soci={soci} batches={batches} buyers={clienti.map((c) => c.name)} items={[]}
+          onClose={() => setPropForm(false)} onSaved={() => { setPropForm(false); setReload((x) => x + 1); }} />
+      )}
+      {selling && (
+        <SaleForm sale={null} me={me} soci={soci} batches={batches} buyers={clienti.map((c) => c.name)} prefillBuyer={selling.buyer}
+          items={((selling.sale_proposal_items ?? []) as Row[]).map((i) => ({ batch_id: i.batch_id, bottles: i.bottles, unit_price: i.unit_price, giver_id: i.giver_id, from_fund: i.from_fund }))}
+          onClose={() => setSelling(null)}
+          onSaved={async (id) => {
+            await supabase.from("sale_proposals").update({ status: "venduta", sale_id: id ?? null }).eq("id", selling.id);
+            setSelling(null); setReload((x) => x + 1);
+          }} />
+      )}
       {editing && (
         <SaleForm sale={editing === "new" ? null : editing} me={me} soci={soci} batches={batches} buyers={clienti.map((c) => c.name)} items={editing === "new" ? [] : itemsOf(editing)}
           onClose={() => setEditing(null)} onSaved={() => { setEditing(null); setReload((x) => x + 1); }} />
@@ -302,35 +372,36 @@ function MiniStep({ value, step, digits, unit, onChange }: { value: number; step
 
 type Line = { key: string; batch_id: string | null; qty: number; price: number; giver: string };
 
-function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: {
-  sale: Row | null; me: string; soci: Row[]; batches: Row[]; buyers: string[]; items: Row[]; onClose: () => void; onSaved: () => void;
+/** Vendita (o proposta di vendita): chi la fa, a chi, quali birre, quante, da chi (socio o fondo birre), a che prezzo. */
+function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved, mode = "vendita", prefillBuyer }: {
+  sale: Row | null; me: string; soci: Row[]; batches: Row[]; buyers: string[]; items: Row[]; onClose: () => void; onSaved: (id?: string) => void;
+  mode?: "vendita" | "proposta"; prefillBuyer?: string;
 }) {
+  const isProp = mode === "proposta";
   const [seller, setSeller] = useState<string>(sale?.seller_id ?? me);
-  const [buyer, setBuyer] = useState<string>(sale?.buyer ?? "");
+  const [buyer, setBuyer] = useState<string>(sale?.buyer ?? prefillBuyer ?? "");
   const [day, setDay] = useState<string>(sale?.sold_on ?? today());
   // di partenza i soldi vanno nel fondo cassa
   const [split, setSplit] = useState<"cassa" | "soci" | "venditore">(sale?.split ?? "cassa");
   const [notes, setNotes] = useState<string>(sale?.notes ?? "");
   const [payment, setPayment] = useState<string>(sale?.payment ?? "contanti");
-  // le bottiglie si tolgono dalla cantina di chi le dà (di partenza sì)
+  // le bottiglie si tolgono dalla cantina di chi le dà (o dal fondo birre); di partenza sì
   const [fromCellar, setFromCellar] = useState<boolean>(sale ? Boolean(sale.from_cellar) : true);
-  const [cellar, setCellar] = useState<Record<string, number>>({});   // «socio|batch» → bottiglie
-  useEffect(() => {
-    supabase.from("cellar_bottles").select("user_id, batch_id, bottles")
-      .then(({ data }) => setCellar(Object.fromEntries((data ?? []).map((c) => [`${c.user_id}|${c.batch_id}`, Number(c.bottles)]))));
-  }, []);
+  const [stock, setStock] = useState<Record<string, number>>({});   // «socio|batch» e «fondo|batch» → bottiglie
+  useEffect(() => { loadStock().then(setStock); }, []);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  // le ultime 5 birre non esaurite (dalla più recente), più quelle già nella vendita che si modifica, più «altra birra»
+  // le ultime 5 birre non esaurite (dalla più recente), più quelle già nella vendita, più «altra birra»
   const beers = useMemo(() => {
     const last = batches.filter((b) => !isEnded(b.status)).slice(0, 5);
     for (const i of items) { const b = batches.find((x) => x.id === i.batch_id); if (b && !last.includes(b)) last.push(b); }
     return last;
   }, [batches, items]);
+  const giverOf = (it?: Row) => (it ? (it.from_fund ? FONDO : (it.giver_id ?? sale?.seller_id ?? me)) : me);
   const [lines, setLines] = useState<Line[]>(() => [
-    ...beers.map((b) => { const it = items.find((i) => i.batch_id === b.id); return { key: b.id, batch_id: b.id, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0, giver: it?.giver_id ?? sale?.seller_id ?? me }; }),
-    (() => { const it = items.find((i) => !i.batch_id || !beers.some((b) => b.id === i.batch_id)); return { key: "altro", batch_id: null, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0, giver: it?.giver_id ?? sale?.seller_id ?? me }; })(),
+    ...beers.map((b) => { const it = items.find((i) => i.batch_id === b.id); return { key: b.id, batch_id: b.id, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0, giver: giverOf(it) }; }),
+    (() => { const it = items.find((i) => !i.batch_id || !beers.some((b) => b.id === i.batch_id)); return { key: "altro", batch_id: null, qty: it ? Number(it.bottles) : 0, price: it ? Number(it.unit_price) : 0, giver: giverOf(it) }; })(),
   ]);
   const setLine = (key: string, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
@@ -358,11 +429,37 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
   const nBottles = chosen.reduce((a, l) => a + l.qty, 0);
   const names = beers.map((b) => b.recipes?.name ?? b.code);
   const label = (b: Row) => { const n = b.recipes?.name ?? b.code; return names.filter((x) => x === n).length > 1 && b.code ? `${n} (${b.code})` : n; };
+  const giverName = (g: string) => (g === FONDO ? "Fondo birre" : soci.find((p) => p.id === g)?.display_name ?? "");
+  const usesFund = chosen.some((l) => l.giver === FONDO);
+  // quante ne ha chi le dà (contando quelle che questa vendita aveva già tolto)
+  const haveOf = (l: Line) => {
+    const before = items.find((i) => i.batch_id === l.batch_id);
+    const back = sale?.from_cellar && before && giverOf(before) === l.giver ? Number(before.bottles) : 0;
+    return (stock[`${l.giver}|${l.batch_id}`] ?? 0) + back;
+  };
+
+  const saveProposal = async () => {
+    const { data, error } = await supabase.from("sale_proposals").insert({ buyer: buyer.trim(), notes: notes.trim() || null }).select("id").single();
+    if (error) throw error;
+    const { error: e2 } = await supabase.from("sale_proposal_items").insert(chosen.map((l) => ({
+      proposal_id: data.id, batch_id: l.batch_id, bottles: l.qty, unit_price: l.price,
+      giver_id: l.giver === FONDO ? null : l.giver, from_fund: l.giver === FONDO,
+      // chi chiede le proprie bottiglie o quelle del fondo non deve aspettare nessuno; le bottiglie degli altri le confermano loro
+      giver_status: l.giver === FONDO || l.giver === me ? "ok" : "attesa",
+    })));
+    if (e2) throw e2;
+    return data.id as string;
+  };
 
   const save = async () => {
-    if (!buyer.trim()) return setErr("Scrivi a chi l'avete venduta.");
+    if (!buyer.trim()) return setErr(isProp ? "Scrivi chi le ha chieste." : "Scrivi a chi l'avete venduta.");
     if (!chosen.length) return setErr("Metti quante bottiglie di almeno una birra.");
     setBusy(true); setErr("");
+    const fail = (e: { message: string }) => { setBusy(false); setErr(isBottlesMissing(e.message) ? NEED_0032 : isCashMissing(e.message) ? NEED_0030 : /from_cellar/i.test(e.message) ? NEED_0029 : /payment/i.test(e.message) ? NEED_0026 : /amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
+    if (isProp) {
+      try { await saveProposal(); } catch (e) { return fail(e as { message: string }); }
+      setBusy(false); return onSaved();
+    }
     const amount = Math.round(t * 100) / 100;
     const row = {
       seller_id: seller, buyer: buyer.trim(), sold_on: day || today(), split, payment, notes: notes.trim() || null,
@@ -370,43 +467,50 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
       unit_price: Math.round((amount / nBottles) * 100) / 100, amount,
       ...(fromCellar || sale?.from_cellar ? { from_cellar: fromCellar } : {}),
     };
-    const fail = (e: { message: string }) => { setBusy(false); setErr(isCashMissing(e.message) ? NEED_0030 : /from_cellar/i.test(e.message) ? NEED_0029 : /payment/i.test(e.message) ? NEED_0026 : /amount|sale_items/i.test(e.message) ? NEED_0025 : /sales|relation|schema cache/i.test(e.message) ? NEED_0024 : errMsg(e)); };
     let id = sale?.id as string | undefined;
     if (sale) { const { error } = await supabase.from("sales").update(row).eq("id", sale.id); if (error) return fail(error); }
     else { const { data, error } = await supabase.from("sales").insert(row).select("id").single(); if (error) return fail(error); id = data.id; }
     await supabase.from("sale_items").delete().eq("sale_id", id!);
-    const { error } = await supabase.from("sale_items").insert(chosen.map((l) => ({ sale_id: id, batch_id: l.batch_id, bottles: l.qty, unit_price: l.price, giver_id: l.giver })));
+    const { error } = await supabase.from("sale_items").insert(chosen.map((l) => ({
+      sale_id: id, batch_id: l.batch_id, bottles: l.qty, unit_price: l.price,
+      giver_id: l.giver === FONDO ? null : l.giver, ...(usesFund || items.some((i) => i.from_fund) ? { from_fund: l.giver === FONDO } : {}),
+    })));
     if (error) return fail(error);
     // fondo cassa: l'incasso entra nel fondo (o ne esce, se la vendita non è più nel fondo)
     try {
       await setLinkedCash({ sale_id: id! }, { amount: split === "cassa" ? amount : 0, kind: "vendita", description: `Vendita a ${buyer.trim()}`, day: day || today() });
     } catch (e) { setBusy(false); return setErr("Vendita salvata, ma il fondo cassa non si è aggiornato: " + errMsg(e as { message: string })); }
-    // cantina: rimetto quello che la vendita aveva tolto prima e tolgo quello di adesso
+    // cantine e fondo birre: rimetto quello che la vendita aveva tolto prima e tolgo quello di adesso
     try {
-      await moveCellar([
+      await moveBottles([
         ...(sale ? cellarOut({ ...sale, sale_items: items }, 1) : []),
         ...(fromCellar ? chosen.filter((l) => l.batch_id).map((l) => ({ user: l.giver, batch: l.batch_id!, delta: -l.qty })) : []),
       ]);
     } catch (e) { setBusy(false); return setErr("Vendita salvata, ma la cantina non si è aggiornata: " + errMsg(e as { message: string })); }
     setBusy(false);
-    onSaved();
+    onSaved(id);
   };
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal sale-modal" onClick={(e) => e.stopPropagation()}>
         <button className="icon-btn famous-x" aria-label="Chiudi" onClick={onClose}><X size={18} /></button>
-        <h2>{sale ? "Modifica vendita" : "Nuova vendita"}</h2>
+        <h2>{isProp ? "📝 Proposta di vendita" : sale ? "Modifica vendita" : "Nuova vendita"}</h2>
+        {isProp && <p className="muted small">Te le hanno chieste ma non le hai ancora vendute: chi deve dare le bottiglie conferma, e quelle confermate restano prenotate nella sua cantina.</p>}
 
-        <span className="nb-label">Chi ha fatto la vendita</span>
-        <div className="xp-types">
-          {soci.map((p) => <button key={p.id} type="button" className={"pay-method" + (seller === p.id ? " on" : "")} onClick={() => setSeller(p.id)}>{p.display_name}{p.id === me ? " (tu)" : ""}</button>)}
-        </div>
-        <label className="block"><span>A chi</span>
+        {!isProp && (
+          <>
+            <span className="nb-label">Chi ha fatto la vendita</span>
+            <div className="xp-types">
+              {soci.map((p) => <button key={p.id} type="button" className={"pay-method" + (seller === p.id ? " on" : "")} onClick={() => setSeller(p.id)}>{p.display_name}{p.id === me ? " (tu)" : ""}</button>)}
+            </div>
+          </>
+        )}
+        <label className="block"><span>{isProp ? "Chi le ha chieste" : "A chi"}</span>
           <input list="sale-buyers" value={buyer} onChange={(e) => setBuyer(e.target.value)} placeholder="Nome di chi compra" />
           <datalist id="sale-buyers">{buyers.map((b) => <option key={b} value={b} />)}</datalist>
         </label>
-        <label className="block"><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>
+        {!isProp && <label className="block"><span>Data</span><input type="date" value={day} onChange={(e) => setDay(e.target.value)} /></label>}
 
         <span className="nb-label">Quali birre e quante bottiglie</span>
         <div className="sale-beers">
@@ -427,7 +531,11 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
                     </div>
                     <div className="sb-giver">
                       <span className="muted small">le dà</span>
-                      {soci.map((p) => <button key={p.id} type="button" className={"chip" + (l.giver === p.id ? " on" : "")} onClick={() => setLine(l.key, { giver: p.id })}>{p.display_name}</button>)}
+                      {[...soci.map((p) => p.id), FONDO].map((g) => (
+                        <button key={g} type="button" className={"chip" + (l.giver === g ? " on" : "")} onClick={() => setLine(l.key, { giver: g })}>
+                          {g === FONDO ? "🍺 Fondo" : giverName(g)}{l.batch_id ? ` (${stock[`${g}|${l.batch_id}`] ?? 0})` : ""}
+                        </button>
+                      ))}
                     </div>
                   </>
                 )}
@@ -438,39 +546,41 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved }: 
         </div>
         <div className="sale-total">{nBottles} {nBottles === 1 ? "bottiglia" : "bottiglie"} · totale <strong>{eur(t)}</strong></div>
 
-        <div className={"sale-cellar" + (fromCellar ? " on" : "")}>
-          <label className="check"><input type="checkbox" checked={fromCellar} onChange={(e) => setFromCellar(e.target.checked)} /> <span>🍾 Togli le bottiglie dalla cantina di chi le dà</span></label>
-          {fromCellar && chosen.filter((l) => l.batch_id).map((l) => {
-            const b = beers.find((x) => x.id === l.batch_id);
-            const before = items.find((i) => i.batch_id === l.batch_id);
-            const back = sale?.from_cellar && before && (before.giver_id ?? sale.seller_id) === l.giver ? Number(before.bottles) : 0;
-            const have = (cellar[`${l.giver}|${l.batch_id}`] ?? 0) + back;
-            return (
-              <div key={l.key} className={"sc-row" + (l.qty > have ? " short" : "")}>
-                <span>{b ? label(b) : "Birra"} · <b>{soci.find((p) => p.id === l.giver)?.display_name ?? ""}</b></span>
-                <span>{have} → <b>{Math.max(0, have - l.qty)}</b>{l.qty > have ? " (non bastano)" : ""}</span>
-              </div>
-            );
-          })}
-          {fromCellar && chosen.some((l) => !l.batch_id) && <p className="muted small">«Altra birra» non è in cantina e non viene tolta.</p>}
-        </div>
+        {!isProp && (
+          <>
+            <div className={"sale-cellar" + (fromCellar ? " on" : "")}>
+              <label className="check"><input type="checkbox" checked={fromCellar} onChange={(e) => setFromCellar(e.target.checked)} /> <span>🍾 Togli le bottiglie dalla cantina di chi le dà</span></label>
+              {fromCellar && chosen.filter((l) => l.batch_id).map((l) => {
+                const b = beers.find((x) => x.id === l.batch_id);
+                const have = haveOf(l);
+                return (
+                  <div key={l.key} className={"sc-row" + (l.qty > have ? " short" : "")}>
+                    <span>{b ? label(b) : "Birra"} · <b>{giverName(l.giver)}</b></span>
+                    <span>{have} → <b>{Math.max(0, have - l.qty)}</b>{l.qty > have ? " (non bastano)" : ""}</span>
+                  </div>
+                );
+              })}
+              {fromCellar && chosen.some((l) => !l.batch_id) && <p className="muted small">«Altra birra» non è in cantina e non viene tolta.</p>}
+            </div>
 
-        <span className="nb-label">I soldi</span>
-        <div className="xp-types">
-          <button type="button" className={"pay-method" + (split === "cassa" ? " on" : "")} onClick={() => setSplit("cassa")}>💰 Nel fondo cassa<small>{eur(t)}</small></button>
-          <button type="button" className={"pay-method" + (split === "soci" ? " on" : "")} onClick={() => setSplit("soci")}>Divisi tra i soci<small>{eur(t / Math.max(1, soci.length))} a testa</small></button>
-          <button type="button" className={"pay-method" + (split === "venditore" ? " on" : "")} onClick={() => setSplit("venditore")}>Li tiene chi vende<small>{eur(t)}</small></button>
-        </div>
-        <span className="nb-label">Pagamento</span>
-        <div className="xp-types">
-          {PAYMENTS.map((p) => <button key={p.key} type="button" className={"pay-method" + (payment === p.key ? " on" : "")} onClick={() => setPayment(p.key)}>{p.label}</button>)}
-        </div>
-        <label className="block"><span>Note</span><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="es. bottiglie da 33 cl, regalo…" /></label>
+            <span className="nb-label">I soldi</span>
+            <div className="xp-types">
+              <button type="button" className={"pay-method" + (split === "cassa" ? " on" : "")} onClick={() => setSplit("cassa")}>💰 Nel fondo cassa<small>{eur(t)}</small></button>
+              <button type="button" className={"pay-method" + (split === "soci" ? " on" : "")} onClick={() => setSplit("soci")}>Divisi tra i soci<small>{eur(t / Math.max(1, soci.length))} a testa</small></button>
+              <button type="button" className={"pay-method" + (split === "venditore" ? " on" : "")} onClick={() => setSplit("venditore")}>Li tiene chi vende<small>{eur(t)}</small></button>
+            </div>
+            <span className="nb-label">Pagamento</span>
+            <div className="xp-types">
+              {PAYMENTS.map((p) => <button key={p.key} type="button" className={"pay-method" + (payment === p.key ? " on" : "")} onClick={() => setPayment(p.key)}>{p.label}</button>)}
+            </div>
+          </>
+        )}
+        <label className="block"><span>Note</span><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={isProp ? "es. le vuole per sabato" : "es. bottiglie da 33 cl, regalo…"} /></label>
 
         {err && <p className="error">{err}</p>}
         <div className="half-actions" style={{ marginTop: 14 }}>
           <button className="btn" onClick={onClose}>Annulla</button>
-          <button className="btn primary" disabled={busy} onClick={save}>{busy ? "Salvo…" : sale ? "Salva" : "Registra vendita"}</button>
+          <button className="btn primary" disabled={busy} onClick={save}>{busy ? "Salvo…" : isProp ? "Registra la proposta" : sale ? "Salva" : "Registra vendita"}</button>
         </div>
       </div>
     </div>

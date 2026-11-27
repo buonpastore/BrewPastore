@@ -2370,3 +2370,19 @@ a.mini-btn { text-decoration: none; }
 .tk-badge.ts-wait { background: color-mix(in srgb, var(--violet) 20%, transparent); color: var(--violet); white-space: nowrap; }
 .recipe-head .rh-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .recipe-head .rh-title .badge { flex: none; margin-top: 6px; }
+
+/* vendite: proposte */
+.sales-new { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+.sales-new .btn { justify-content: center; min-height: 50px; }
+.props { margin-top: 10px; }
+.prop-card { background: var(--surface); border: 1px dashed color-mix(in srgb, var(--violet) 55%, transparent); border-radius: 14px; padding: 12px 14px; display: grid; gap: 5px; margin-bottom: 10px; }
+.prop-card.ready { border-style: solid; border-color: color-mix(in srgb, var(--hop) 60%, transparent); }
+.prop-card .sr-top { display: flex; justify-content: space-between; gap: 10px; }
+.prop-card .sr-tot { color: var(--violet); }
+.pi-st { font-style: normal; font-weight: 800; margin-left: 4px; }
+.pi-st.ok { color: var(--hop); } .pi-st.no { color: var(--magenta); } .pi-st.attesa { color: var(--gold); }
+.prop-ask { margin-top: 6px; padding: 10px; border-radius: 12px; background: color-mix(in srgb, var(--gold) 10%, transparent); display: grid; gap: 8px; font-weight: 700; }
+.cel-res { color: var(--violet) !important; font-weight: 700; }
+.cel-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.cel-fund-ico { width: 34px; height: 34px; display: grid; place-items: center; font-size: 1.3rem; border-radius: 50%; background: var(--surface-2); }
+.split-fund { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; margin-bottom: 10px; border-radius: 12px; background: color-mix(in srgb, var(--gold) 10%, transparent); font-weight: 700; }

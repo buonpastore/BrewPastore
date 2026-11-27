@@ -1,5 +1,6 @@
+import { loadReserved, isBottlesMissing, NEED_0032 } from "../bottles";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Check, Minus, Plus, RotateCcw, Trash2, User, Users, X } from "lucide-react";
+import { Beer, Camera, Check, Minus, Plus, RotateCcw, Trash2, User, Users, X } from "lucide-react";
 import { detectCaps, type CapResult } from "../capDetect";
 import { supabase, errMsg, type Row } from "../lib";
 import { useAuth } from "../auth";
@@ -14,13 +15,22 @@ export function Cellar() {
   const me = session?.user.id;
   const [beers, setBeers] = useState<Row[]>([]);
   const [cellar, setCellar] = useState<Row[] | null | undefined>(undefined);
-  const [tab, setTab] = useState<"mie" | "tutti">("mie");
+  const [tab, setTab] = useState<"mie" | "fondo" | "tutti">("mie");
+  // fondo birre (bottiglie in comune) e bottiglie prenotate dalle proposte di vendita
+  const [common, setCommon] = useState<Row[]>([]);
+  const [commonErr, setCommonErr] = useState("");
+  const [reserved, setReserved] = useState<Record<string, number>>({});
+  const [addingFund, setAddingFund] = useState(false);
   const [adding, setAdding] = useState(false);
   const [scan, setScan] = useState<(CapResult & { url: string; pick: Record<string, string>; n: Record<string, number> }) | null>(null);
   const [scanning, setScanning] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
 
-  const load = () => { loadCellar().then(setCellar); };
+  const load = () => {
+    loadCellar().then(setCellar);
+    supabase.from("common_bottles").select("*").then(({ data, error }) => { setCommon(data ?? []); setCommonErr(error ? (isBottlesMissing(error.message) ? NEED_0032 : errMsg(error)) : ""); });
+    loadReserved().then(setReserved).catch(() => setReserved({}));
+  };
   useEffect(() => { loadProduced().then(setBeers); load(); }, []);
 
   const beer = (id: string) => beers.find((b) => b.id === id);
@@ -28,6 +38,15 @@ export function Cellar() {
   const mine = (cellar ?? []).filter((c) => c.user_id === me && beer(c.batch_id))
     .sort((a, b) => String(beer(b.batch_id)?.created_at ?? "").localeCompare(String(beer(a.batch_id)?.created_at ?? "")));
   const myTotal = mine.reduce((t, c) => t + c.bottles, 0);
+  const fund = common.filter((c) => beer(c.batch_id))
+    .sort((a, b) => String(beer(b.batch_id)?.created_at ?? "").localeCompare(String(beer(a.batch_id)?.created_at ?? "")));
+  const fundTotal = fund.reduce((t, c) => t + Number(c.bottles), 0);
+  const saveFund = async (batch_id: string, bottles: number) => {
+    const n = Math.max(0, Math.round(bottles));
+    setCommon((cs) => [...cs.filter((c) => c.batch_id !== batch_id), { batch_id, bottles: n }]);
+    const { error } = await supabase.from("common_bottles").upsert({ batch_id, bottles: n, updated_at: new Date().toISOString() });
+    if (error) { alert(isBottlesMissing(error.message) ? NEED_0032 : errMsg(error)); load(); }
+  };
   const notMine = beers.filter((b) => !mine.some((c) => c.batch_id === b.id));
 
   const save = async (batch_id: string, bottles: number) => {
@@ -92,7 +111,8 @@ export function Cellar() {
       <h1>Cantina</h1>
       <div className="pv-views cel-tabs">
         <button className={"pv-view" + (tab === "mie" ? " on" : "")} onClick={() => setTab("mie")}><User size={15} /> Le mie · {myTotal}</button>
-        <button className={"pv-view" + (tab === "tutti" ? " on" : "")} onClick={() => setTab("tutti")}><Users size={15} /> Di tutti · {(cellar ?? []).filter((c) => beer(c.batch_id)).reduce((t, c) => t + c.bottles, 0)}</button>
+        <button className={"pv-view" + (tab === "fondo" ? " on" : "")} onClick={() => setTab("fondo")}><Beer size={15} /> Fondo · {fundTotal}</button>
+        <button className={"pv-view" + (tab === "tutti" ? " on" : "")} onClick={() => setTab("tutti")}><Users size={15} /> Di tutti · {(cellar ?? []).filter((c) => beer(c.batch_id)).reduce((t, c) => t + c.bottles, 0) + fundTotal}</button>
       </div>
 
       {tab === "mie" && (
@@ -106,6 +126,7 @@ export function Cellar() {
                   <div className="cel-name">
                     <strong>{nameOfBeer(b)}</strong>
                     <small>{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</small>
+                    {reserved[`${me}|${c.batch_id}`] > 0 && <small className="cel-res">di cui {reserved[`${me}|${c.batch_id}`]} prenotate per una vendita</small>}
                   </div>
                   <div className="cel-step">
                     <button aria-label="Una in meno" disabled={!c.bottles} onClick={() => save(c.batch_id, c.bottles - 1)}><Minus size={18} /></button>
@@ -174,6 +195,49 @@ export function Cellar() {
         </>
       )}
 
+      {tab === "fondo" && (
+        <>
+          <p className="muted small">Le bottiglie in comune dell'attività, non di un socio: si possono dare nelle vendite e nelle proposte.</p>
+          {commonErr && <p className="note">{commonErr}</p>}
+          <div className="cel-list">
+            {fund.map((c) => {
+              const b = beer(c.batch_id)!;
+              const res = reserved[`fondo|${c.batch_id}`] ?? 0;
+              return (
+                <div key={c.batch_id} className={"cel-card" + (c.bottles ? "" : " empty")}>
+                  <CapDot color={b.cap_color} size={30} />
+                  <div className="cel-name">
+                    <strong>{nameOfBeer(b)}</strong>
+                    <small>{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</small>
+                    {res > 0 && <small className="cel-res">di cui {res} prenotate per una vendita</small>}
+                  </div>
+                  <div className="cel-step">
+                    <button aria-label="Una in meno" disabled={!c.bottles} onClick={() => saveFund(c.batch_id, Number(c.bottles) - 1)}><Minus size={18} /></button>
+                    <input type="number" inputMode="numeric" min={0} value={c.bottles} onChange={(e) => saveFund(c.batch_id, Number(e.target.value) || 0)} />
+                    <button aria-label="Una in più" onClick={() => saveFund(c.batch_id, Number(c.bottles) + 1)}><Plus size={18} /></button>
+                  </div>
+                </div>
+              );
+            })}
+            {!fund.length && !commonErr && <p className="muted">Il fondo birre è vuoto.</p>}
+          </div>
+          {!commonErr && (addingFund ? (
+            <div className="cel-add">
+              <p className="muted small">Quale birra mettete nel fondo?</p>
+              <div className="cel-pick">
+                {beers.filter((b) => !fund.some((c) => c.batch_id === b.id)).map((b) => (
+                  <button key={b.id} className="cel-opt" onClick={() => { saveFund(b.id, 1); setAddingFund(false); }}>
+                    <CapDot color={b.cap_color} size={22} />
+                    <span><strong>{nameOfBeer(b)}</strong><small>{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</small></span>
+                  </button>
+                ))}
+              </div>
+              <button className="btn full-w" onClick={() => setAddingFund(false)}><X size={17} /> Annulla</button>
+            </div>
+          ) : <button className="btn primary full-w" onClick={() => setAddingFund(true)}><Plus size={18} /> Metti una birra nel fondo</button>)}
+        </>
+      )}
+
       {tab === "tutti" && (
         <div className="cel-list">
           {profiles.map((p) => {
@@ -197,12 +261,20 @@ export function Cellar() {
               </div>
             );
           })}
+          {fund.some((c) => c.bottles > 0) && (
+            <div className="cel-person">
+              <div className="cel-person-head"><span className="cel-fund-ico">🍺</span><strong>Fondo birre</strong><span className="cel-tot">{fundTotal} {fundTotal === 1 ? "bottiglia" : "bottiglie"}</span></div>
+              <div className="cel-chips">
+                {fund.filter((c) => c.bottles > 0).map((c) => { const b = beer(c.batch_id)!; return <span key={c.batch_id} className="cel-chip"><CapDot color={b.cap_color} size={16} /> {nameOfBeer(b)} <b>{c.bottles}</b></span>; })}
+              </div>
+            </div>
+          )}
           {beers.length > 0 && (
             <div className="cel-person">
               <div className="cel-person-head"><strong>Per birra</strong></div>
               <div className="cel-chips">
                 {beers.map((b) => {
-                  const n = (cellar ?? []).filter((c) => c.batch_id === b.id).reduce((t, c) => t + c.bottles, 0);
+                  const n = (cellar ?? []).filter((c) => c.batch_id === b.id).reduce((t, c) => t + c.bottles, 0) + Number(common.find((c) => c.batch_id === b.id)?.bottles ?? 0);
                   return n > 0 ? <span key={b.id} className="cel-chip"><CapDot color={b.cap_color} size={16} /> {nameOfBeer(b)} <b>{n}</b></span> : null;
                 })}
               </div>

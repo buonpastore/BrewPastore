@@ -187,19 +187,44 @@ export function CapColorsSettings({ canEdit }: { canEdit: boolean }) {
 }
 
 /** Divisione delle bottiglie tra i soci (es. 33 → 11 a testa). */
-export function BottleSplit({ bottles, people }: { bottles: number | null | undefined; people: { id: string; display_name: string }[] }) {
+export function BottleSplit({ bottles, people, batchId }: { bottles: number | null | undefined; people: { id: string; display_name: string }[]; batchId?: string }) {
   const n = people.length || 3;
+  // bottiglie messe nel fondo birre (in comune): il resto si divide tra i soci
+  const [fund, setFund] = useState<number | null>(null);
+  const [fundErr, setFundErr] = useState(false);
+  useEffect(() => {
+    if (!batchId) return;
+    supabase.from("common_bottles").select("bottles").eq("batch_id", batchId).maybeSingle()
+      .then(({ data, error }) => { if (error) setFundErr(true); else setFund(Number(data?.bottles ?? 0)); });
+  }, [batchId]);
+  const saveFund = async (v: number) => {
+    const next = Math.max(0, Math.min(Number(bottles ?? 0), v));
+    setFund(next);
+    const { error } = await supabase.from("common_bottles").upsert({ batch_id: batchId, bottles: next, updated_at: new Date().toISOString() });
+    if (error) setFundErr(true);
+  };
   if (!bottles) return <p className="muted small split-empty">Inserisci il numero di bottiglie per vedere quante ne toccano a ciascuno.</p>;
-  const each = Math.floor(Number(bottles) / n), rest = Number(bottles) - each * n;
+  const toShare = Math.max(0, Number(bottles) - (fund ?? 0));
+  const each = Math.floor(toShare / n), rest = toShare - each * n;
   return (
     <div className="split">
-      <span className="nb-label">Divisione tra i {n} soci</span>
+      {batchId && !fundErr && fund != null && (
+        <div className="split-fund">
+          <span>🍺 Nel fondo birre</span>
+          <div className="mini-step">
+            <button type="button" onClick={() => saveFund(fund - 1)} aria-label="Una in meno">−</button>
+            <span><input inputMode="numeric" value={fund} onChange={(e) => saveFund(Number(e.target.value) || 0)} /></span>
+            <button type="button" onClick={() => saveFund(fund + 1)} aria-label="Una in più">+</button>
+          </div>
+        </div>
+      )}
+      <span className="nb-label">Divisione tra i {n} soci{fund ? ` (tolte le ${fund} del fondo)` : ""}</span>
       <div className="split-row">
         {(people.length ? people : Array.from({ length: n }, (_, i) => ({ id: String(i), display_name: `Socio ${i + 1}` }))).map((p) => (
           <span key={p.id} className="split-item"><strong>{each}</strong><small>{p.display_name}</small></span>
         ))}
       </div>
-      <p className="muted small">{bottles} bottiglie → {each} a testa{rest ? ` · ${rest} ${rest === 1 ? "avanza" : "avanzano"}` : ""}</p>
+      <p className="muted small">{toShare} bottiglie → {each} a testa{rest ? ` · ${rest} ${rest === 1 ? "avanza" : "avanzano"}` : ""}</p>
     </div>
   );
 }
