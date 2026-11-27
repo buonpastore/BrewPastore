@@ -4,7 +4,7 @@ import { BookOpen, Beer, Leaf } from "lucide-react";
 import { CapDot, useCapColors } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase, errMsg, num, date, accentAt, type Row, lastBatchOf, normStatus, statusLabel, batchNow } from "../lib";
+import { supabase, errMsg, num, date, accentAt, type Row, lastBatchOf, normStatus, statusLabel, batchNow, syncStatuses } from "../lib";
 import { useAuth } from "../auth";
 import { ImportRecipe } from "./ImportRecipe";
 import { FilePicker } from "../components/FilePicker";
@@ -27,8 +27,8 @@ export function Recipes() {
     .sort((a, b) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "").localeCompare(String(a.bottling_date ?? a.brew_date ?? a.created_at ?? "")))[0]?.cap_color as string | undefined;
 
   useEffect(() => {
-    supabase.from("recipes").select("*, batches(id, brew_date, fermentation_start, bottling_date, created_at, status, cap_color)").order("created_at", { ascending: false })
-      .then(({ data }) => setRows(data ?? []));
+    supabase.from("recipes").select("*, batches(*)").order("created_at", { ascending: false })
+      .then(({ data }) => setRows((data ?? []).map((r) => ({ ...r, batches: syncStatuses((r.batches ?? []) as Row[]) }))));
   }, []);
 
   const create = async () => {

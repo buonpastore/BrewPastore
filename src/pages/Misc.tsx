@@ -11,7 +11,7 @@ import { lastStep } from "../components/PreviousBatches";
 import { getThemePref, setThemePref, sunTimes, type ThemePref, ACCENT_KEYS, ACCENT_LABELS, ACCENT_DEFAULTS, getAccents, setAccent, resetAccents, type AccentKey } from "../theme";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, normStatus, statusLabel, type Row } from "../lib";
+import { supabase, errMsg, configured, date, eur, sg, STATUS_LABELS, TABLE_LABELS, MASCOT_PATH, loadMascot, prepareMascot, FACE_IMG, normStatus, statusLabel, syncStatuses, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { ChatPanel } from "../components/ChatPanel";
 import { HistoryList } from "../components/HistoryList";
@@ -87,7 +87,7 @@ export function Dashboard() {
       .then(({ data }) => {
         const key = (b: Row) => String(b.brew_date ?? b.created_at ?? "") + String(b.created_at ?? "");
         const latest: Record<string, Row> = {};
-        for (const b of data ?? []) {
+        for (const b of syncStatuses(data ?? [])) {
           if (b.recipes?.archived) continue;
           const k = b.recipe_id ?? b.id;
           if (!latest[k] || key(b) > key(latest[k])) latest[k] = b;

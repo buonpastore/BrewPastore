@@ -1,7 +1,7 @@
 import { ArrowRight, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { supabase, errMsg, sg, num, date, normStatus, statusLabel, type Row } from "../lib";
+import { supabase, errMsg, sg, num, date, normStatus, statusLabel, syncStatuses, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { QuickEntry } from "./QuickEntry";
 import { DeleteDialog } from "../components/DeleteDialog";
@@ -129,7 +129,8 @@ export function BatchDetail() {
   const nav = useNavigate();
 
   useEffect(() => {
-    supabase.from("batches").select("*").eq("id", id!).single().then(({ data }) => {
+    supabase.from("batches").select("*").eq("id", id!).single().then(({ data: raw }) => {
+      const data = raw ? syncStatuses([raw])[0] : raw;
       setBatch(data);
       if (data) setStep(defaultStep(data));
       if (data) supabase.from("recipes").select("*").eq("id", data.recipe_id).single().then(({ data: r }) => setRecipe(r));

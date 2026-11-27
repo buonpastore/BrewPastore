@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.315", date: "28/11/2026 02:20", text: "Batch: lo stato si allinea alle date. Se un batch ha la data di degustazione ma era rimasto «imbottigliato» (es. la Saison), ora risulta degustato ovunque, come dentro il batch." },
   { version: "0.314", date: "28/11/2026 02:00", text: "Tappi: se tra le ultime 5 birre due hanno il tappo dello stesso colore, sul tappo compare l'iniziale della birra (es. B per la Blanche e S per la Saison), in tutta l'app." },
   { version: "0.313", date: "28/11/2026 01:40", text: "Batch: torna la barra lunga «Avanza: … oggi» e il cestino sull'ultimo passaggio per cancellarlo; tolto il pulsante «Annulla»." },
   { version: "0.312", date: "28/11/2026 01:20", text: "Batch: entrando vedi subito i dati della fase da fare adesso (es. dopo la cotta, quelli della fermentazione). Le fasi fatte mostrano un riassunto in una riga (OG, litri, FG, bottiglie…): toccale per aprire i dati, ritoccale per richiuderli. Quando avanzi si aprono i dati della fase appena segnata." },

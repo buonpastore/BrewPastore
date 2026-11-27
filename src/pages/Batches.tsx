@@ -4,7 +4,7 @@ import { CapDot } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BREW_KWH } from "../costs";
-import { supabase, date, sg, eur, errMsg, STATUS_NOW, isEnded, normStatus, statusLabel, type Row } from "../lib";
+import { supabase, date, sg, eur, errMsg, STATUS_NOW, isEnded, normStatus, syncStatuses, statusLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { deleteBatches } from "../deleteHelpers";
 import { createBatchFromRecipe } from "../newBatch";
@@ -47,7 +47,7 @@ export function Batches() {
 
   useEffect(() => {
     supabase.from("batches").select("*, recipes(name)").order("brew_date", { ascending: false, nullsFirst: true }).order("created_at", { ascending: false })
-      .then(({ data }) => setRows(data ?? []));
+      .then(({ data }) => setRows(syncStatuses(data ?? [])));
     // ultima voce del log di ogni batch (misure, note…): conta anche quella per la data più recente
     supabase.from("batch_events").select("batch_id, event_at").then(({ data }) => {
       const m: Record<string, string> = {};

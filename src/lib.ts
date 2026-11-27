@@ -342,3 +342,22 @@ export function lastBatchOf(batches: Row[] | null | undefined): Row | null {
 }
 /** Stato dell'ultimo batch come si dice a voce: «In fermentazione» invece di «Fermentata». */
 export const batchNow = (status?: string | null) => statusLabel(status ?? "");
+
+/** Passaggi in ordine con la loro data: se c'è la data di un passaggio, il batch è almeno a quel passaggio. */
+const STEP_DATES: [string, string][] = [["cotta", "brew_date"], ["fermentazione", "fermentation_start"], ["imbottigliato", "bottling_date"], ["degustato", "first_tasting_date"], ["esaurito", "depleted_date"]];
+const stepIdx = (s?: string | null) => STEP_DATES.findIndex(([k]) => k === normStatus(s));
+/** Stato coerente con le date (es. data di degustazione messa ma stato rimasto «imbottigliato» → «degustato»). */
+export function effectiveStatus(b: Row): string {
+  let i = stepIdx(b.status);
+  STEP_DATES.forEach(([, f], j) => { if (b[f] && j > i) i = j; });
+  return i < 0 ? b.status : STEP_DATES[i][0];
+}
+/** Corregge lo stato dei batch rimasto indietro rispetto alle date (anche nel database, senza aspettare). */
+export function syncStatuses<T extends Row>(rows: T[]): T[] {
+  return rows.map((b) => {
+    const s = effectiveStatus(b);
+    if (!b.id || s === normStatus(b.status) || !s) return b;
+    void supabase.from("batches").update({ status: s }).eq("id", b.id).then(() => undefined);
+    return { ...b, status: s };
+  });
+}
