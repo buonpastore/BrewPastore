@@ -206,7 +206,7 @@ export function Sales() {
                     const b = batchOf(i.batch_id);
                     return (
                       <span key={i.id}>
-                        {b ? <CapDot color={b.cap_color} /> : <i className="sr-nocap" />}
+                        {b ? <CapDot batchId={b.id} color={b.cap_color} /> : <i className="sr-nocap" />}
                         <b>{i.bottles}×</b> {beerName(i.batch_id) ?? "birra"} <span className="muted">da {i.from_fund ? "Fondo birre" : nameOf(i.giver_id)}</span>
                         <em className={"pi-st " + i.giver_status}>{i.giver_status === "ok" ? "✓" : i.giver_status === "no" ? "✋ no" : "⏳"}</em>
                       </span>
@@ -290,7 +290,7 @@ export function Sales() {
                         const b = batchOf(i.batch_id);
                         return (
                           <span key={k}>
-                            {b ? <CapDot color={b.cap_color} /> : <i className="sr-nocap" />}
+                            {b ? <CapDot batchId={b.id} color={b.cap_color} /> : <i className="sr-nocap" />}
                             <b>{i.bottles}×</b> {beerName(i.batch_id) ?? "birra"} <span className="muted">a {eur(i.unit_price)}{i.giver_id ? ` · da ${nameOf(i.giver_id)}` : ""}</span>
                           </span>
                         );
@@ -519,7 +519,7 @@ function SaleForm({ sale, me, soci, batches, buyers, items, onClose, onSaved, mo
             return (
               <div key={l.key} className={"sale-beer" + (l.qty > 0 ? " on" : "")}>
                 <div className="sb-top">
-                  <span className="sb-name">{b ? <CapDot color={b.cap_color} size={18} /> : <i className="sr-nocap" />}{b ? label(b) : "Altra birra"}</span>
+                  <span className="sb-name">{b ? <CapDot batchId={b.id} color={b.cap_color} size={18} /> : <i className="sr-nocap" />}{b ? label(b) : "Altra birra"}</span>
                   <MiniStep value={l.qty} step={1} digits={0} onChange={(q) => (q > l.qty && l.qty === 0 ? addOne(l) : setLine(l.key, { qty: q }))} />
                 </div>
                 {l.qty > 0 && (

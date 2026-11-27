@@ -287,7 +287,7 @@ function TastingForm({ initial, batches, lockBatch, onClose, onSaved }: { initia
         <div className="tc-beers">
           {batches.filter((b) => !lockBatch || b.id === t.batch_id).map((b) => (
             <button key={b.id} type="button" className={"tc-beer" + (t.batch_id === b.id ? " on" : "")} onClick={() => set("batch_id", b.id)}>
-              <CapDot color={b.cap_color} size={20} />
+              <CapDot batchId={b.id} color={b.cap_color} size={20} />
               <span className="tc-beer-txt"><strong>{b.recipes?.name ?? b.code}</strong><span className="muted small">{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</span></span>
               {t.batch_id === b.id && <span className="tc-check">✓</span>}
             </button>

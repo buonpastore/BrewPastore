@@ -314,7 +314,7 @@ export function BeerWheel() {
             {winner ? (
               <>
                 <span className="muted small">Stasera si beve</span>
-                <strong><CapDot color={winner.cap_color} size={22} /> {nameOf(winner)}</strong>
+                <strong><CapDot batchId={winner.id} color={winner.cap_color} size={22} /> {nameOf(winner)}</strong>
                 {winner.recipes?.style && <span className="muted">{winner.recipes.style}</span>}
                 <span className="wheel-links"><Link to={`/batch/${winner.id}`}>Apri il batch</Link><Link to="/degustazioni">Fai la degustazione</Link></span>
               </>
@@ -331,7 +331,7 @@ export function BeerWheel() {
                 <div className="wheel-chips">
                   {all.map((b) => (
                     <button key={b.id} className={"wheel-chip" + (onWheel(b) ? " on" : "")} onClick={() => toggle(b)} disabled={spinning}>
-                      <CapDot color={b.cap_color} size={18} /> {nameOf(b)}
+                      <CapDot batchId={b.id} color={b.cap_color} size={18} /> {nameOf(b)}
                     </button>
                   ))}
                 </div>

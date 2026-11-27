@@ -122,7 +122,7 @@ export function Cellar() {
               const b = beer(c.batch_id)!;
               return (
                 <div key={c.batch_id} className={"cel-card" + (c.bottles ? "" : " empty")}>
-                  <CapDot color={b.cap_color} size={30} />
+                  <CapDot batchId={b.id} color={b.cap_color} size={30} />
                   <div className="cel-name">
                     <strong>{nameOfBeer(b)}</strong>
                     <small>{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</small>
@@ -146,7 +146,7 @@ export function Cellar() {
               <div className="cel-pick">
                 {notMine.map((b) => (
                   <button key={b.id} className="cel-opt" onClick={() => { save(b.id, 1); setAdding(false); }}>
-                    <CapDot color={b.cap_color} size={22} />
+                    <CapDot batchId={b.id} color={b.cap_color} size={22} />
                     <span><strong>{nameOfBeer(b)}</strong><small>{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</small></span>
                   </button>
                 ))}
@@ -205,7 +205,7 @@ export function Cellar() {
               const res = reserved[`fondo|${c.batch_id}`] ?? 0;
               return (
                 <div key={c.batch_id} className={"cel-card" + (c.bottles ? "" : " empty")}>
-                  <CapDot color={b.cap_color} size={30} />
+                  <CapDot batchId={b.id} color={b.cap_color} size={30} />
                   <div className="cel-name">
                     <strong>{nameOfBeer(b)}</strong>
                     <small>{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</small>
@@ -227,7 +227,7 @@ export function Cellar() {
               <div className="cel-pick">
                 {beers.filter((b) => !fund.some((c) => c.batch_id === b.id)).map((b) => (
                   <button key={b.id} className="cel-opt" onClick={() => { saveFund(b.id, 1); setAddingFund(false); }}>
-                    <CapDot color={b.cap_color} size={22} />
+                    <CapDot batchId={b.id} color={b.cap_color} size={22} />
                     <span><strong>{nameOfBeer(b)}</strong><small>{[b.recipes?.style, b.code].filter(Boolean).join(" · ")}</small></span>
                   </button>
                 ))}
@@ -254,7 +254,7 @@ export function Cellar() {
                   <div className="cel-chips">
                     {rows.sort((a, b) => b.bottles - a.bottles).map((c) => {
                       const b = beer(c.batch_id)!;
-                      return <span key={c.batch_id} className="cel-chip"><CapDot color={b.cap_color} size={16} /> {nameOfBeer(b)} <b>{c.bottles}</b></span>;
+                      return <span key={c.batch_id} className="cel-chip"><CapDot batchId={b.id} color={b.cap_color} size={16} /> {nameOfBeer(b)} <b>{c.bottles}</b></span>;
                     })}
                   </div>
                 ) : <p className="muted small">Nessuna bottiglia segnata.</p>}
@@ -265,7 +265,7 @@ export function Cellar() {
             <div className="cel-person">
               <div className="cel-person-head"><span className="cel-fund-ico">🍺</span><strong>Fondo birre</strong><span className="cel-tot">{fundTotal} {fundTotal === 1 ? "bottiglia" : "bottiglie"}</span></div>
               <div className="cel-chips">
-                {fund.filter((c) => c.bottles > 0).map((c) => { const b = beer(c.batch_id)!; return <span key={c.batch_id} className="cel-chip"><CapDot color={b.cap_color} size={16} /> {nameOfBeer(b)} <b>{c.bottles}</b></span>; })}
+                {fund.filter((c) => c.bottles > 0).map((c) => { const b = beer(c.batch_id)!; return <span key={c.batch_id} className="cel-chip"><CapDot batchId={b.id} color={b.cap_color} size={16} /> {nameOfBeer(b)} <b>{c.bottles}</b></span>; })}
               </div>
             </div>
           )}
@@ -275,7 +275,7 @@ export function Cellar() {
               <div className="cel-chips">
                 {beers.map((b) => {
                   const n = (cellar ?? []).filter((c) => c.batch_id === b.id).reduce((t, c) => t + c.bottles, 0) + Number(common.find((c) => c.batch_id === b.id)?.bottles ?? 0);
-                  return n > 0 ? <span key={b.id} className="cel-chip"><CapDot color={b.cap_color} size={16} /> {nameOfBeer(b)} <b>{n}</b></span> : null;
+                  return n > 0 ? <span key={b.id} className="cel-chip"><CapDot batchId={b.id} color={b.cap_color} size={16} /> {nameOfBeer(b)} <b>{n}</b></span> : null;
                 })}
               </div>
             </div>

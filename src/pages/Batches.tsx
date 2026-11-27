@@ -88,7 +88,7 @@ export function Batches() {
               return (
                 <tr key={b.id}>
                   <td className="bl-name">
-                    <Link to={`/batch/${b.id}`}><strong>{b.code}</strong></Link> <CapDot color={b.cap_color} size={14} />
+                    <Link to={`/batch/${b.id}`}><strong>{b.code}</strong></Link> <CapDot batchId={b.id} color={b.cap_color} size={14} />
                     {b.recipes?.name && <div className="muted small">{b.recipes.name}</div>}
                   </td>
                   <td><span className={"badge st-" + normStatus(b.status)}>{statusLabel(b.status)}</span></td>

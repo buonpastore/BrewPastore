@@ -139,7 +139,7 @@ export function Revenue() {
       <div className="rv-pick">
         {beers.map((x) => (
           <button key={x.recipe.id} className={"rv-beer" + (x.recipe.id === pick ? " on" : "")} onClick={() => setPick(x.recipe.id)}>
-            <CapDot color={x.batch?.cap_color} size={22} />
+            <CapDot batchId={x.batch?.id} color={x.batch?.cap_color} size={22} />
             <span><strong>{x.recipe.name}</strong><small>{x.recipe.style ?? ""}</small></span>
           </button>
         ))}

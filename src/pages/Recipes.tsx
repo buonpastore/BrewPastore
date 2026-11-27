@@ -97,7 +97,7 @@ export function Recipes() {
                 {lastBatchOf(r.batches as Row[]) && <span className={"badge st-" + normStatus(lastBatchOf(r.batches as Row[])!.status)}>{batchNow(lastBatchOf(r.batches as Row[])!.status)}</span>}
                 <ShareBeer recipe={r} className="rc-share" size={16} />
               </div>
-              <h3 className="rc-title">{r.name} <CapDot color={capOf(r)} size={22} /> {r.archived && <span className="badge">archiviata</span>}</h3>
+              <h3 className="rc-title">{r.name} <CapDot recipeId={r.id} color={capOf(r)} size={22} /> {r.archived && <span className="badge">archiviata</span>}</h3>
               <div className="rc-style">{r.style ?? "stile non indicato"}</div>
               <div className="rc-traits">
                 {abvOf(r.target_og, r.target_fg) != null && (

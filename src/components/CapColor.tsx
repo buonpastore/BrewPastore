@@ -46,8 +46,54 @@ export function useCapColors(): CapColor[] {
 }
 export const capInfo = (k?: string | null) => (cache ?? []).find((c) => c.key === k) ?? CAP_COLORS.find((c) => c.key === k) ?? DEFAULT_CAPS.find((c) => c.key === k) ?? null;
 
-/** Tappo a corona stilizzato: solo il bordo esterno, appena dentellato, nel colore del tappo. */
-export function CapIcon({ hex, size = 24, unknown = false, title }: { hex: string; size?: number; unknown?: boolean; title?: string }) {
+/** Ultime 5 birre imbottigliate (la più recente per ricetta, non esaurite): servono a riconoscerle dal tappo. */
+async function latestBottled(limit = 5): Promise<Row[]> {
+  const { data } = await supabase.from("batches").select("*, recipes(name, style)");
+  const when = (b: Row) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "");
+  const bottled = (data ?? []).filter((b) => b.status !== "esaurito" && (b.cap_color || isProduced(b)))
+    .sort((a, b) => when(b).localeCompare(when(a)));
+  const seen = new Set<string>(), out: Row[] = [];
+  for (const b of bottled) { const k = b.recipe_id ?? b.id; if (seen.has(k)) continue; seen.add(k); out.push(b); }
+  return out.slice(0, limit);
+}
+/** Lettere sui tappi: se tra le ultime 5 birre due hanno lo stesso colore, ognuna porta l'iniziale del nome (B, S…). */
+let letters: Map<string, string> | null = null;
+let lettersLoading: Promise<Map<string, string>> | null = null;
+const letterListeners = new Set<(m: Map<string, string>) => void>();
+function loadCapLetters(): Promise<Map<string, string>> {
+  if (letters) return Promise.resolve(letters);
+  lettersLoading ??= latestBottled().then((rows) => {
+    const m = new Map<string, string>();
+    const byColor = new Map<string, Row[]>();
+    for (const b of rows) if (b.cap_color) byColor.set(b.cap_color, [...(byColor.get(b.cap_color) ?? []), b]);
+    for (const group of byColor.values()) {
+      if (group.length < 2) continue;
+      const names = group.map((b) => String(b.recipes?.name ?? b.code ?? "").replace(/^(la|il|lo|l'|the)\s+/i, "").trim());
+      group.forEach((b, i) => {
+        // iniziale; se due iniziali sono uguali, le prime due lettere
+        const one = names[i].charAt(0).toUpperCase();
+        const clash = names.some((n, j) => j !== i && n.charAt(0).toUpperCase() === one);
+        const l = clash ? names[i].slice(0, 2).replace(/^./, (c) => c.toUpperCase()) : one;
+        if (!l) return;
+        m.set(b.id, l);
+        if (b.recipe_id) m.set("r:" + b.recipe_id, l);
+      });
+    }
+    letters = m; letterListeners.forEach((f) => f(m));
+    return m;
+  });
+  return lettersLoading;
+}
+function useCapLetters(): Map<string, string> | null {
+  const [m, setM] = useState<Map<string, string> | null>(letters);
+  useEffect(() => { letterListeners.add(setM); loadCapLetters().then(setM); return () => { letterListeners.delete(setM); }; }, []);
+  return m;
+}
+/** Da richiamare quando cambia il colore di un tappo. */
+export function resetCapLetters() { letters = null; lettersLoading = null; void loadCapLetters(); }
+
+/** Tappo a corona stilizzato: solo il bordo esterno, appena dentellato, nel colore del tappo (con l'iniziale, se serve). */
+export function CapIcon({ hex, size = 24, unknown = false, title, letter }: { hex: string; size?: number; unknown?: boolean; title?: string; letter?: string }) {
   const teeth = 21, pts: string[] = [];
   for (let i = 0; i < teeth * 2; i++) {
     const a = (Math.PI * i) / teeth - Math.PI / 2, rr = i % 2 ? 43.5 : 46.5;   // dentatura leggera
@@ -60,6 +106,8 @@ export function CapIcon({ hex, size = 24, unknown = false, title }: { hex: strin
       {light && <polygon points={pts.join(" ")} fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="11" strokeLinejoin="round" />}
       <polygon points={pts.join(" ")} fill={hex} fillOpacity=".14" stroke={hex} strokeWidth="7" strokeLinejoin="round" />
       {unknown && <text x="50" y="61" textAnchor="middle" fontSize="30" fontWeight="700" fill={hex}>?</text>}
+      {!unknown && letter && <text x="50" y={letter.length > 1 ? 63 : 67} textAnchor="middle" fontSize={letter.length > 1 ? 38 : 50} fontWeight="800" fontFamily="system-ui, sans-serif"
+        fill={hex} stroke={light ? "rgba(0,0,0,.45)" : "none"} strokeWidth={light ? 3 : 0} paintOrder="stroke">{letter}</text>}
     </svg>
   );
 }
@@ -71,11 +119,13 @@ const isLight = (hex: string) => {
 };
 
 /** Pallino con il colore del tappo. */
-export function CapDot({ color, size = 18 }: { color?: string | null; size?: number }) {
+export function CapDot({ color, size = 18, batchId, recipeId }: { color?: string | null; size?: number; batchId?: string | null; recipeId?: string | null }) {
   useCapColors();
+  const lt = useCapLetters();
   const c = capInfo(color);
   if (!c) return null;
-  return <CapIcon hex={c.hex} size={size} title={`Tappo ${c.label.toLowerCase()}`} />;
+  const letter = (batchId && lt?.get(batchId)) || (recipeId && lt?.get("r:" + recipeId)) || undefined;
+  return <CapIcon hex={c.hex} size={size} letter={letter} title={`Tappo ${c.label.toLowerCase()}${letter ? ` (${letter})` : ""}`} />;
 }
 
 /** Scelta del colore del tappo, nella fase di imbottigliamento. */
@@ -88,6 +138,7 @@ export function CapPicker({ batch, canEdit, onSaved }: { batch: Row; canEdit: bo
     const { data, error } = await supabase.from("batches").update({ cap_color: k }).eq("id", batch.id).select().single();
     if (error) return setErr(/cap_color|column/i.test(error.message) ? "Manca un aggiornamento del database: esegui su Supabase il file 0010_colore_tappo.sql." : errMsg(error));
     onSaved(data);
+    resetCapLetters();
   };
   return (
     <div className="cap-picker">
@@ -111,15 +162,7 @@ export function CapGallery({ limit = 5 }: { limit?: number }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   useCapColors();
   useEffect(() => {
-    supabase.from("batches").select("*, recipes(name, style)").then(({ data }) => {
-      const when = (b: Row) => String(b.bottling_date ?? b.brew_date ?? b.created_at ?? "");
-      // solo birre imbottigliate, la più recente per ricetta, al massimo 5
-      const bottled = (data ?? []).filter((b) => b.status !== "esaurito" && (b.cap_color || isProduced(b)))
-        .sort((a, b) => when(b).localeCompare(when(a)));
-      const seen = new Set<string>(), out: Row[] = [];
-      for (const b of bottled) { const k = b.recipe_id ?? b.id; if (seen.has(k)) continue; seen.add(k); out.push(b); }
-      setRows(out.slice(0, limit));
-    });
+    latestBottled(limit).then(setRows);
   }, [limit]);
   if (rows === null || !rows.length) return null;
   return (
@@ -130,7 +173,7 @@ export function CapGallery({ limit = 5 }: { limit?: number }) {
           const c = capInfo(b.cap_color);
           return (
             <Link key={b.id} to={`/batch/${b.id}`} className="cap-row">
-              {c ? <CapIcon hex={c.hex} size={20} title={`Tappo ${c.label.toLowerCase()}`} /> : <CapIcon hex="#8a8276" size={20} unknown title="Tappo da scegliere" />}
+              {c ? <CapDot color={b.cap_color} batchId={b.id} size={22} /> : <CapIcon hex="#8a8276" size={22} unknown title="Tappo da scegliere" />}
               <strong>{b.recipes?.name ?? b.code}</strong>
               <span className="muted small">{b.recipes?.style ?? ""}</span>
               <span className="muted small cap-row-c">{c ? c.label.toLowerCase() : "tappo ?"}</span>

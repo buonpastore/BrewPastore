@@ -156,7 +156,7 @@ export function Dashboard() {
           const d = days(ref);
           return (
             <Link key={b.id} to={`/batch/${b.id}`} className="card">
-              <h3>{b.code} <CapDot color={b.cap_color} /></h3>
+              <h3>{b.code} <CapDot batchId={b.id} color={b.cap_color} /></h3>
               <div className="muted">{b.recipes?.name}</div>
               <div><span className={"badge st-" + normStatus(b.status)}>{statusLabel(b.status)}</span> {d != null && <span className="muted small">{d === 0 ? "da oggi" : d === 1 ? "da 1 giorno" : `da ${d} giorni`}</span>}</div>
               <div className="stats"><span>OG {sg(b.original_gravity)}</span><span>FG {sg(b.final_gravity)}</span>{b.bottles_count && <span>{b.bottles_count} bott.</span>}</div>

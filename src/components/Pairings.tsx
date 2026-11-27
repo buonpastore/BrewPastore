@@ -26,7 +26,7 @@ export function BeerPairings() {
           const fam = pairingFor(b.recipes?.style).family;
           return (
             <button key={b.id} type="button" className={"pairing-beer" + (b.id === open.id ? " on" : "")} onClick={() => setPick(b.id)}>
-              <CapDot color={b.cap_color} size={34} />
+              <CapDot batchId={b.id} color={b.cap_color} size={34} />
               <strong>{b.recipes?.name ?? b.code}</strong>
               <span className="muted small">{b.recipes?.style ?? "stile non indicato"}</span>
               <span className="pb-fam">{fam}</span>
@@ -36,7 +36,7 @@ export function BeerPairings() {
       </div>
 
       <div className="pairing-detail">
-        <h2><CapDot color={open.cap_color} size={24} /> {open.recipes?.name ?? open.code}</h2>
+        <h2><CapDot batchId={open.id} color={open.cap_color} size={24} /> {open.recipes?.name ?? open.code}</h2>
         <p className="muted small">{p.styleName ? `${p.styleName} · ` : ""}{p.family}. {p.intro}</p>
         {COURSES.map((c, ci) => (
           <div key={c.key} className="pairing-course" style={{ ["--c" as string]: COURSE_COLORS[ci] }}>
