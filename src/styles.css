@@ -2356,5 +2356,8 @@ a.mini-btn { text-decoration: none; }
 .share-modal { position: relative; max-width: 520px; }
 .share-modal h2 { display: flex; align-items: center; gap: 8px; padding-right: 32px; }
 .share-text { white-space: pre-wrap; word-break: break-word; font: .88rem/1.45 var(--sans); background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; max-height: 46vh; overflow-y: auto; margin: 10px 0 12px; user-select: text; -webkit-user-select: text; }
-.share-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; }
-.share-btns .btn { justify-content: center; text-decoration: none; }
+.share-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.share-btns .btn { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; min-height: 50px; width: 100%; padding: 0 12px; white-space: nowrap; text-decoration: none; font-size: 1rem; border-radius: 14px; box-sizing: border-box; }
+.share-btns .btn svg { flex: none; }
+.share-btns .share-wa { grid-column: 1 / -1; background: #25d366; border-color: #25d366; color: #06301a; font-weight: 800; }
+.share-btns .btn:only-of-type { grid-column: 1 / -1; }

@@ -56,9 +56,9 @@ export function ShareBeer({ recipe }: { recipe: Row }) {
             <p className="muted small">Il testo per chi riceve la birra: stile, caratteristiche e abbinamenti.</p>
             <pre className="share-text">{text}</pre>
             <div className="share-btns">
-              <a className="btn primary" href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} /> WhatsApp</a>
+              <a className="btn share-wa" href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={20} /> Invia su WhatsApp</a>
               <button type="button" className="btn" onClick={copy}><Copy size={18} /> Copia</button>
-              {typeof navigator.share === "function" && <button type="button" className="btn" onClick={share}><Share2 size={18} /> Altro…</button>}
+              {typeof navigator.share === "function" && <button type="button" className="btn" onClick={share}><Share2 size={18} /> Altre app</button>}
             </div>
             {msg && <p className="ok small">{msg}</p>}
           </div>
