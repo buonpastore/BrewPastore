@@ -2364,6 +2364,9 @@ a.mini-btn { text-decoration: none; }
 
 /* condividi anche dall'elenco delle ricette */
 .rc-card { position: relative; }
-.rc-card .rc-title { padding-right: 40px; }
-.rc-share { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer; padding: 0; z-index: 2; }
+.rc-card .rc-title { padding-right: 150px; }
+.rc-topright { position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 6px; z-index: 2; }
+.rc-share { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer; padding: 0; z-index: 2; }
 .tk-badge.ts-wait { background: color-mix(in srgb, var(--violet) 20%, transparent); color: var(--violet); white-space: nowrap; }
+.recipe-head .rh-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.recipe-head .rh-title .badge { flex: none; margin-top: 6px; }

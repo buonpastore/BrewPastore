@@ -4,7 +4,7 @@ import { BookOpen, Beer, Leaf } from "lucide-react";
 import { CapDot, useCapColors } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase, errMsg, num, date, accentAt, type Row } from "../lib";
+import { supabase, errMsg, num, date, accentAt, type Row, lastBatchOf, normStatus, statusLabel, batchNow } from "../lib";
 import { useAuth } from "../auth";
 import { ImportRecipe } from "./ImportRecipe";
 import { FilePicker } from "../components/FilePicker";
@@ -93,7 +93,10 @@ export function Recipes() {
           const last = (r.batches as Row[]).map((b) => b.brew_date).filter(Boolean).sort().pop();
           return (
             <Link key={r.id} to={`/ricette/${r.id}`} className="card rc-card" style={{ ["--rc" as string]: accentAt(rows.indexOf(r)) }}>
-              <ShareBeer recipe={r} className="rc-share" size={16} />
+              <div className="rc-topright">
+                {lastBatchOf(r.batches as Row[]) && <span className={"badge st-" + normStatus(lastBatchOf(r.batches as Row[])!.status)}>{batchNow(lastBatchOf(r.batches as Row[])!.status)}</span>}
+                <ShareBeer recipe={r} className="rc-share" size={16} />
+              </div>
               <h3 className="rc-title">{r.name} <CapDot color={capOf(r)} size={22} /> {r.archived && <span className="badge">archiviata</span>}</h3>
               <div className="rc-style">{r.style ?? "stile non indicato"}</div>
               <div className="rc-traits">

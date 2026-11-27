@@ -2,7 +2,7 @@ import { DedupeButton } from "../components/DedupeButton";
 import { Beer, Copy, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { supabase, errMsg, date, sg, MATERIAL_CATEGORIES, UNITS, loadMaterials, normStatus, statusLabel, type Row } from "../lib";
+import { supabase, errMsg, date, sg, MATERIAL_CATEGORIES, UNITS, loadMaterials, normStatus, statusLabel, type Row, lastBatchOf, batchNow } from "../lib";
 import { useAuth } from "../auth";
 import { RecordForm } from "../components/RecordForm";
 import { RowsEditor } from "../components/RowsEditor";
@@ -120,7 +120,10 @@ export function RecipeDetail() {
             )}
           </div>
         </div>
-        <h1>{recipe.name}</h1>
+        <div className="rh-title">
+          <h1>{recipe.name}</h1>
+          {lastBatchOf(batches) && <span className={"badge st-" + normStatus(lastBatchOf(batches)!.status)} title="Stato dell'ultimo batch">{batchNow(lastBatchOf(batches)!.status)}</span>}
+        </div>
         <div className="muted style-line">{recipe.style}<FamousBeers style={recipe.style} /></div>
       </div>
 

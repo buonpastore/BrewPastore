@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.304", date: "27/11/2026 12:15", text: "Ricette: in alto a destra di ogni birra, nell’elenco e dentro la ricetta, c’è lo stato del suo ultimo batch (cotta, in fermentazione, imbottigliata, degustata, esaurita)" },
   { version: "0.303", date: "27/11/2026 12:00", text: "Task: lo stato segue le conferme. Se c’è solo chi l’ha creata resta «Inserita»; se qualcuno deve ancora confermare è «In attesa di conferma»; quando tutti hanno confermato diventa «In corso». Vale nell’elenco e in Home" },
   { version: "0.302", date: "27/11/2026 11:45", text: "Ricette: l’iconcina «Condividi» c’è anche nell’elenco, in alto a destra di ogni birra, senza dover aprire la ricetta" },
   { version: "0.301", date: "27/11/2026 11:30", text: "Condividi la birra: pulsanti rifatti, «Invia su WhatsApp» verde a tutta larghezza e sotto «Copia» e «Altre app» affiancati e uguali" },

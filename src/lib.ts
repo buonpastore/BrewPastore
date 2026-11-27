@@ -320,3 +320,13 @@ export function toBase(qty: number, unit: string) {
   const u = unit.toLowerCase();
   return u === "g" || u === "ml" ? qty / 1000 : u === "cl" ? qty / 100 : u === "mg" ? qty / 1e6 : qty;
 }
+
+/** L'ultimo batch di una ricetta (cotta più recente; se non ancora cotto, il più recente creato). */
+export function lastBatchOf(batches: Row[] | null | undefined): Row | null {
+  const list = [...(batches ?? [])];
+  if (!list.length) return null;
+  const key = (b: Row) => String(b.brew_date ?? "") + "|" + String(b.created_at ?? "");
+  return list.sort((a, b) => key(b).localeCompare(key(a)))[0];
+}
+/** Stato dell'ultimo batch come si dice a voce: «In fermentazione» invece di «Fermentata». */
+export const batchNow = (status?: string | null) => (normStatus(status ?? "") === "fermentazione" ? "In fermentazione" : statusLabel(status ?? ""));
