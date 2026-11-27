@@ -48,9 +48,8 @@ export function Tasks() {
   }, [reload]);
 
   const list = (tasks ?? []).filter((t) => !onlyMine || whoOf(t).includes(me));   // «Le mie» = solo quelle assegnate a me
-  // le terminate restano nell'elenco per una settimana (si vedono come terminate), poi vanno nello storico
-  const WEEK = 7 * 24 * 3600 * 1000;
-  const old = (t: Row) => t.status === "terminata" && Date.now() - new Date(t.done_at ?? t.updated_at ?? t.created_at).getTime() > WEEK;
+  // le terminate non si vedono nell'elenco: stanno in fondo sotto «Task terminate»
+  const old = (t: Row) => t.status === "terminata";
   const rank = (t: Row) => (t.status === "in_corso" ? 0 : t.status === "inserita" ? 1 : 2);
   // le importanti in cima (tranne quelle già terminate)
   const imp = (t: Row) => (t.important && t.status !== "terminata" ? 0 : 1);
@@ -98,7 +97,7 @@ export function Tasks() {
           {done.length > 0 && (
             <>
               <button className="xp-hist-btn" onClick={() => setShowHistory(!showHistory)}>
-                {showHistory ? <ChevronDown size={18} /> : <ChevronRight size={18} />} Storico ({done.length} terminate da più di una settimana)
+                {showHistory ? <ChevronDown size={18} /> : <ChevronRight size={18} />} Task terminate ({done.length})
               </button>
               {showHistory && <div className="tk-list">{done.map((t) => <Item key={t.id} t={t} />)}</div>}
             </>

@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.299", date: "27/11/2026 11:00", text: "Task: quelle terminate non compaiono più nell’elenco (prima restavano una settimana) e nemmeno in Home; stanno tutte in fondo sotto «Task terminate», che si apre toccandolo" },
   { version: "0.298", date: "27/11/2026 10:45", text: "Task: dopo «Confermo, la faccio» o «Non posso» la finestra si chiude da sola e si torna all’elenco" },
   { version: "0.297", date: "27/11/2026 10:30", text: "Ricetta: nuova iconcina «Condividi» in alto (accanto a modifica, duplica, elimina) con un testo pronto per chi riceve la birra: nome, stile, gradi, amaro e colore, origine e caratteristiche dello stile e gli abbinamenti per portata; si manda con «WhatsApp», si copia con «Copia» o si condivide con le altre app. Task: quando qualcuno conferma che la fa, la task passa da sola da «Inserita» a «In corso»" },
   { version: "0.296", date: "27/11/2026 10:00", text: "Task: chi riceve una task da un altro conferma con «👍 Confermo, la faccio» o «✋ Non posso». Nel dettaglio si vede la risposta di ognuno; nell’elenco «👋 Confermi che la fai?» per te e «⏳ da confermare» per gli altri; in Home la task da confermare ha l’etichetta «Da confermare». Chi si assegna una task da solo non deve confermare. Da eseguire: 0031_task_conferme.sql" },
