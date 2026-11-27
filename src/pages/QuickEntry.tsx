@@ -2,7 +2,7 @@ import { CapPicker, BottleSplit } from "../components/CapColor";
 import { useAuth } from "../auth";
 import { Link } from "react-router-dom";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Zap, Minus, Plus, Check, Save, Trash2, ChevronDown } from "lucide-react";
+import { Droplets, Wheat, ShowerHead, Snowflake, FlaskConical, Wine, Minus, Plus, Check, Save, Trash2, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase, errMsg, num, type Row } from "../lib";
 import { BottleCalc } from "./BottleCalc";
@@ -37,10 +37,6 @@ const PHASES: Phase[] = [
   { title: "Fine bollitura", color: "var(--magenta)", icon: <Snowflake size={20} />, fields: [
     { key: "original_gravity", label: "OG (post-bollitura)", kind: "sg" },
     { key: "volume_fermenter_l", label: "Litri in fermentatore", kind: "l" },
-  ] },
-  { title: "Consumi della cotta", color: "var(--violet)", icon: <Zap size={20} />, fields: [
-    { key: "energy_kwh", label: "Energia elettrica", kind: "kwh" },
-    { key: "water_used_l", label: "Acqua totale usata", kind: "l" },
   ] },
   { title: "Fermentazione", color: "var(--gold)", icon: <FlaskConical size={20} />, fields: [
     { key: "final_gravity", label: "FG (post-fermentazione)", kind: "sg" },
@@ -247,7 +243,7 @@ function QuickEvents({ batch, canEdit }: { batch: Row; canEdit: boolean }) {
 
 /** Fasi (gruppi di dati) di ogni passaggio del batch. */
 const STEP_PHASES: Record<string, string[]> = {
-  cotta: ["Acqua", "Correzione acqua del mash", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"],
+  cotta: ["Acqua", "Correzione acqua del mash", "Mash", "Sparge", "Fine bollitura"],
   fermentazione: ["Fermentazione"],
   imbottigliato: ["Imbottigliamento"],
 };
@@ -340,7 +336,7 @@ function phasesReached(b: Row): Set<string> {
   const fermented = ["maturazione", "imbottigliato", "degustato", "finito", "esaurito"].includes(st) || Boolean(b.bottling_date);   // FG: a fermentazione finita
   const bottled = ["imbottigliato", "degustato", "finito", "esaurito"].includes(st) || Boolean(b.bottling_date);
   const out = new Set<string>();
-  if (brewed) ["Acqua", "Mash", "Sparge", "Fine bollitura", "Consumi della cotta"].forEach((x) => out.add(x));   // la correzione non ha valori proposti
+  if (brewed) ["Acqua", "Mash", "Sparge", "Fine bollitura"].forEach((x) => out.add(x));   // la correzione non ha valori proposti
   if (fermented) out.add("Fermentazione");
   if (bottled) out.add("Imbottigliamento");
   return out;

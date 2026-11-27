@@ -223,14 +223,12 @@ export function computeBatchCost(b: Row, recipe: Row | undefined, ings: Row[], e
     packaging = bottles * ((bp ?? 0) + (cp ?? 0)); packagingEstimated = true;
   }
 
-  // corrente: quella inserita nel batch, altrimenti stimata dal processo (acqua da scaldare, mash, bollitura)
+  // corrente: fissa, BREW_KWH per ogni cotta (non si inserisce più nel batch)
   const est = estimateBrew(b, recipe);
-  const kwh = b.energy_kwh != null ? Number(b.energy_kwh) : est.kwh;
-  const energyMissing = kwh == null;
-  const energy = Number(kwh ?? 0) * energyPrice;
-  // calcolata dai dati confermati nel batch (litri di mash e sparge della cottura + tempi della ricetta) = precisa
-  const fromBatch = b.mash_water_l != null || b.sparge_water_l != null;
-  facts.push({ label: "Corrente", value: kwh == null ? "—" : `${fmt(kwh)} kWh`, source: b.energy_kwh != null || (kwh != null && fromBatch) ? "inserito" : kwh != null ? "stimato" : "manca" });
+  const kwh = BREW_KWH;
+  const energyMissing = false;
+  const energy = kwh * energyPrice;
+  facts.push({ label: "Corrente", value: `${fmt(kwh)} kWh a cotta`, source: "inserito" });
 
   // ingredienti
   facts.push({ label: "Prezzi ingredienti", value: `${priced + guessed}/${ings.length}`, source: missing.length ? "manca" : guessed ? "stimato" : "inserito" });
@@ -301,6 +299,9 @@ export function perPiece(costPerBase: number, baseUnit: string, pieceSize: numbe
    Valori indicativi per un impianto elettrico da homebrewing (resistenza ~2,5 kW in bollitura). */
 const TAP_C = 15, EFF = 0.85, BOIL_KW = 2.5, MASH_HOLD_KW = 0.5;
 const heatKwh = (litri: number, da: number, a: number) => (litri * 4.186 * Math.max(0, a - da)) / 3600 / EFF;
+/** Corrente consumata da ogni cotta (kWh), uguale per tutte. */
+export const BREW_KWH = 4.5;
+
 export function estimateBrew(b: Row, recipe?: Row): { kwh: number | null; waterL: number | null } {
   const mashL = Number(b.mash_water_l ?? recipe?.mash_water_l ?? 0);
   const spargeL = Number(b.sparge_water_l ?? recipe?.sparge_water_l ?? 0);

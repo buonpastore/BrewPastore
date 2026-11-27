@@ -6,6 +6,7 @@
 export interface Release { version: string; date: string; text: string }
 
 export const CHANGELOG: Release[] = [
+  { version: "0.310", date: "28/11/2026 00:45", text: "Batch: tolti i «Consumi della cotta», la corrente è automatica (4,5 kWh a cotta, nei costi). Accanto ad «Avanza» c'è «Torna a…» per annullare l'ultima fase e tornare a quella precedente." },
   { version: "0.309", date: "28/11/2026 00:20", text: "Diario di fermentazione: non si vedono più le vecchie note automatiche «Stato: Cotta» e simili." },
   { version: "0.308", date: "27/11/2026 15:20", text: "Pagina del batch più semplice: in alto i passaggi fatti, ognuno con la sua data da cambiare al volo; il cestino cancella l'ultimo passaggio; «Avanza» segna il successivo con la data di oggi. Tocca un passaggio per vederne e modificarne i dati. Tolto il menu «Altro» e le note automatiche nel diario." },
   { version: "0.307", date: "27/11/2026 14:40", text: "Condividi la birra: oltre allo schema c'è una breve descrizione di come dovrebbe essere lo stile, e sotto tutti gli abbinamenti divisi per portata, ciascuno con il perché." },

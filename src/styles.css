@@ -2399,3 +2399,9 @@ span.bstep-date { display: inline-flex; align-items: center; color: var(--muted)
 .bstep-next { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; border-radius: 14px; border: 2px dashed var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--text); font: 600 1.05rem var(--sans); cursor: pointer; }
 .bstep-next strong { color: var(--c); }
 .qe-step-title { margin: 0 0 12px; font-size: 1.15rem; }
+.bstep-move { display: grid; gap: 8px; }
+.bstep-move.two { grid-template-columns: 1fr 1.4fr; }
+.bstep-back { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 56px; padding: 0 10px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); font: 600 .95rem var(--sans); cursor: pointer; text-align: center; }
+.bstep-back strong { color: var(--text); }
+.bstep-move .bstep-next { padding: 0 10px; font-size: .95rem; text-align: center; }
+.bstep-move strong { white-space: nowrap; }

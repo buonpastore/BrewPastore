@@ -3,6 +3,7 @@ import { Beer } from "lucide-react";
 import { CapDot } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BREW_KWH } from "../costs";
 import { supabase, date, sg, eur, errMsg, STATUS_NOW, isEnded, normStatus, statusLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { deleteBatches } from "../deleteHelpers";
@@ -36,6 +37,7 @@ export function Batches() {
     try { await deleteBatches([b.id]); setRows((r) => r.filter((x) => x.id !== b.id)); } catch (e) { alert(errMsg(e)); }
   };
   const [rows, setRows] = useState<Row[]>([]);
+  const [kwhPrice, setKwhPrice] = useState(0);   // corrente: fissa per cotta
   const [costs, setCosts] = useState<Record<string, Row>>({});
   const [status, setStatus] = useState("");
   const [lastLog, setLastLog] = useState<Record<string, string>>({});
@@ -52,6 +54,7 @@ export function Batches() {
       for (const e of data ?? []) { const d = String(e.event_at ?? "").slice(0, 10); if (d && (!m[e.batch_id] || d > m[e.batch_id])) m[e.batch_id] = d; }
       setLastLog(m);
     });
+    supabase.from("settings").select("value").eq("key", "energy_price_kwh").maybeSingle().then(({ data }) => setKwhPrice(Number(data?.value ?? 0)));
     supabase.from("batch_cost_summary").select("*").then(({ data }) =>
       setCosts(Object.fromEntries((data ?? []).map((c) => [c.batch_id, c]))));
   }, []);
@@ -81,7 +84,7 @@ export function Batches() {
           <tbody>
             {list.map((b) => {
               const c = costs[b.id];
-              const total = c ? c.ingredients_cost + c.extra_cost + c.energy_cost + c.water_cost : null;
+              const total = c ? c.ingredients_cost + c.extra_cost + BREW_KWH * kwhPrice + c.water_cost : null;
               return (
                 <tr key={b.id}>
                   <td className="bl-name">

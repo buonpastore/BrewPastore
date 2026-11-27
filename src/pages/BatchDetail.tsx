@@ -1,4 +1,4 @@
-import { ArrowRight, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase, errMsg, sg, date, normStatus, statusLabel, type Row } from "../lib";
@@ -43,7 +43,7 @@ function BatchSteps({ batch, canEdit, selected, onSelect, onSaved }: { batch: Ro
   };
   const undo = async (i: number) => {
     const s = STEPS[i];
-    if (!confirm(`Cancellare il passaggio «${s.label}»${batch[s.field] ? ` del ${date(batch[s.field])}` : ""}? La birra torna allo stato precedente; i dati inseriti restano.`)) return;
+    if (!confirm(`Annullare «${s.label}»${batch[s.field] ? ` del ${date(batch[s.field])}` : ""} e tornare a «${i > 0 ? STEPS[i - 1].label : "da cuocere"}»? I dati inseriti restano.`)) return;
     if (await update({ status: i > 0 ? STEPS[i - 1].status : "pianificato", [s.field]: null })) onSelect(i > 0 ? STEPS[i - 1].status : "cotta");
   };
   return (
@@ -56,13 +56,21 @@ function BatchSteps({ batch, canEdit, selected, onSelect, onSaved }: { batch: Ro
           {canEdit
             ? <input type="date" className="bstep-date" value={batch[s.field] ?? ""} aria-label={`Data: ${s.label}`} onChange={(e) => update({ [s.field]: e.target.value || null })} />
             : <span className="bstep-date">{batch[s.field] ? date(batch[s.field]) : "—"}</span>}
-          {canEdit && i === done - 1 && <button type="button" className="icon-btn bstep-del" aria-label={`Cancella «${s.label}»`} title="Cancella questo passaggio" onClick={() => undo(i)}><Trash2 size={18} /></button>}
         </div>
       ))}
-      {canEdit && next && (
-        <button type="button" className="bstep-next" style={{ ["--c" as string]: next.color }} onClick={advance}>
-          <span className="bstep-ico">{next.icon}</span> Avanza: <strong>{next.label}</strong> oggi <ArrowRight size={18} />
-        </button>
+      {canEdit && (done > 0 || next) && (
+        <div className={"bstep-move" + (done > 0 && next ? " two" : "")}>
+          {done > 0 && (
+            <button type="button" className="bstep-back" onClick={() => undo(done - 1)} title={`Annulla «${STEPS[done - 1].label}»`}>
+              <ArrowLeft size={18} /> Torna a <strong>{done > 1 ? STEPS[done - 2].label : "da cuocere"}</strong>
+            </button>
+          )}
+          {next && (
+            <button type="button" className="bstep-next" style={{ ["--c" as string]: next.color }} onClick={advance}>
+              <span>Avanza a <strong>{next.label}</strong></span> <ArrowRight size={18} />
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
