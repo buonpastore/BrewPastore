@@ -7,8 +7,8 @@ export function lastStep(b: Row): string {
   if (b.status === "esaurito") return "esaurita";
   if (b.first_tasting_date) return `degustata dal ${date(b.first_tasting_date)}`;
   if (b.bottling_date) return `imbottigliata il ${date(b.bottling_date)}`;
-  if (b.fermentation_start) return `in fermentatore dal ${date(b.fermentation_start)}`;
-  if (b.brew_date) return `cotta il ${date(b.brew_date)}`;
+  if (b.fermentation_start) return `fermentata il ${date(b.fermentation_start)}`;
+  if (b.brew_date) return `cotta il ${date(b.brew_date)}, in fermentazione`;
   return "non ancora cotta";
 }
 

@@ -3,7 +3,7 @@ import { Beer } from "lucide-react";
 import { CapDot } from "../components/CapColor";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase, date, sg, eur, errMsg, STATUS_LABELS, isEnded, normStatus, statusLabel, type Row } from "../lib";
+import { supabase, date, sg, eur, errMsg, STATUS_NOW, isEnded, normStatus, statusLabel, type Row } from "../lib";
 import { useAuth } from "../auth";
 import { deleteBatches } from "../deleteHelpers";
 import { createBatchFromRecipe } from "../newBatch";
@@ -72,7 +72,7 @@ export function Batches() {
       <div className="toolbar">
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tutti gli stati</option>
-          {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          {Object.entries(STATUS_NOW).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
       </div>
       <div className="table-wrap">

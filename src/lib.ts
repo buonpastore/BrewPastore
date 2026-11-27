@@ -34,7 +34,19 @@ export const STATUS_LABELS: Record<string, string> = {
 export const STATUS_STEPS = ["cotta", "fermentazione", "imbottigliato", "degustato", "esaurito"];
 /** Nomi vecchi (prima di 0020): «maturazione» = fermentata, «finito» = degustata. */
 export const normStatus = (s?: string | null) => (s === "maturazione" ? "fermentazione" : s === "finito" ? "degustato" : s ?? "");
-export const statusLabel = (s?: string | null) => STATUS_LABELS[normStatus(s)] ?? s ?? "";
+/** Cosa sta succedendo adesso: finito un passaggio, è in corso il successivo (cotta → in fermentazione, ecc.). */
+export const STATUS_NOW: Record<string, string> = {
+  pianificato: "Da cuocere",
+  cotta: "In fermentazione",
+  fermentazione: "In imbottigliamento",
+  imbottigliato: "In degustazione",
+  degustato: "Degustata",
+  esaurito: "Esaurita",
+};
+/** Etichetta mostrata nelle liste: lo stato in corso. */
+export const statusLabel = (s?: string | null) => STATUS_NOW[normStatus(s)] ?? s ?? "";
+/** Il passaggio fatto (Cotta, Fermentata, …): per i pulsanti e il diario. */
+export const stepLabel = (s?: string | null) => STATUS_LABELS[normStatus(s)] ?? s ?? "";
 /** I cinque colori dell'app, in ordine: giallo, ciano, magenta, viola, verde luppolo (poi si ricomincia). */
 export const ACCENTS = ["var(--gold)", "var(--teal)", "var(--magenta)", "var(--violet)", "var(--hop)"];
 export const accentAt = (i: number) => ACCENTS[((i % ACCENTS.length) + ACCENTS.length) % ACCENTS.length];
@@ -329,4 +341,4 @@ export function lastBatchOf(batches: Row[] | null | undefined): Row | null {
   return list.sort((a, b) => key(b).localeCompare(key(a)))[0];
 }
 /** Stato dell'ultimo batch come si dice a voce: «In fermentazione» invece di «Fermentata». */
-export const batchNow = (status?: string | null) => (normStatus(status ?? "") === "fermentazione" ? "In fermentazione" : statusLabel(status ?? ""));
+export const batchNow = (status?: string | null) => statusLabel(status ?? "");

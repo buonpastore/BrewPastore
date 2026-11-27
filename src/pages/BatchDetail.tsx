@@ -3,7 +3,7 @@ import { DedupeButton } from "../components/DedupeButton";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
-  supabase, errMsg, sg, eur, num, date, STATUS_LABELS, STATUS_STEPS, normStatus, statusLabel, MATERIAL_CATEGORIES, UNITS, loadMaterials,
+  supabase, errMsg, sg, eur, num, date, STATUS_LABELS, STATUS_STEPS, normStatus, statusLabel, stepLabel, MATERIAL_CATEGORIES, UNITS, loadMaterials,
   primingGrams, residualCo2, PRIMING_FACTORS, fmtUnitPrice, type Row,
 } from "../lib";
 import { useAuth } from "../auth";
@@ -241,17 +241,28 @@ export function BatchDetail() {
       if (error && /depleted_date/.test(error.message)) ({ data, error } = await supabase.from("batches").update({ status }).eq("id", batch!.id).select().single());
       if (error) return alert(errMsg(error));
       setBatch(data);
-      await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${statusLabel(status)}` });
+      await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${stepLabel(status)}` });
       return;
     }
     const field = q.field;
     const today = new Date().toISOString().slice(0, 10);
-    if (batch![field] && batch![field] !== today && !confirm(`${q.label.replace(/^\S+\s/, "")}: era già segnata il ${date(batch![field])}. Cambiare la data in oggi?`)) return;
+    const name = q.label.replace(/^\S+\s/, "").replace(/ oggi$/, "");
+    if (batch![field]) {
+      // già segnato: si può annullare (es. segnata fermentata per sbaglio); la data si cambia da «Modifica le date»
+      if (!confirm(`${name} il ${date(batch![field])}.\n\nL'hai segnato per sbaglio? Premi OK per annullarlo: la birra torna allo stato precedente.`)) return;
+      const left = QUICK.filter((x) => x.field && x.field !== field && batch![x.field]);
+      const status = left.length ? left[left.length - 1].status : "pianificato";
+      const { data, error } = await supabase.from("batches").update({ status, [field]: null }).eq("id", batch!.id).select().single();
+      if (error) return alert(errMsg(error));
+      setBatch(data);
+      await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Annullato: ${name}` });
+      return;
+    }
     const { data, error } = await supabase.from("batches").update({ status: q.status, [field]: today }).eq("id", batch!.id).select().single();
     if (error) return alert(errMsg(error));
     setBatch(data);
     setFocusStatus(q.status); setFocusKey((k) => k + 1);   // apri solo la fase interessante
-    await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${statusLabel(q.status)}` });
+    await supabase.from("batch_events").insert({ batch_id: batch!.id, kind: "nota", notes: `Stato: ${stepLabel(q.status)}` });
   };
 
   if (!batch) return <p>Caricamento…</p>;
